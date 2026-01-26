@@ -8,12 +8,12 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
       POSTGRES_DB: ${DB_NAME:-appdb}
     ports:
-      - "${DB_PORT:-5432}:${DB_PORT:-5432}"
+      - '${DB_PORT:-5432}:${DB_PORT:-5432}'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test:
-        ["CMD-SHELL", "pg_isready -U ${DB_USER:-appuser} -d ${DB_NAME:-appdb}"]
+        ['CMD-SHELL', 'pg_isready -U ${DB_USER:-appuser} -d ${DB_NAME:-appdb}']
       interval: 10s
       timeout: 5s
       retries: 5
