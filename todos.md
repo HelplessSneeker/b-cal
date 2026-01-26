@@ -21,6 +21,7 @@
 ### Other todos
 
 - update readme
+- impletent faster builder option
 
 ---
 
