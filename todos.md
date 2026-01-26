@@ -1,20 +1,36 @@
 # Files to write down todos
 
-## Thecnical todos
+---
+
+## Open Todos
+
+### Thecnical todos
 
 - Add passport for authentication
 - Add Swagger for documentation
 - Add typeorm for database abstraction
 - add bycrypt for encryptions
 - add validation
+- add logging
 
-## Architectual todos
+### Architectual todos
 
-- add Database 
 - add mail server
-- add env
+- testing with additional considerations for encryption
 
-## Other todos
+### Other todos
 
 - update readme
 
+---
+
+## Done / Currently implementing todos
+
+### Thecnical todos
+
+### Architectual todos
+
+- add Database (added Prisma with simpel schema and docker postgres implementation)
+- add env (added env)
+
+### Architectual todos
