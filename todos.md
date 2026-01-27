@@ -7,7 +7,6 @@
 ### Thecnical todos
 
 - Add Swagger for documentation
-- add validation
 - add logging
 
 ### Architectual todos
@@ -29,6 +28,7 @@
 - add Database (added Prisma with simpel schema and docker postgres implementation)
 - Add passport for authentication (Implemented Local and JWT strategy for authentication)
 - add bycrypt for encryptions (implemented bycrpt for pasword hashing)
+- add validation (added valdidation pipe seems to work for dto's)
 
 ### Architectual todos
 
