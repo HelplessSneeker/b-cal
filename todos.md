@@ -6,17 +6,14 @@
 
 ### Thecnical todos
 
-- Add passport for authentication
 - Add Swagger for documentation
-- Add typeorm for database abstraction
-- add bycrypt for encryptions
 - add validation
 - add logging
 
 ### Architectual todos
 
-- add mail server
-- testing with additional considerations for encryption
+- add mail server for 2 factor
+- testing 
 
 ### Other todos
 
@@ -29,9 +26,12 @@
 
 ### Thecnical todos
 
+- add Database (added Prisma with simpel schema and docker postgres implementation)
+- Add passport for authentication (Implemented Local and JWT strategy for authentication)
+- add bycrypt for encryptions (implemented bycrpt for pasword hashing)
+
 ### Architectual todos
 
-- add Database (added Prisma with simpel schema and docker postgres implementation)
 - add env (added env)
 
 ### Architectual todos
