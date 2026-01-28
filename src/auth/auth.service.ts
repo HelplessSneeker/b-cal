@@ -6,7 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { User } from 'generated/prisma/browser';
 import { UsersService } from 'src/users/users.service';
-import { AuthenticatedUser } from './types';
+import { AuthenticatedUser, TokenResponse } from './types';
 import { SignupDto } from './dto/signup.dto';
 import { jwtRefreshConstants, saltRounds } from './constants';
 import * as bcrypt from 'bcrypt';
@@ -33,7 +33,10 @@ export class AuthService {
     return null;
   }
 
-  private async generateTokens(user: { id: string; email: string }) {
+  private async generateTokens(user: {
+    id: string;
+    email: string;
+  }): Promise<TokenResponse> {
     const payload = { email: user.email, sub: user.id };
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(payload),
@@ -45,7 +48,7 @@ export class AuthService {
     return { access_token, refresh_token };
   }
 
-  async login(user: User) {
+  async login(user: User): Promise<TokenResponse> {
     const tokens = await this.generateTokens(user);
     const hashedRefreshToken = await bcrypt.hash(
       tokens.refresh_token,
@@ -55,7 +58,7 @@ export class AuthService {
     return tokens;
   }
 
-  async signup(signupDto: SignupDto) {
+  async signup(signupDto: SignupDto): Promise<TokenResponse> {
     const { email, password } = signupDto;
 
     const existingUser = await this.usersService.findOne(email);
@@ -80,7 +83,10 @@ export class AuthService {
     return tokens;
   }
 
-  async refreshTokens(userId: string, refreshToken: string) {
+  async refreshTokens(
+    userId: string,
+    refreshToken: string,
+  ): Promise<TokenResponse> {
     const user = await this.usersService.findById(userId);
     if (!user || !user.refreshToken) {
       throw new ForbiddenException('Access denied');

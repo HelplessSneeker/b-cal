@@ -14,3 +14,8 @@ export interface RequestWithUser extends Request {
 export interface RequestWithRefreshUser extends Request {
   user: { id: string; email: string; refreshToken: string };
 }
+
+export interface TokenResponse {
+  access_token: string;
+  refresh_token: string;
+}
