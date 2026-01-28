@@ -10,3 +10,7 @@ export interface JwtPayload {
 export interface RequestWithUser extends Request {
   user: User;
 }
+
+export interface RequestWithRefreshUser extends Request {
+  user: { id: string; email: string; refreshToken: string };
+}

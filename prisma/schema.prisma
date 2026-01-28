@@ -17,8 +17,9 @@ datasource db {
 model User {
   id String @id @default(uuid())
 
-  email    String @unique
-  password String
+  email        String  @unique
+  password     String
+  refreshToken String?
 
   calendarEntry CalenderEntry[]
 }

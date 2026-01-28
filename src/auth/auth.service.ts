@@ -1,10 +1,14 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from 'generated/prisma/browser';
 import { UsersService } from 'src/users/users.service';
 import { AuthenticatedUser } from './types';
 import { SignupDto } from './dto/signup.dto';
-import { saltRounds } from './constants';
+import { jwtRefreshConstants, saltRounds } from './constants';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -29,11 +33,26 @@ export class AuthService {
     return null;
   }
 
-  login(user: User) {
+  private async generateTokens(user: { id: string; email: string }) {
     const payload = { email: user.email, sub: user.id };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+    const [access_token, refresh_token] = await Promise.all([
+      this.jwtService.signAsync(payload),
+      this.jwtService.signAsync(payload, {
+        secret: jwtRefreshConstants.secret,
+        expiresIn: '7d',
+      }),
+    ]);
+    return { access_token, refresh_token };
+  }
+
+  async login(user: User) {
+    const tokens = await this.generateTokens(user);
+    const hashedRefreshToken = await bcrypt.hash(
+      tokens.refresh_token,
+      saltRounds,
+    );
+    await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
+    return tokens;
   }
 
   async signup(signupDto: SignupDto) {
@@ -52,8 +71,36 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    return {
-      access_token: this.jwtService.sign({ email: user.email, sub: user.id }),
-    };
+    const tokens = await this.generateTokens(user);
+    const hashedRefreshToken = await bcrypt.hash(
+      tokens.refresh_token,
+      saltRounds,
+    );
+    await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
+    return tokens;
+  }
+
+  async refreshTokens(userId: string, refreshToken: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.refreshToken) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    const isMatch = await bcrypt.compare(refreshToken, user.refreshToken);
+    if (!isMatch) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    const tokens = await this.generateTokens(user);
+    const hashedRefreshToken = await bcrypt.hash(
+      tokens.refresh_token,
+      saltRounds,
+    );
+    await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
+    return tokens;
+  }
+
+  async logout(userId: string) {
+    await this.usersService.updateRefreshToken(userId, null);
   }
 }
