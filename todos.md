@@ -8,6 +8,8 @@
 
 - Add Swagger for documentation
 - add logging
+- add testing
+- add cookie support for refresh tokens
 
 ### Architectual todos
 
@@ -29,6 +31,7 @@
 - Add passport for authentication (Implemented Local and JWT strategy for authentication)
 - add bycrypt for encryptions (implemented bycrpt for pasword hashing)
 - add validation (added valdidation pipe seems to work for dto's)
+- add refresh token (refresh token functionality was added)
 
 ### Architectual todos
 
