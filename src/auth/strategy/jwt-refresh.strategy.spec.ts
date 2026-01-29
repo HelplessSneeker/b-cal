@@ -11,6 +11,11 @@ jest.mock('../constants', () => ({
   jwtRefreshConstants: {
     secret: 'test-refresh-secret-key',
   },
+  cookieConfig: {
+    accessToken: { name: 'access_token', maxAge: 3600000 },
+    refreshToken: { name: 'refresh_token', maxAge: 604800000 },
+    options: { httpOnly: true, secure: false, sameSite: 'strict' },
+  },
 }));
 
 describe('JwtRefreshStrategy', () => {
@@ -30,9 +35,10 @@ describe('JwtRefreshStrategy', () => {
 
   describe('validate', () => {
     it('should return user object with id, email, and refreshToken', () => {
-      const getMock = jest.fn().mockReturnValue('Bearer test-refresh-token');
       const mockRequest = {
-        get: getMock,
+        cookies: {
+          refresh_token: 'test-refresh-token',
+        },
       } as unknown as Request;
 
       const payload: JwtPayload = {
@@ -47,12 +53,13 @@ describe('JwtRefreshStrategy', () => {
         email: 'test@example.com',
         refreshToken: 'test-refresh-token',
       });
-      expect(getMock).toHaveBeenCalledWith('Authorization');
     });
 
-    it('should extract refresh token from Authorization header', () => {
+    it('should extract refresh token from cookie', () => {
       const mockRequest = {
-        get: jest.fn().mockReturnValue('Bearer my-secret-refresh-token'),
+        cookies: {
+          refresh_token: 'my-secret-refresh-token',
+        },
       } as unknown as Request;
 
       const payload: JwtPayload = {
@@ -67,7 +74,9 @@ describe('JwtRefreshStrategy', () => {
 
     it('should map sub to id correctly', () => {
       const mockRequest = {
-        get: jest.fn().mockReturnValue('Bearer token'),
+        cookies: {
+          refresh_token: 'token',
+        },
       } as unknown as Request;
 
       const payload: JwtPayload = {

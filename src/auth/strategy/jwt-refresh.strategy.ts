@@ -1,8 +1,8 @@
-import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { Request } from 'express';
-import { jwtRefreshConstants } from '../constants';
+import { jwtRefreshConstants, cookieConfig } from '../constants';
 import { JwtPayload } from '../types';
 
 @Injectable()
@@ -12,7 +12,8 @@ export class JwtRefreshStrategy extends PassportStrategy(
 ) {
   constructor() {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: (req: Request): string | null =>
+        (req?.cookies?.[cookieConfig.refreshToken.name] as string) ?? null,
       ignoreExpiration: false,
       secretOrKey: jwtRefreshConstants.secret,
       passReqToCallback: true,
@@ -20,7 +21,9 @@ export class JwtRefreshStrategy extends PassportStrategy(
   }
 
   validate(req: Request, payload: JwtPayload) {
-    const refreshToken = req.get('Authorization')!.replace('Bearer ', '');
+    const refreshToken = req.cookies?.[
+      cookieConfig.refreshToken.name
+    ] as string;
     return { id: payload.sub, email: payload.email, refreshToken };
   }
 }
