@@ -7,16 +7,17 @@
 ### Thecnical todos
 
 - add logging
-- add cookie support for refresh tokens
-
+ 
 ### Architectual todos
 
 - add mail server for 2 factor
 
 ### Other todos
 
-- impletent faster builder option
-- add calender function
+- implement faster build option
+- add calender functionality
+- implement additional authentication (Github, Google and simmilar);
+- implement Google, Outlook and simmilar Calendar export
 
 ---
 
@@ -29,6 +30,7 @@
 - add bycrypt for encryptions (implemented bycrpt for pasword hashing)
 - add validation (added valdidation pipe seems to work for dto's)
 - add refresh token (refresh token functionality was added)
+- add cookie support for refresh tokens (implement complete jwt cookies support, makes it easier to test and handle with browser applications)
 
 ### Architectual todos
 

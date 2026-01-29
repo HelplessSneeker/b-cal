@@ -1,44 +1,43 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project Overview
 
-b-cal is a calendar application built with NestJS 11, TypeScript, Prisma 7 (PostgreSQL), and Passport-based authentication (local + JWT strategies).
+b-cal is a calendar application built with NestJS 11, TypeScript, Prisma 7 (PostgreSQL), and Passport-based authentication (local + JWT with refresh tokens).
 
 ## Commands
 
 - `npm run build` — compile the project
-- `npm run start:dev` — run in watch mode for development
+- `npm run start:dev` — run in watch mode
 - `npm run lint` — ESLint with auto-fix
 - `npm run format` — Prettier formatting
-- `npm run test` — run all unit tests (Jest)
-- `npm run test -- --testPathPattern=<pattern>` — run a single test file
-- `npm run test:e2e` — run end-to-end tests
-- `npx prisma migrate dev` — apply database migrations
+- `npm run test` — run unit tests (Jest)
+- `npm run test -- --testPathPattern=<pattern>` — run specific tests
+- `npm run test:e2e` — run e2e tests
+- `npx prisma migrate dev` — apply migrations
 - `npx prisma generate` — regenerate Prisma client
 
 ## Infrastructure
 
-PostgreSQL runs via `docker-compose.yml`. Start with `docker compose up -d`. Environment variables are in `.env` (PORT, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT, SECRET_KEY).
+PostgreSQL runs via `docker-compose.yml` (`docker compose up -d`). Environment variables in `.env`: PORT, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT, SECRET_KEY, REFRESH_SECRET_KEY.
 
 ## Architecture
 
-**Root module** (`app.module.ts`) imports: ConfigModule, PrismaModule (global), AuthModule, UsersModule, CalendarModule.
+**Modules:** AppModule imports ConfigModule, PrismaModule (global), AuthModule, UsersModule, CalendarModule.
 
-**PrismaModule** is global — it provides `PrismaService` (extends `PrismaClient` with `@prisma/adapter-pg`) to all modules without explicit imports. Connection string is built from env vars.
+**Auth flow:** Tokens stored in httpOnly cookies (not Bearer headers).
+- `/auth/login` — LocalAuthGuard validates email+password, sets access_token (1h) + refresh_token (7d) cookies
+- `/auth/signup` — creates user, sets token cookies
+- `/auth/refresh` — JwtRefreshAuthGuard validates refresh token, issues new token pair
+- `/auth/logout` — clears cookies and invalidates refresh token
 
-**Auth flow:** AuthController exposes `/auth/login` (LocalAuthGuard) and `/auth/signup`. LocalStrategy validates email+password via bcrypt. On success, AuthService issues a JWT (1h expiry). JwtStrategy extracts Bearer tokens for protected routes via JwtAuthGuard. UsersModule is exported for AuthModule to consume.
+Strategies: LocalStrategy (bcrypt), JwtStrategy (reads access_token cookie), JwtRefreshStrategy (reads refresh_token cookie).
 
-**Prisma schema** has two models: `User` (id, email, password) and `CalenderEntry` (id, title, startDate, endDate, wholeDay, content, authorId→User). Note: the model is spelled "CalenderEntry" (not "Calendar").
+**Prisma schema:** `User` (id, email, password, refreshToken) and `CalenderEntry` (id, title, startDate, endDate, wholeDay, content, authorId→User). Note: model spelled "CalenderEntry".
 
-**Prisma client** is generated to `generated/prisma` (CommonJS format).
-
-**Validation:** A global `ValidationPipe` is registered in `main.ts`. DTOs use `class-validator` decorators.
+**API docs:** Swagger at `/api`.
 
 ## Code Style
 
-- ESLint 9 flat config with TypeScript + Prettier
-- `@typescript-eslint/no-explicit-any` is OFF
-- Single quotes, trailing commas (Prettier)
-- `noImplicitAny` is disabled in tsconfig
+- ESLint 9 flat config + Prettier
+- Single quotes, trailing commas
+- `noImplicitAny` disabled
