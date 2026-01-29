@@ -7,18 +7,16 @@
 ### Thecnical todos
 
 - add logging
-- add testing
 - add cookie support for refresh tokens
 
 ### Architectual todos
 
 - add mail server for 2 factor
-- add testing databse for 2e2 tests including seeding
 
 ### Other todos
 
-- update readme
 - impletent faster builder option
+- add calender function
 
 ---
 
@@ -39,4 +37,6 @@
 
 ### other todos
 
+- update readme (added first simple Readme)
+- add testing (added integration and e2e tests for all implemented endpoints and services)
 - Add Swagger for documentation (added swagger to the app for api endpoint documentation)
