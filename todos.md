@@ -6,7 +6,6 @@
 
 ### Thecnical todos
 
-- Add Swagger for documentation
 - add logging
 - add testing
 - add cookie support for refresh tokens
@@ -14,7 +13,7 @@
 ### Architectual todos
 
 - add mail server for 2 factor
-- testing 
+- add testing databse for 2e2 tests including seeding
 
 ### Other todos
 
@@ -36,5 +35,8 @@
 ### Architectual todos
 
 - add env (added env)
+- testing (added unit and integration tests for User Auth and passport strategies plus 2e2 testing for auth controller)
 
-### Architectual todos
+### other todos
+
+- Add Swagger for documentation (added swagger to the app for api endpoint documentation)

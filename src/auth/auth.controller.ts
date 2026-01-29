@@ -5,11 +5,14 @@ import { JwtAuthGuard } from './guard/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from './guard/jwt-refresh-auth.guard';
 import type { RequestWithUser, RequestWithRefreshUser } from './types';
 import { SignupDto } from './dto/signup.dto';
+import { ApiBody } from '@nestjs/swagger';
+import { LoginDto } from './dto/login.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @ApiBody({ type: LoginDto })
   @UseGuards(LocalAuthGuard)
   @Post('login')
   login(@Request() req: RequestWithUser) {
