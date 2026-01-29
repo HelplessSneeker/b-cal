@@ -14,10 +14,13 @@
 
 ### Other todos
 
+- add caching for optimization
+- add lazyloading for long lists
 - implement faster build option
 - add calender functionality
 - implement additional authentication (Github, Google and simmilar);
 - implement Google, Outlook and simmilar Calendar export
+- add i18n
 
 ---
 

@@ -4,6 +4,12 @@ A REST API for a calendar application built with NestJS, TypeScript, Prisma, and
 
 This project is my attempt to develop a backend API for a calendar application. Currently, only the database layer and user authentication are implemented. Calendar functionality is still in development.
 
+
+## Related Repositories
+
+- [Frontend](https://github.com/HelplessSneeker/b-cal-frontend)
+
+
 ## Tech Stack
 
 - NestJS 11
