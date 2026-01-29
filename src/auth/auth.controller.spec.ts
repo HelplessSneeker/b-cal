@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import type { Response } from 'express';
+import type { RequestWithUser, RequestWithRefreshUser } from './types';
 
 jest.mock('generated/prisma/client', () => ({
   PrismaClient: class PrismaClient {},
@@ -18,11 +20,23 @@ const mockUser = {
   id: 'user-1',
   email: 'test@example.com',
   password: 'hashed',
+  refreshToken: null,
 };
 
 const mockTokens = {
   access_token: 'access-token',
   refresh_token: 'refresh-token',
+};
+
+type MockResponse = Pick<Response, 'cookie' | 'clearCookie'>;
+
+const mockResponse = (): MockResponse => {
+  const res = {} as MockResponse;
+  res.cookie = jest.fn().mockReturnValue(res) as MockResponse['cookie'];
+  res.clearCookie = jest
+    .fn()
+    .mockReturnValue(res) as MockResponse['clearCookie'];
+  return res;
 };
 
 describe('AuthController', () => {
@@ -43,53 +57,80 @@ describe('AuthController', () => {
   });
 
   describe('login', () => {
-    it('should return tokens from authService.login', async () => {
+    it('should set cookies and return success message', async () => {
       mockAuthService.login.mockResolvedValue(mockTokens);
+      const res = mockResponse();
 
-      const result = await controller.login({ user: mockUser } as any);
+      const result = await controller.login(
+        { user: mockUser } as RequestWithUser,
+        res as Response,
+      );
 
-      expect(result).toEqual(mockTokens);
+      expect(result).toEqual({ message: 'Login successful' });
       expect(mockAuthService.login).toHaveBeenCalledWith(mockUser);
+      expect(res.cookie).toHaveBeenCalledTimes(2);
     });
   });
 
   describe('signup', () => {
-    it('should return tokens from authService.signup', async () => {
+    it('should set cookies and return success message', async () => {
       mockAuthService.signup.mockResolvedValue(mockTokens);
       const dto = { email: 'new@example.com', password: 'password' };
+      const res = mockResponse();
 
-      const result = await controller.signup(dto);
+      const result = await controller.signup(dto, res as Response);
 
-      expect(result).toEqual(mockTokens);
+      expect(result).toEqual({ message: 'Signup successful' });
       expect(mockAuthService.signup).toHaveBeenCalledWith(dto);
+      expect(res.cookie).toHaveBeenCalledTimes(2);
     });
   });
 
   describe('refresh', () => {
-    it('should call authService.refreshTokens with user id and token', async () => {
+    it('should set cookies and return success message', async () => {
       mockAuthService.refreshTokens.mockResolvedValue(mockTokens);
       const req = {
         user: { id: 'user-1', email: 'test@example.com', refreshToken: 'rt' },
       };
+      const res = mockResponse();
 
-      const result = await controller.refresh(req as any);
+      const result = await controller.refresh(
+        req as RequestWithRefreshUser,
+        res as Response,
+      );
 
-      expect(result).toEqual(mockTokens);
+      expect(result).toEqual({ message: 'Tokens refreshed' });
       expect(mockAuthService.refreshTokens).toHaveBeenCalledWith(
         'user-1',
         'rt',
       );
+      expect(res.cookie).toHaveBeenCalledTimes(2);
     });
   });
 
   describe('logout', () => {
-    it('should call authService.logout with user id', async () => {
+    it('should clear cookies and return success message', async () => {
       mockAuthService.logout.mockResolvedValue(undefined);
+      const res = mockResponse();
 
-      const result = await controller.logout({ user: mockUser } as any);
+      const result = await controller.logout(
+        { user: mockUser } as RequestWithUser,
+        res as Response,
+      );
 
-      expect(result).toBeUndefined();
+      expect(result).toEqual({ message: 'Logout successful' });
       expect(mockAuthService.logout).toHaveBeenCalledWith('user-1');
+      expect(res.clearCookie).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('me', () => {
+    it('should return user id and email', () => {
+      const req = { user: mockUser };
+
+      const result = controller.me(req as RequestWithUser);
+
+      expect(result).toEqual({ id: 'user-1', email: 'test@example.com' });
     });
   });
 });

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Post,
   UseGuards,
   Request,
@@ -86,5 +87,11 @@ export class AuthController {
     await this.authService.logout(req.user.id);
     this.clearTokenCookies(res);
     return { message: 'Logout successful' };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  me(@Request() req: RequestWithUser) {
+    return { id: req.user.id, email: req.user.email };
   }
 }

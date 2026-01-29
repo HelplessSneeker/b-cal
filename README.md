@@ -25,6 +25,7 @@ Create a `.env` file in the project root with the following variables:
 ```
 # App setup
 PORT=3000
+FRONTEND_URL="http://localhost:8080/"
 
 # Database
 DB_USER=root

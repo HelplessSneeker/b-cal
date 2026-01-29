@@ -5,10 +5,26 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from 'src/app.module';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { TokenResponse } from 'src/auth/types';
+import cookieParser from 'cookie-parser';
 
 interface ErrorResponse {
   message: string | string[];
+}
+
+interface MessageResponse {
+  message: string;
+}
+
+function extractCookies(response: request.Response): string[] {
+  const cookies = response.headers['set-cookie'];
+  if (!cookies) return [];
+  return Array.isArray(cookies) ? cookies : [cookies];
+}
+
+function getCookieValue(cookies: string[], name: string): string | undefined {
+  const cookie = cookies.find((c) => c.startsWith(`${name}=`));
+  if (!cookie) return undefined;
+  return cookie.split(';')[0].split('=')[1];
 }
 
 describe('AuthController (e2e)', () => {
@@ -26,6 +42,7 @@ describe('AuthController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.use(cookieParser());
     app.useGlobalPipes(new ValidationPipe());
     await app.init();
 
@@ -33,7 +50,6 @@ describe('AuthController (e2e)', () => {
   });
 
   afterAll(async () => {
-    // Clean up test user
     await prisma.user.deleteMany({
       where: { email: testUser.email },
     });
@@ -41,17 +57,18 @@ describe('AuthController (e2e)', () => {
   });
 
   describe('POST /auth/signup', () => {
-    it('should create a new user and return tokens', async () => {
+    it('should create a new user and set token cookies', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/signup')
         .send(testUser)
         .expect(201);
 
-      const body = response.body as TokenResponse;
-      expect(body).toHaveProperty('access_token');
-      expect(body).toHaveProperty('refresh_token');
-      expect(typeof body.access_token).toBe('string');
-      expect(typeof body.refresh_token).toBe('string');
+      const body = response.body as MessageResponse;
+      expect(body.message).toBe('Signup successful');
+
+      const cookies = extractCookies(response);
+      expect(getCookieValue(cookies, 'access_token')).toBeDefined();
+      expect(getCookieValue(cookies, 'refresh_token')).toBeDefined();
     });
 
     it('should return 409 when email already exists', async () => {
@@ -88,14 +105,18 @@ describe('AuthController (e2e)', () => {
   });
 
   describe('POST /auth/login', () => {
-    it('should login and return tokens', async () => {
+    it('should login and set token cookies', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/login')
         .send(testUser)
         .expect(201);
 
-      expect(response.body).toHaveProperty('access_token');
-      expect(response.body).toHaveProperty('refresh_token');
+      const body = response.body as MessageResponse;
+      expect(body.message).toBe('Login successful');
+
+      const cookies = extractCookies(response);
+      expect(getCookieValue(cookies, 'access_token')).toBeDefined();
+      expect(getCookieValue(cookies, 'refresh_token')).toBeDefined();
     });
 
     it('should return 401 for wrong password', async () => {
@@ -114,67 +135,70 @@ describe('AuthController (e2e)', () => {
   });
 
   describe('POST /auth/refresh', () => {
-    let refreshToken: string;
+    let cookies: string[];
 
     beforeAll(async () => {
-      // Login to get a refresh token
       const response = await request(app.getHttpServer())
         .post('/auth/login')
         .send(testUser);
-      const body = response.body as TokenResponse;
-      refreshToken = body.refresh_token;
+      cookies = extractCookies(response);
     });
 
-    it('should return new tokens with valid refresh token', async () => {
+    it('should return new tokens with valid refresh token cookie', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/refresh')
-        .set('Authorization', `Bearer ${refreshToken}`)
+        .set('Cookie', cookies)
         .expect(201);
 
-      expect(response.body).toHaveProperty('access_token');
-      expect(response.body).toHaveProperty('refresh_token');
+      const body = response.body as MessageResponse;
+      expect(body.message).toBe('Tokens refreshed');
+
+      const newCookies = extractCookies(response);
+      expect(getCookieValue(newCookies, 'access_token')).toBeDefined();
+      expect(getCookieValue(newCookies, 'refresh_token')).toBeDefined();
     });
 
-    it('should return 401 without authorization header', async () => {
+    it('should return 401 without cookies', async () => {
       await request(app.getHttpServer()).post('/auth/refresh').expect(401);
     });
 
-    it('should return 401 with invalid refresh token', async () => {
+    it('should return 401 with invalid refresh token cookie', async () => {
       await request(app.getHttpServer())
         .post('/auth/refresh')
-        .set('Authorization', 'Bearer invalid-token')
+        .set('Cookie', ['refresh_token=invalid-token'])
         .expect(401);
     });
   });
 
   describe('POST /auth/logout', () => {
-    let accessToken: string;
+    let cookies: string[];
 
     beforeAll(async () => {
-      // Login to get an access token
       const response = await request(app.getHttpServer())
         .post('/auth/login')
         .send(testUser);
-      const body = response.body as TokenResponse;
-      accessToken = body.access_token;
+      cookies = extractCookies(response);
     });
 
-    it('should return 401 without authorization header', async () => {
+    it('should return 401 without cookies', async () => {
       await request(app.getHttpServer()).post('/auth/logout').expect(401);
     });
 
-    it('should return 401 with invalid access token', async () => {
+    it('should return 401 with invalid access token cookie', async () => {
       await request(app.getHttpServer())
         .post('/auth/logout')
-        .set('Authorization', 'Bearer invalid-token')
+        .set('Cookie', ['access_token=invalid-token'])
         .expect(401);
     });
 
-    it('should logout successfully with valid access token', async () => {
-      await request(app.getHttpServer())
+    it('should logout successfully with valid access token cookie', async () => {
+      const response = await request(app.getHttpServer())
         .post('/auth/logout')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Cookie', cookies)
         .expect(201);
+
+      const body = response.body as MessageResponse;
+      expect(body.message).toBe('Logout successful');
     });
 
     it('should invalidate refresh token after logout', async () => {
@@ -182,22 +206,51 @@ describe('AuthController (e2e)', () => {
       const loginResponse = await request(app.getHttpServer())
         .post('/auth/login')
         .send(testUser);
-
-      const loginBody = loginResponse.body as TokenResponse;
-      const newAccessToken = loginBody.access_token;
-      const newRefreshToken = loginBody.refresh_token;
+      const newCookies = extractCookies(loginResponse);
 
       // Logout
       await request(app.getHttpServer())
         .post('/auth/logout')
-        .set('Authorization', `Bearer ${newAccessToken}`)
+        .set('Cookie', newCookies)
         .expect(201);
 
       // Try to refresh with the old refresh token - should fail
       await request(app.getHttpServer())
         .post('/auth/refresh')
-        .set('Authorization', `Bearer ${newRefreshToken}`)
+        .set('Cookie', newCookies)
         .expect(403);
+    });
+  });
+
+  describe('GET /auth/me', () => {
+    let cookies: string[];
+
+    beforeAll(async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send(testUser);
+      cookies = extractCookies(response);
+    });
+
+    it('should return user info with valid access token cookie', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/auth/me')
+        .set('Cookie', cookies)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('id');
+      expect(response.body).toHaveProperty('email', testUser.email);
+    });
+
+    it('should return 401 without cookies', async () => {
+      await request(app.getHttpServer()).get('/auth/me').expect(401);
+    });
+
+    it('should return 401 with invalid access token cookie', async () => {
+      await request(app.getHttpServer())
+        .get('/auth/me')
+        .set('Cookie', ['access_token=invalid-token'])
+        .expect(401);
     });
   });
 });
