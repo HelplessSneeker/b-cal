@@ -10,5 +10,7 @@
     "^src/(.*)$": "<rootDir>/../src/$1",
     "^generated/(.*)$": "<rootDir>/../generated/$1",
     "^(\\.{1,2}/.*)\\.js$": "$1"
-  }
+  },
+  "globalSetup": "<rootDir>/global-setup.ts",
+  "setupFilesAfterEnv": ["<rootDir>/setup-env.ts"]
 }

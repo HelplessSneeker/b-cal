@@ -44,6 +44,22 @@ SECRET_KEY="your-secret-key"
 REFRESH_SECRET_KEY="your-refresh-secret-key"
 ```
 
+For e2e tests, create a `.env.test` file with a separate database name:
+
+```
+DB_NAME=b_cal_test
+```
+
+(Copy the rest of the variables from `.env`)
+
+## Database Seeding
+
+Run `npm run prisma:seed` to populate the database with test data. The seed script will prompt for confirmation before resetting the database (use `--force` to skip).
+
+Test users created by the seed script (password for all: `password123!`):
+- `alice@example.com`
+- `bob@example.com`
+
 ## Getting Started
 
 ### 1. Start the Development Database
@@ -87,7 +103,8 @@ The API will be available at `http://localhost:3000`.
 | `npm run lint` | Run ESLint with auto-fix |
 | `npm run format` | Run Prettier formatting |
 | `npm run test` | Run unit tests |
-| `npm run test:e2e` | Run end-to-end tests |
+| `npm run test:e2e` | Run end-to-end tests (uses separate test database) |
+| `npm run prisma:seed` | Seed database with test data |
 | `npm run test:cov` | Run tests with coverage |
 | `pnpm run risma:generate` | Generate prisma client |
 | `npm run prisma:migrate` | Migrate the database |

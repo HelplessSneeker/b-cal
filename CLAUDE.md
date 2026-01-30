@@ -13,17 +13,36 @@ b-cal is a calendar REST API built with NestJS 11, TypeScript, Prisma 7 (Postgre
 - `npm run test` — run unit tests (Jest 30)
 - `npm run test -- --testPathPattern=<pattern>` — run specific tests
 - `npm run test:cov` — run tests with coverage
-- `npm run test:e2e` — run e2e tests
+- `npm run test:e2e` — run e2e tests (uses separate test database)
+- `npm run prisma:seed` — seed database with test data (prompts for confirmation, use `--force` to skip)
 - `npx prisma migrate dev` — apply migrations
 - `npx prisma generate` — regenerate Prisma client
 - `docker compose up -d` — start PostgreSQL
 
 ## Infrastructure
 
-PostgreSQL 16 runs via `docker-compose.yml`. Environment variables in `.env`:
+PostgreSQL 16 runs via `docker-compose.yml`. Environment variables in `.env` (dev) and `.env.test` (e2e tests):
 - `PORT` (default 3000), `FRONTEND_URL` (CORS origin)
 - `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`
 - `SECRET_KEY` (access token), `REFRESH_SECRET_KEY` (refresh token)
+
+## Database Seeding
+
+Run `npm run prisma:seed` to populate the database with test data. The seed script creates:
+
+**Test users** (password for all: `password123!`):
+- `alice@example.com`
+- `bob@example.com`
+
+**Sample calendar entries:** 3 entries distributed between the test users.
+
+## Test Database
+
+E2e tests use a separate database (`b_cal_test`) configured in `.env.test`. Running `npm run test:e2e` automatically:
+1. Drops and recreates the test database
+2. Runs all migrations
+3. Seeds with test data
+4. Executes tests
 
 ## Architecture
 
