@@ -33,7 +33,7 @@ describe('AuthController (e2e)', () => {
 
   const testUser = {
     email: `e2e-test-${Date.now()}@example.com`,
-    password: 'testpassword123',
+    password: 'testpassword123!',
   };
 
   beforeAll(async () => {
@@ -84,7 +84,7 @@ describe('AuthController (e2e)', () => {
     it('should return 400 for invalid email', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/signup')
-        .send({ email: 'invalid-email', password: 'testpassword123' })
+        .send({ email: 'invalid-email', password: 'testpassword123!' })
         .expect(400);
 
       const body = response.body as ErrorResponse;
@@ -94,12 +94,36 @@ describe('AuthController (e2e)', () => {
     it('should return 400 for password shorter than 8 characters', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/signup')
-        .send({ email: 'valid@email.com', password: 'short' })
+        .send({ email: 'valid@email.com', password: 'short1!' })
         .expect(400);
 
       const body = response.body as ErrorResponse;
       expect(body.message).toContain(
-        'password must be longer than or equal to 8 characters',
+        'Password must be at least 8 characters and contain at least one number and one symbol',
+      );
+    });
+
+    it('should return 400 for password without a number', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send({ email: 'valid@email.com', password: 'testpassword!' })
+        .expect(400);
+
+      const body = response.body as ErrorResponse;
+      expect(body.message).toContain(
+        'Password must be at least 8 characters and contain at least one number and one symbol',
+      );
+    });
+
+    it('should return 400 for password without a symbol', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send({ email: 'valid@email.com', password: 'testpassword123' })
+        .expect(400);
+
+      const body = response.body as ErrorResponse;
+      expect(body.message).toContain(
+        'Password must be at least 8 characters and contain at least one number and one symbol',
       );
     });
   });
