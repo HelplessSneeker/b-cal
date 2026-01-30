@@ -54,7 +54,9 @@ describe('CalendarService', () => {
         endDate: '2026-01-16',
         content: 'Test content',
       };
-      mockPrismaService.calenderEntry.create.mockResolvedValue(mockCalendarEntry);
+      mockPrismaService.calenderEntry.create.mockResolvedValue(
+        mockCalendarEntry,
+      );
 
       const result = await service.create('user-1', createDto);
 
@@ -73,7 +75,7 @@ describe('CalendarService', () => {
       const entries = [mockCalendarEntry];
       mockPrismaService.calenderEntry.findMany.mockResolvedValue(entries);
 
-      const result = service.findAll('user-1', {});
+      service.findAll('user-1', {});
 
       expect(mockPrismaService.calenderEntry.findMany).toHaveBeenCalledWith({
         where: { userId: 'user-1' },
@@ -127,7 +129,9 @@ describe('CalendarService', () => {
 
   describe('findOne', () => {
     it('should return entry when found', async () => {
-      mockPrismaService.calenderEntry.findUnique.mockResolvedValue(mockCalendarEntry);
+      mockPrismaService.calenderEntry.findUnique.mockResolvedValue(
+        mockCalendarEntry,
+      );
 
       const result = await service.findOne('user-1', 'entry-1');
 
@@ -153,7 +157,9 @@ describe('CalendarService', () => {
     it('should update entry when found', async () => {
       const updateDto = { title: 'Updated Title' };
       const updatedEntry = { ...mockCalendarEntry, title: 'Updated Title' };
-      mockPrismaService.calenderEntry.findUnique.mockResolvedValue(mockCalendarEntry);
+      mockPrismaService.calenderEntry.findUnique.mockResolvedValue(
+        mockCalendarEntry,
+      );
       mockPrismaService.calenderEntry.update.mockResolvedValue(updatedEntry);
 
       const result = await service.update('user-1', 'entry-1', updateDto);
@@ -174,7 +180,9 @@ describe('CalendarService', () => {
     });
 
     it('should throw BadRequestException when startDate is after endDate', async () => {
-      mockPrismaService.calenderEntry.findUnique.mockResolvedValue(mockCalendarEntry);
+      mockPrismaService.calenderEntry.findUnique.mockResolvedValue(
+        mockCalendarEntry,
+      );
 
       await expect(
         service.update('user-1', 'entry-1', {
@@ -205,8 +213,12 @@ describe('CalendarService', () => {
 
   describe('remove', () => {
     it('should remove entry when found', async () => {
-      mockPrismaService.calenderEntry.findUnique.mockResolvedValue(mockCalendarEntry);
-      mockPrismaService.calenderEntry.delete.mockResolvedValue(mockCalendarEntry);
+      mockPrismaService.calenderEntry.findUnique.mockResolvedValue(
+        mockCalendarEntry,
+      );
+      mockPrismaService.calenderEntry.delete.mockResolvedValue(
+        mockCalendarEntry,
+      );
 
       const result = await service.remove('user-1', 'entry-1');
 

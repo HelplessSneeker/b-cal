@@ -56,7 +56,10 @@ describe('CalendarController', () => {
       expect(result).toEqual({
         message: 'Calendar entry with id entry-1 created',
       });
-      expect(mockCalendarService.create).toHaveBeenCalledWith('user-1', createDto);
+      expect(mockCalendarService.create).toHaveBeenCalledWith(
+        'user-1',
+        createDto,
+      );
     });
   });
 
@@ -77,7 +80,10 @@ describe('CalendarController', () => {
 
       await controller.findAll('user-1', queryDto);
 
-      expect(mockCalendarService.findAll).toHaveBeenCalledWith('user-1', queryDto);
+      expect(mockCalendarService.findAll).toHaveBeenCalledWith(
+        'user-1',
+        queryDto,
+      );
     });
   });
 
@@ -88,7 +94,10 @@ describe('CalendarController', () => {
       const result = await controller.findOne('user-1', 'entry-1');
 
       expect(result).toEqual({ data: mockCalendarEntry });
-      expect(mockCalendarService.findOne).toHaveBeenCalledWith('user-1', 'entry-1');
+      expect(mockCalendarService.findOne).toHaveBeenCalledWith(
+        'user-1',
+        'entry-1',
+      );
     });
   });
 
@@ -120,7 +129,10 @@ describe('CalendarController', () => {
       expect(result).toEqual({
         message: 'Deletd Calendar entry with id entry-1',
       });
-      expect(mockCalendarService.remove).toHaveBeenCalledWith('user-1', 'entry-1');
+      expect(mockCalendarService.remove).toHaveBeenCalledWith(
+        'user-1',
+        'entry-1',
+      );
     });
   });
 });
