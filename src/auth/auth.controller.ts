@@ -1,22 +1,15 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  UseGuards,
-  Request,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards, Res } from '@nestjs/common';
 import * as express from 'express';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guard/local-auth.guard';
 import { JwtAuthGuard } from './guard/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from './guard/jwt-refresh-auth.guard';
-import type { RequestWithUser, RequestWithRefreshUser } from './types';
+import type { JwtUser, JwtRefreshUser } from './types';
 import { SignupDto } from './dto/signup.dto';
 import { ApiBody } from '@nestjs/swagger';
 import { LoginDto } from './dto/login.dto';
 import { cookieConfig } from './constants';
+import { User } from './decorators/user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -46,10 +39,10 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async login(
-    @Request() req: RequestWithUser,
+    @User() user: JwtUser,
     @Res({ passthrough: true }) res: express.Response,
   ) {
-    const tokens = await this.authService.login(req.user);
+    const tokens = await this.authService.login(user);
     this.setTokenCookies(res, tokens.access_token, tokens.refresh_token);
     return { message: 'Login successful' };
   }
@@ -67,12 +60,12 @@ export class AuthController {
   @UseGuards(JwtRefreshAuthGuard)
   @Post('refresh')
   async refresh(
-    @Request() req: RequestWithRefreshUser,
+    @User() user: JwtRefreshUser,
     @Res({ passthrough: true }) res: express.Response,
   ) {
     const tokens = await this.authService.refreshTokens(
-      req.user.id,
-      req.user.refreshToken,
+      user.id,
+      user.refreshToken,
     );
     this.setTokenCookies(res, tokens.access_token, tokens.refresh_token);
     return { message: 'Tokens refreshed' };
@@ -81,17 +74,17 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   async logout(
-    @Request() req: RequestWithUser,
+    @User('id') userId: string,
     @Res({ passthrough: true }) res: express.Response,
   ) {
-    await this.authService.logout(req.user.id);
+    await this.authService.logout(userId);
     this.clearTokenCookies(res);
     return { message: 'Logout successful' };
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  me(@Request() req: RequestWithUser) {
-    return { id: req.user.id, email: req.user.email };
+  me(@User() user: JwtUser) {
+    return user;
   }
 }

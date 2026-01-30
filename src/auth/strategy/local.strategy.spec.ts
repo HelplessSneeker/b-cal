@@ -8,10 +8,11 @@ jest.mock('generated/prisma/client', () => ({
 }));
 jest.mock('generated/prisma/browser', () => ({}));
 
-const mockUser = {
+import { JwtUser } from '../types';
+
+const mockUser: JwtUser = {
   id: 'user-1',
   email: 'test@example.com',
-  password: 'hashedpassword',
 };
 
 const mockAuthService = {
@@ -41,7 +42,6 @@ describe('LocalStrategy', () => {
     it('should return user when credentials are valid', async () => {
       mockAuthService.validateUser.mockResolvedValue(mockUser);
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const result = await strategy.validate('test@example.com', 'password');
 
       expect(result).toEqual(mockUser);

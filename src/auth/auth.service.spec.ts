@@ -56,7 +56,7 @@ describe('AuthService', () => {
 
       const result = await service.validateUser('test@example.com', 'password');
 
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual({ id: mockUser.id, email: mockUser.email });
       expect(mockUsersService.findOne).toHaveBeenCalledWith('test@example.com');
     });
 

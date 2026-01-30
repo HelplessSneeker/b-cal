@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import type { Response } from 'express';
-import type { RequestWithUser, RequestWithRefreshUser } from './types';
+import type { JwtUser, JwtRefreshUser } from './types';
 
 jest.mock('generated/prisma/client', () => ({
   PrismaClient: class PrismaClient {},
@@ -60,14 +60,12 @@ describe('AuthController', () => {
     it('should set cookies and return success message', async () => {
       mockAuthService.login.mockResolvedValue(mockTokens);
       const res = mockResponse();
+      const user: JwtUser = { id: mockUser.id, email: mockUser.email };
 
-      const result = await controller.login(
-        { user: mockUser } as RequestWithUser,
-        res as Response,
-      );
+      const result = await controller.login(user, res as Response);
 
       expect(result).toEqual({ message: 'Login successful' });
-      expect(mockAuthService.login).toHaveBeenCalledWith(mockUser);
+      expect(mockAuthService.login).toHaveBeenCalledWith(user);
       expect(res.cookie).toHaveBeenCalledTimes(2);
     });
   });
@@ -89,15 +87,14 @@ describe('AuthController', () => {
   describe('refresh', () => {
     it('should set cookies and return success message', async () => {
       mockAuthService.refreshTokens.mockResolvedValue(mockTokens);
-      const req = {
-        user: { id: 'user-1', email: 'test@example.com', refreshToken: 'rt' },
+      const user: JwtRefreshUser = {
+        id: 'user-1',
+        email: 'test@example.com',
+        refreshToken: 'rt',
       };
       const res = mockResponse();
 
-      const result = await controller.refresh(
-        req as RequestWithRefreshUser,
-        res as Response,
-      );
+      const result = await controller.refresh(user, res as Response);
 
       expect(result).toEqual({ message: 'Tokens refreshed' });
       expect(mockAuthService.refreshTokens).toHaveBeenCalledWith(
@@ -113,10 +110,7 @@ describe('AuthController', () => {
       mockAuthService.logout.mockResolvedValue(undefined);
       const res = mockResponse();
 
-      const result = await controller.logout(
-        { user: mockUser } as RequestWithUser,
-        res as Response,
-      );
+      const result = await controller.logout('user-1', res as Response);
 
       expect(result).toEqual({ message: 'Logout successful' });
       expect(mockAuthService.logout).toHaveBeenCalledWith('user-1');
@@ -126,9 +120,9 @@ describe('AuthController', () => {
 
   describe('me', () => {
     it('should return user id and email', () => {
-      const req = { user: mockUser };
+      const user: JwtUser = { id: 'user-1', email: 'test@example.com' };
 
-      const result = controller.me(req as RequestWithUser);
+      const result = controller.me(user);
 
       expect(result).toEqual({ id: 'user-1', email: 'test@example.com' });
     });

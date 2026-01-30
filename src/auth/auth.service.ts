@@ -4,9 +4,8 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User } from 'generated/prisma/browser';
 import { UsersService } from 'src/users/users.service';
-import { AuthenticatedUser, TokenResponse } from './types';
+import { JwtUser, TokenResponse } from './types';
 import { SignupDto } from './dto/signup.dto';
 import { jwtRefreshConstants, saltRounds } from './constants';
 import * as bcrypt from 'bcrypt';
@@ -18,17 +17,14 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(
-    email: string,
-    pass: string,
-  ): Promise<AuthenticatedUser | null> {
+  async validateUser(email: string, pass: string): Promise<JwtUser | null> {
     const user = await this.usersService.findOne(email);
     if (!user) {
       return null;
     }
     const isMatch = await bcrypt.compare(pass, user.password);
     if (isMatch) {
-      return user;
+      return { id: user.id, email: user.email };
     }
     return null;
   }
@@ -48,7 +44,7 @@ export class AuthService {
     return { access_token, refresh_token };
   }
 
-  async login(user: User): Promise<TokenResponse> {
+  async login(user: JwtUser): Promise<TokenResponse> {
     const tokens = await this.generateTokens(user);
     const hashedRefreshToken = await bcrypt.hash(
       tokens.refresh_token,
