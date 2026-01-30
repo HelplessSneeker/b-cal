@@ -4,7 +4,7 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 
 // Load test environment
-dotenv.config({ path: path.resolve(__dirname, '../.env.test') });
+dotenv.config({ path: path.resolve(__dirname, '../.env.test'), quiet: true });
 
 export default async function globalSetup() {
   const { DB_USER, DB_PASSWORD, DB_PORT, DB_NAME } = process.env;

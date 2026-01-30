@@ -2,8 +2,6 @@
 
 A REST API for a calendar application built with NestJS, TypeScript, Prisma, and PostgreSQL.
 
-This project is my attempt to develop a backend API for a calendar application. Currently, only the database layer and user authentication are implemented. Calendar functionality is still in development.
-
 
 ## Related Repositories
 
@@ -114,10 +112,12 @@ The API will be available at `http://localhost:3000`.
 
 Swagger documentation is available at `/api` when the server is running.
 
-## Current Features
+## Features
 
 - User registration and login
 - JWT-based authentication with access and refresh tokens
+- Calendar entries with CRUD operations
+- Date range filtering for calendar queries
 - PostgreSQL database with Prisma ORM
 
 ## License

@@ -124,7 +124,9 @@ describe('AuthController', () => {
 
       const result = controller.me(user);
 
-      expect(result).toEqual({ data: { id: 'user-1', email: 'test@example.com' } });
+      expect(result).toEqual({
+        data: { id: 'user-1', email: 'test@example.com' },
+      });
     });
   });
 });

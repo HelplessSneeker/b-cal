@@ -13,7 +13,7 @@ export class IsValidPasswordConstraint implements ValidatorConstraintInterface {
     }
 
     const hasNumber = /\d/.test(password);
-    const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password);
+    const hasSymbol = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(password);
 
     return hasNumber && hasSymbol;
   }

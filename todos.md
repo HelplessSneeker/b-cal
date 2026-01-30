@@ -18,7 +18,6 @@
 - add caching for optimization
 - add lazyloading for long lists
 - implement faster build option
-- add calender functionality
 - implement additional authentication (Github, Google and similar);
 - implement Google, Outlook and similar Calendar export
 - add i18n
@@ -46,6 +45,7 @@
 
 ### other todos
 
+- add calender functionality (crud operations with validation and date range query implemented including tests)
 - update readme (added first simple Readme)
 - add testing (added integration and e2e tests for all implemented endpoints and services)
 - Add Swagger for documentation (added swagger to the app for api endpoint documentation)

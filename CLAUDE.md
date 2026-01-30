@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-b-cal is a calendar REST API built with NestJS 11, TypeScript, Prisma 7 (PostgreSQL), and Passport-based authentication (local + JWT with refresh tokens). Authentication is complete; calendar features are in progress.
+b-cal is a calendar REST API built with NestJS 11, TypeScript, Prisma 7 (PostgreSQL), and Passport-based authentication (local + JWT with refresh tokens).
 
 ## Commands
 
@@ -11,7 +11,7 @@ b-cal is a calendar REST API built with NestJS 11, TypeScript, Prisma 7 (Postgre
 - `npm run lint` — ESLint with auto-fix
 - `npm run format` — Prettier formatting
 - `npm run test` — run unit tests (Jest 30)
-- `npm run test -- --testPathPattern=<pattern>` — run specific tests
+- `npm run test -- --testPathPatterns=<pattern>` — run specific tests (note: Jest 30 uses `--testPathPatterns`, not `--testPathPattern`)
 - `npm run test:cov` — run tests with coverage
 - `npm run test:e2e` — run e2e tests (uses separate test database)
 - `npm run prisma:seed` — seed database with test data (prompts for confirmation, use `--force` to skip)
@@ -53,7 +53,7 @@ E2e tests use a separate database (`b_cal_test`) configured in `.env.test`. Runn
 src/
 ├── auth/           # Auth controller, service, strategies, guards, decorators, validators
 ├── users/          # UsersService for database operations
-├── calendar/       # CalendarController, CalendarService (WIP)
+├── calendar/       # CalendarController, CalendarService, DTOs, validators
 ├── prisma/         # PrismaModule (global), PrismaService
 └── main.ts         # Bootstrap with CORS, cookies, validation pipe
 ```
@@ -65,15 +65,24 @@ src/
 - `POST /auth/logout` — JwtAuthGuard required, clears cookies and invalidates refresh token
 - `GET /auth/me` — JwtAuthGuard required, returns `{ id, email }`
 
+**Calendar endpoints:** All require JwtAuthGuard.
+- `POST /calendar` — create entry (title, startDate, endDate required; content optional)
+- `GET /calendar` — list user's entries; optional `startDate`/`endDate` query params for date range filtering
+- `GET /calendar/:id` — get single entry (404 if not found or not owned)
+- `PATCH /calendar/:id` — update entry (partial updates supported)
+- `DELETE /calendar/:id` — delete entry
+
 **Strategies:** LocalStrategy (bcrypt, 10 rounds), JwtStrategy (reads access_token cookie), JwtRefreshStrategy (reads refresh_token cookie).
 
 **Guards:** LocalAuthGuard, JwtAuthGuard, JwtRefreshAuthGuard — use on protected routes.
 
 **Custom decorators:** `@User()` — extracts JwtUser (`{ id, email }`) from request in JWT-protected routes.
 
-**Custom validators:** `@IsValidPassword()` — enforces password complexity (8+ chars, number, symbol).
+**Custom validators:**
+- `@IsValidPassword()` — enforces password complexity (8+ chars, number, symbol)
+- `@IsStartBeforeEnd()` — validates startDate ≤ endDate on calendar DTOs
 
-**Prisma schema:** `User` (id, email, password, refreshToken) and `CalenderEntry` (id, title, startDate, endDate, wholeDay, content, authorId→User). Note: model spelled "CalenderEntry".
+**Prisma schema:** `User` (id, email, password, refreshToken) and `CalenderEntry` (id, title, startDate, endDate, content, userId→User). Note: model spelled "CalenderEntry".
 
 **API docs:** Swagger at `/api`.
 

@@ -14,6 +14,13 @@ interface MessageResponse {
   message: string;
 }
 
+interface UserResponse {
+  data: {
+    id: string;
+    email: string;
+  };
+}
+
 function extractCookies(response: request.Response): string[] {
   const cookies = response.headers['set-cookie'];
   if (!cookies) return [];
@@ -261,8 +268,9 @@ describe('AuthController (e2e)', () => {
         .set('Cookie', cookies)
         .expect(200);
 
-      expect(response.body.data).toHaveProperty('id');
-      expect(response.body.data).toHaveProperty('email', testUser.email);
+      const { data } = response.body as UserResponse;
+      expect(data).toHaveProperty('id');
+      expect(data).toHaveProperty('email', testUser.email);
     });
 
     it('should return 401 without cookies', async () => {
