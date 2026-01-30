@@ -18,8 +18,8 @@
 - add lazyloading for long lists
 - implement faster build option
 - add calender functionality
-- implement additional authentication (Github, Google and simmilar);
-- implement Google, Outlook and simmilar Calendar export
+- implement additional authentication (Github, Google and similar);
+- implement Google, Outlook and similar Calendar export
 - add i18n
 
 ---
@@ -28,12 +28,14 @@
 
 ### Thecnical todos
 
-- add Database (added Prisma with simpel schema and docker postgres implementation)
+- add Database (added Prisma with simple schema and docker postgres implementation)
 - Add passport for authentication (Implemented Local and JWT strategy for authentication)
 - add bycrypt for encryptions (implemented bycrpt for pasword hashing)
-- add validation (added valdidation pipe seems to work for dto's)
+- add validation (added validation pipe seems to work for dto's)
 - add refresh token (refresh token functionality was added)
 - add cookie support for refresh tokens (implement complete jwt cookies support, makes it easier to test and handle with browser applications)
+- add user extraction from request with injectable (added custom decorator to extract user object)
+- add custom validations (added custom valdidator for password)
 
 ### Architectual todos
 
