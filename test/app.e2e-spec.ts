@@ -262,8 +262,8 @@ describe('AuthController (e2e)', () => {
         .set('Cookie', cookies)
         .expect(200);
 
-      expect(response.body).toHaveProperty('id');
-      expect(response.body).toHaveProperty('email', testUser.email);
+      expect(response.body.data).toHaveProperty('id');
+      expect(response.body.data).toHaveProperty('email', testUser.email);
     });
 
     it('should return 401 without cookies', async () => {

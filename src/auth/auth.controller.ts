@@ -85,6 +85,6 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   me(@User() user: JwtUser) {
-    return user;
+    return { data: user };
   }
 }

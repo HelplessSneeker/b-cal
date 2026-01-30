@@ -7,6 +7,7 @@
 ### Thecnical todos
 
 - add logging
+- add proper response handeling with interceptor and response message decorator
  
 ### Architectual todos
 
@@ -21,6 +22,7 @@
 - implement additional authentication (Github, Google and similar);
 - implement Google, Outlook and similar Calendar export
 - add i18n
+- add auto format on git commit
 
 ---
 
