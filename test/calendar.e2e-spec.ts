@@ -20,6 +20,7 @@ interface CalendarEntry {
   startDate: string;
   endDate: string;
   content: string | null;
+  wholeDay: boolean | null;
   userId: string;
 }
 
@@ -146,6 +147,46 @@ describe('CalendarController (e2e)', () => {
 
       const body = response.body as MessageResponse;
       expect(body.message).toMatch(/Calendar entry with id .+ created/);
+    });
+
+    it('should create a calendar entry with wholeDay set to true', async () => {
+      const wholeDayEntry = {
+        title: 'All Day Event',
+        startDate: '2025-01-17T00:00:00.000Z',
+        endDate: '2025-01-17T23:59:59.000Z',
+        wholeDay: true,
+      };
+
+      const response = await request(app.getHttpServer())
+        .post('/calendar')
+        .set('Cookie', userCookies)
+        .send(wholeDayEntry)
+        .expect(201);
+
+      const body = response.body as MessageResponse;
+      const entryId = extractIdFromMessage(body);
+
+      const getResponse = await request(app.getHttpServer())
+        .get(`/calendar/${entryId}`)
+        .set('Cookie', userCookies);
+      const getBody = getResponse.body as DataResponse<CalendarEntry>;
+      expect(getBody.data.wholeDay).toBe(true);
+    });
+
+    it('should return 400 when wholeDay is not a boolean', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/calendar')
+        .set('Cookie', userCookies)
+        .send({
+          title: 'Invalid Entry',
+          startDate: '2025-01-18T10:00:00.000Z',
+          endDate: '2025-01-18T11:00:00.000Z',
+          wholeDay: 'yes',
+        })
+        .expect(400);
+
+      const body = response.body as ErrorResponse;
+      expect(body.message).toContain('wholeDay must be a boolean value');
     });
 
     it('should return 401 without authentication', async () => {
@@ -510,6 +551,20 @@ describe('CalendarController (e2e)', () => {
         .set('Cookie', userCookies);
       const getBody = getResponse.body as DataResponse<CalendarEntry>;
       expect(getBody.data.content).toBe('New content');
+    });
+
+    it('should update a calendar entry wholeDay', async () => {
+      await request(app.getHttpServer())
+        .patch(`/calendar/${updateEntryId}`)
+        .set('Cookie', userCookies)
+        .send({ wholeDay: true })
+        .expect(200);
+
+      const getResponse = await request(app.getHttpServer())
+        .get(`/calendar/${updateEntryId}`)
+        .set('Cookie', userCookies);
+      const getBody = getResponse.body as DataResponse<CalendarEntry>;
+      expect(getBody.data.wholeDay).toBe(true);
     });
 
     it('should return 401 without authentication', async () => {

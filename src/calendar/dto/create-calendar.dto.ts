@@ -1,4 +1,4 @@
-import { IsDateString, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDateString, IsOptional, IsString } from 'class-validator';
 import { IsStartBeforeEnd } from '../validators/date-range.validator';
 
 export class CreateCalendarDto {
@@ -14,5 +14,9 @@ export class CreateCalendarDto {
 
   @IsOptional()
   @IsString()
-  content: string;
+  content?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  wholeDay?: boolean;
 }

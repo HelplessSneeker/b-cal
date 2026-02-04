@@ -15,6 +15,7 @@ const mockCalendarEntry = {
   startDate: new Date('2026-01-15'),
   endDate: new Date('2026-01-16'),
   content: 'Test content',
+  wholeDay: false,
 };
 
 const mockPrismaService = {

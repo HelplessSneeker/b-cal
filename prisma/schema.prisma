@@ -31,7 +31,8 @@ model CalenderEntry {
   startDate DateTime
   endDate   DateTime
 
-  content String?
+  content  String?
+  wholeDay Boolean?
 
   user   User   @relation(fields: [userId], references: [id])
   userId String
