@@ -10,6 +10,30 @@ const prisma = new PrismaClient({
   }),
 });
 
+/**
+ * Creates a date relative to today at a specific time.
+ * @param daysOffset - Number of days from today (0 = today, 1 = tomorrow, -1 = yesterday)
+ * @param hours - Hour of the day (0-23)
+ * @param minutes - Minutes (0-59)
+ */
+function getRelativeDate(
+  daysOffset: number,
+  hours = 0,
+  minutes = 0,
+): Date {
+  const date = new Date();
+  date.setDate(date.getDate() + daysOffset);
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+}
+
+/**
+ * Creates a date at the start of the day (00:00:00) for whole day events.
+ */
+function getWholeDayDate(daysOffset: number): Date {
+  return getRelativeDate(daysOffset, 0, 0);
+}
+
 async function confirmSeed(): Promise<boolean> {
   // Skip confirmation if --force flag is passed
   if (process.argv.includes('--force')) {
@@ -99,7 +123,94 @@ async function main() {
     }),
   ]);
 
-  console.log(`Created ${entries.length} calendar entries`);
+  // Create dynamic entries relative to current date
+  const dynamicEntries = await Promise.all([
+    // Today - regular timed event
+    prisma.calenderEntry.create({
+      data: {
+        title: 'Morning Standup',
+        startDate: getRelativeDate(0, 9, 0),
+        endDate: getRelativeDate(0, 9, 30),
+        content: 'Daily standup meeting',
+        userId: user1.id,
+      },
+    }),
+    // Today - whole day event
+    prisma.calenderEntry.create({
+      data: {
+        title: 'Focus Day',
+        startDate: getWholeDayDate(0),
+        endDate: getWholeDayDate(0),
+        content: 'No meetings - deep work only',
+        wholeDay: true,
+        userId: user2.id,
+      },
+    }),
+    // Tomorrow - regular event
+    prisma.calenderEntry.create({
+      data: {
+        title: 'Code Review Session',
+        startDate: getRelativeDate(1, 14, 0),
+        endDate: getRelativeDate(1, 15, 30),
+        content: 'Review PR #42',
+        userId: user1.id,
+      },
+    }),
+    // Multi-day event (3 days starting tomorrow)
+    prisma.calenderEntry.create({
+      data: {
+        title: 'Team Offsite',
+        startDate: getWholeDayDate(1),
+        endDate: getWholeDayDate(3),
+        content: 'Annual team building retreat',
+        wholeDay: true,
+        userId: user1.id,
+      },
+    }),
+    // Next week - whole day event
+    prisma.calenderEntry.create({
+      data: {
+        title: 'Company Holiday',
+        startDate: getWholeDayDate(7),
+        endDate: getWholeDayDate(7),
+        wholeDay: true,
+        userId: user2.id,
+      },
+    }),
+    // Multi-day event spanning 5 days (starting in 10 days)
+    prisma.calenderEntry.create({
+      data: {
+        title: 'Conference Week',
+        startDate: getWholeDayDate(10),
+        endDate: getWholeDayDate(14),
+        content: 'Tech conference with workshops',
+        wholeDay: true,
+        userId: user1.id,
+      },
+    }),
+    // Future regular event (2 weeks out)
+    prisma.calenderEntry.create({
+      data: {
+        title: 'Quarterly Review',
+        startDate: getRelativeDate(14, 10, 0),
+        endDate: getRelativeDate(14, 12, 0),
+        content: 'Q1 performance review',
+        userId: user2.id,
+      },
+    }),
+    // Future event (3 weeks out)
+    prisma.calenderEntry.create({
+      data: {
+        title: 'Product Launch',
+        startDate: getRelativeDate(21, 9, 0),
+        endDate: getRelativeDate(21, 18, 0),
+        content: 'v2.0 release day',
+        userId: user1.id,
+      },
+    }),
+  ]);
+
+  console.log(`Created ${entries.length + dynamicEntries.length} calendar entries`);
   console.log('Seed completed.');
 }
 
