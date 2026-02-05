@@ -2,22 +2,37 @@
 
 ## Project Overview
 
-b-cal is a calendar REST API built with NestJS 11, TypeScript, Prisma 7 (PostgreSQL), and Passport-based authentication (local + JWT with refresh tokens).
+This is the API package (`@b-cal/api`) within the b-cal monorepo. It's a calendar REST API built with NestJS 11, TypeScript, Prisma 7 (PostgreSQL), and Passport-based authentication (local + JWT with refresh tokens).
+
+**Monorepo structure:**
+```
+b-cal/                  # Root (Turborepo + pnpm workspaces)
+├── apps/
+│   ├── api/            # This package (@b-cal/api)
+│   └── web/            # Frontend (@b-cal/web)
+└── turbo.json
+```
 
 ## Commands
 
-- `npm run build` — compile the project
-- `npm run start:dev` — run in watch mode
-- `npm run lint` — ESLint with auto-fix
-- `npm run format` — Prettier formatting
-- `npm run test` — run unit tests (Jest 30)
-- `npm run test -- --testPathPatterns=<pattern>` — run specific tests (note: Jest 30 uses `--testPathPatterns`, not `--testPathPattern`)
-- `npm run test:cov` — run tests with coverage
-- `npm run test:e2e` — run e2e tests (uses separate test database)
-- `npm run prisma:seed` — seed database with test data (prompts for confirmation, use `--force` to skip)
-- `npx prisma migrate dev` — apply migrations
-- `npx prisma generate` — regenerate Prisma client
+Run from this directory (`apps/api`):
+
+- `pnpm run build` — compile the project
+- `pnpm run dev` — run in watch mode
+- `pnpm run lint` — ESLint with auto-fix
+- `pnpm run format` — Prettier formatting
+- `pnpm run test` — run unit tests (Jest 30)
+- `pnpm run test -- --testPathPatterns=<pattern>` — run specific tests (note: Jest 30 uses `--testPathPatterns`, not `--testPathPattern`)
+- `pnpm run test:cov` — run tests with coverage
+- `pnpm run test:e2e` — run e2e tests (uses separate test database)
+- `pnpm run prisma:seed` — seed database with test data (prompts for confirmation, use `--force` to skip)
+- `pnpm run prisma:migrate` — apply migrations
+- `pnpm run prisma:generate` — regenerate Prisma client
 - `docker compose up -d` — start PostgreSQL
+
+Or from monorepo root:
+
+- `pnpm run dev:api` — run API in watch mode via Turborepo
 
 ## Infrastructure
 
@@ -28,7 +43,7 @@ PostgreSQL 16 runs via `docker-compose.yml`. Environment variables in `.env` (de
 
 ## Database Seeding
 
-Run `npm run prisma:seed` to populate the database with test data. The seed script creates:
+Run `pnpm run prisma:seed` to populate the database with test data. The seed script creates:
 
 **Test users** (password for all: `password123!`):
 - `alice@example.com`
@@ -38,7 +53,7 @@ Run `npm run prisma:seed` to populate the database with test data. The seed scri
 
 ## Test Database
 
-E2e tests use a separate database (`b_cal_test`) configured in `.env.test`. Running `npm run test:e2e` automatically:
+E2e tests use a separate database (`b_cal_test`) configured in `.env.test`. Running `pnpm run test:e2e` automatically:
 1. Drops and recreates the test database
 2. Runs all migrations
 3. Seeds with test data
@@ -82,7 +97,7 @@ src/
 - `@IsValidPassword()` — enforces password complexity (8+ chars, number, symbol)
 - `@IsStartBeforeEnd()` — validates startDate ≤ endDate on calendar DTOs
 
-**Prisma schema:** `User` (id, email, password, refreshToken) and `CalenderEntry` (id, title, startDate, endDate, content, userId→User). Note: model spelled "CalenderEntry".
+**Prisma schema:** `User` (id, email, password, refreshToken) and `CalendarEntry` (id, title, startDate, endDate, content, userId→User).
 
 **API docs:** Swagger at `/api`.
 

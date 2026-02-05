@@ -2,12 +2,33 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Monorepo Structure
+
+This is the **web frontend** (`apps/web`) within a Turborepo monorepo:
+
+```
+b-cal/
+  apps/
+    web/     # This package - Next.js frontend
+    api/     # NestJS backend
+  turbo.json # Turborepo configuration
+```
+
 ## Commands
+
+Run from this directory (`apps/web`):
 
 ```bash
 pnpm dev      # Start development server (http://localhost:8080)
 pnpm build    # Production build
 pnpm lint     # Run ESLint
+```
+
+Or from the monorepo root:
+
+```bash
+pnpm dev --filter=web      # Start web dev server
+pnpm build --filter=web    # Build web only
 ```
 
 ## Architecture

@@ -1,11 +1,6 @@
-# b-cal
+# @b-cal/api
 
 A REST API for a calendar application built with NestJS, TypeScript, Prisma, and PostgreSQL.
-
-
-## Related Repositories
-
-- [Frontend](https://github.com/HelplessSneeker/b-cal-frontend)
 
 
 ## Tech Stack
@@ -19,7 +14,7 @@ A REST API for a calendar application built with NestJS, TypeScript, Prisma, and
 ## Prerequisites
 
 - Node.js
-- npm
+- pnpm
 - Docker and Docker Compose
 
 ## Environment Variables
@@ -52,7 +47,7 @@ DB_NAME=b_cal_test
 
 ## Database Seeding
 
-Run `npm run prisma:seed` to populate the database with test data. The seed script will prompt for confirmation before resetting the database (use `--force` to skip).
+Run `pnpm run prisma:seed` to populate the database with test data. The seed script will prompt for confirmation before resetting the database (use `--force` to skip).
 
 Test users created by the seed script (password for all: `password123!`):
 - `alice@example.com`
@@ -73,20 +68,20 @@ This starts a PostgreSQL 16 container with the credentials defined in your `.env
 ### 2. Install Dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### 3. Generate Prisma Client and Run Migrations
 
 ```bash
-npm prisma:generate
-npm prisma:migrate
+pnpm run prisma:generate
+pnpm run prisma:migrate
 ```
 
 ### 4. Start the Development Server
 
 ```bash
-npm run start:dev
+pnpm run dev
 ```
 
 The API will be available at `http://localhost:3000`.
@@ -95,18 +90,18 @@ The API will be available at `http://localhost:3000`.
 
 | Command | Description |
 |---------|-------------|
-| `npm run build` | Compile the project |
-| `npm run start:dev` | Run in watch mode for development |
-| `npm run start:prod` | Run in production mode |
-| `npm run lint` | Run ESLint with auto-fix |
-| `npm run format` | Run Prettier formatting |
-| `npm run test` | Run unit tests |
-| `npm run test:e2e` | Run end-to-end tests (uses separate test database) |
-| `npm run prisma:seed` | Seed database with test data |
-| `npm run test:cov` | Run tests with coverage |
-| `pnpm run risma:generate` | Generate prisma client |
-| `npm run prisma:migrate` | Migrate the database |
-| `npm run prisma:studio` | View the database with a tool from prisma |
+| `pnpm run build` | Compile the project |
+| `pnpm run dev` | Run in watch mode for development |
+| `pnpm run start:prod` | Run in production mode |
+| `pnpm run lint` | Run ESLint with auto-fix |
+| `pnpm run format` | Run Prettier formatting |
+| `pnpm run test` | Run unit tests |
+| `pnpm run test:e2e` | Run end-to-end tests (uses separate test database) |
+| `pnpm run test:cov` | Run tests with coverage |
+| `pnpm run prisma:generate` | Generate Prisma client |
+| `pnpm run prisma:migrate` | Migrate the database |
+| `pnpm run prisma:seed` | Seed database with test data |
+| `pnpm run prisma:studio` | View the database with Prisma Studio |
 
 ## API Documentation
 
