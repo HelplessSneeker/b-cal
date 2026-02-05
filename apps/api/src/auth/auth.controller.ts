@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, UseGuards, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import * as express from 'express';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guard/local-auth.guard';
@@ -8,6 +16,7 @@ import type { JwtUser, JwtRefreshUser } from './types';
 import { SignupDto } from './dto/signup.dto';
 import { ApiBody } from '@nestjs/swagger';
 import { LoginDto } from './dto/login.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
 import { cookieConfig } from './constants';
 import { User } from './decorators/user.decorator';
 
@@ -86,5 +95,12 @@ export class AuthController {
   @Get('me')
   me(@User() user: JwtUser) {
     return { data: user };
+  }
+
+  @Get('verify-email')
+  async verifyEmail(@Query() query: VerifyEmailDto) {
+    await this.authService.validateEmail(query.token);
+
+    return { message: 'Email verified' };
   }
 }

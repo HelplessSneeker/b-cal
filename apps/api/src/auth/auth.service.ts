@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -7,14 +8,16 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
 import { JwtUser, TokenResponse } from './types';
 import { SignupDto } from './dto/signup.dto';
-import { jwtRefreshConstants, saltRounds } from './constants';
+import { jwtConstants, saltRounds } from './constants';
 import * as bcrypt from 'bcrypt';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<JwtUser | null> {
@@ -37,7 +40,7 @@ export class AuthService {
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(payload),
       this.jwtService.signAsync(payload, {
-        secret: jwtRefreshConstants.secret,
+        secret: jwtConstants.refreshSecret,
         expiresIn: '7d',
       }),
     ]);
@@ -63,12 +66,23 @@ export class AuthService {
       throw new ConflictException('Email already registered');
     }
 
+    const verificationToken = await this.jwtService.signAsync(
+      { email },
+      {
+        secret: jwtConstants.mailSecret,
+        expiresIn: '1d',
+      },
+    );
+
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const user = await this.usersService.create({
       email,
       password: hashedPassword,
+      verificationToken,
     });
+
+    await this.mailService.sendVerificationEmail(email, verificationToken);
 
     const tokens = await this.generateTokens(user);
     const hashedRefreshToken = await bcrypt.hash(
@@ -100,6 +114,19 @@ export class AuthService {
     );
     await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
     return tokens;
+  }
+
+  async validateEmail(token: string) {
+    let payload: { email: string };
+    try {
+      payload = this.jwtService.verify(token, {
+        secret: jwtConstants.mailSecret,
+      });
+    } catch {
+      throw new BadRequestException('Invalid or expired token');
+    }
+
+    await this.usersService.validateEmail(payload.email, token);
   }
 
   async logout(userId: string) {

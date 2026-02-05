@@ -3,6 +3,7 @@ import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UsersService } from 'src/users/users.service';
+import { MailService } from 'src/mail/mail.service';
 import * as bcrypt from 'bcrypt';
 
 jest.mock('bcrypt');
@@ -27,6 +28,11 @@ const mockUsersService = {
 
 const mockJwtService = {
   signAsync: jest.fn(),
+  verify: jest.fn(),
+};
+
+const mockMailService = {
+  sendVerificationEmail: jest.fn(),
 };
 
 describe('AuthService', () => {
@@ -38,6 +44,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: UsersService, useValue: mockUsersService },
         { provide: JwtService, useValue: mockJwtService },
+        { provide: MailService, useValue: mockMailService },
       ],
     }).compile();
 
@@ -102,6 +109,10 @@ describe('AuthService', () => {
   describe('signup', () => {
     it('should create user and return tokens', async () => {
       mockUsersService.findOne.mockResolvedValue(null);
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('verification-token')
+        .mockResolvedValueOnce('access-token')
+        .mockResolvedValueOnce('refresh-token');
       (bcrypt.hash as jest.Mock)
         .mockResolvedValueOnce('hashedpw')
         .mockResolvedValueOnce('hashed-refresh');
@@ -109,9 +120,7 @@ describe('AuthService', () => {
         id: 'new-user',
         email: 'new@example.com',
       });
-      mockJwtService.signAsync
-        .mockResolvedValueOnce('access-token')
-        .mockResolvedValueOnce('refresh-token');
+      mockMailService.sendVerificationEmail.mockResolvedValue(undefined);
       mockUsersService.updateRefreshToken.mockResolvedValue(undefined);
 
       const result = await service.signup({
@@ -126,7 +135,12 @@ describe('AuthService', () => {
       expect(mockUsersService.create).toHaveBeenCalledWith({
         email: 'new@example.com',
         password: 'hashedpw',
+        verificationToken: 'verification-token',
       });
+      expect(mockMailService.sendVerificationEmail).toHaveBeenCalledWith(
+        'new@example.com',
+        'verification-token',
+      );
     });
 
     it('should throw ConflictException if email already exists', async () => {

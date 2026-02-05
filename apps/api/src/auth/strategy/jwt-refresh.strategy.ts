@@ -2,7 +2,7 @@ import { Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { Request } from 'express';
-import { jwtRefreshConstants, cookieConfig } from '../constants';
+import { jwtConstants, cookieConfig } from '../constants';
 import { JwtPayload } from '../types';
 
 @Injectable()
@@ -15,7 +15,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
       jwtFromRequest: (req: Request): string | null =>
         (req?.cookies?.[cookieConfig.refreshToken.name] as string) ?? null,
       ignoreExpiration: false,
-      secretOrKey: jwtRefreshConstants.secret,
+      secretOrKey: jwtConstants.refreshSecret,
       passReqToCallback: true,
     });
   }

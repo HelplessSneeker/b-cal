@@ -8,8 +8,10 @@ jest.mock('generated/prisma/client', () => ({
 }));
 
 jest.mock('../constants', () => ({
-  jwtRefreshConstants: {
-    secret: 'test-refresh-secret-key',
+  jwtConstants: {
+    secret: 'test-secret-key',
+    refreshSecret: 'test-refresh-secret-key',
+    mailSecret: 'test-mail-secret-key',
   },
   cookieConfig: {
     accessToken: { name: 'access_token', maxAge: 3600000 },
