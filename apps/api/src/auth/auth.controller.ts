@@ -19,6 +19,8 @@ import { LoginDto } from './dto/login.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { cookieConfig } from './constants';
 import { User } from './decorators/user.decorator';
+import { RequestPasswordResetDTO } from './dto/request-password-reset.dto';
+import { ChangePasswordDTO } from './dto/change-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -102,5 +104,22 @@ export class AuthController {
     await this.authService.validateEmail(query.token);
 
     return { message: 'Email verified' };
+  }
+
+  @ApiBody({ type: RequestPasswordResetDTO })
+  @Post('forgot-password')
+  async forgotPassword(
+    @Body() requestPasswordResetDTO: RequestPasswordResetDTO,
+  ) {
+    await this.authService.requestPasswordReset(requestPasswordResetDTO.email);
+
+    return { message: 'If that email exists, we sent a reset link' };
+  }
+
+  @ApiBody({ type: ChangePasswordDTO })
+  @Post('reset-password')
+  async resetPassword(@Body() changePasswordDTO: ChangePasswordDTO) {
+    await this.authService.changePassword(changePasswordDTO);
+    return { message: 'Password changed successfully' };
   }
 }

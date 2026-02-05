@@ -54,4 +54,31 @@ export class UsersService {
       },
     });
   }
+
+  async setPasswordResetToken(email: string, token: string) {
+    await this.prisma.user.update({
+      where: { email },
+      data: {
+        resetToken: token,
+      },
+    });
+  }
+
+  async changePassword(email: string, password: string) {
+    const user = await this.findOne(email);
+
+    if (!user || !user.resetToken) {
+      throw new BadRequestException('User not found');
+    }
+
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        password,
+        resetToken: null,
+      },
+    });
+  }
 }

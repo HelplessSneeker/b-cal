@@ -11,6 +11,7 @@ import { SignupDto } from './dto/signup.dto';
 import { jwtConstants, saltRounds } from './constants';
 import * as bcrypt from 'bcrypt';
 import { MailService } from 'src/mail/mail.service';
+import { ChangePasswordDTO } from './dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -127,6 +128,48 @@ export class AuthService {
     }
 
     await this.usersService.validateEmail(payload.email, token);
+  }
+
+  async requestPasswordReset(email: string) {
+    const user = await this.usersService.findOne(email);
+
+    if (!user) {
+      return;
+    }
+
+    const resetToken = await this.jwtService.signAsync(
+      { email },
+      {
+        secret: jwtConstants.mailSecret,
+        expiresIn: '1d',
+      },
+    );
+
+    await this.usersService.setPasswordResetToken(email, resetToken);
+    await this.mailService.sendPasswordResetEmail(email, resetToken);
+  }
+
+  async changePassword(changePasswordDTO: ChangePasswordDTO) {
+    let payload: { email: string };
+    try {
+      payload = this.jwtService.verify(changePasswordDTO.token, {
+        secret: jwtConstants.mailSecret,
+      });
+    } catch {
+      throw new BadRequestException('Invalid or expired token');
+    }
+
+    const user = await this.usersService.findOne(payload.email);
+    if (!user || user.resetToken !== changePasswordDTO.token) {
+      throw new BadRequestException('Invalid or expired token');
+    }
+
+    const hashedPassword = await bcrypt.hash(
+      changePasswordDTO.password,
+      saltRounds,
+    );
+
+    await this.usersService.changePassword(payload.email, hashedPassword);
   }
 
   async logout(userId: string) {
