@@ -6,6 +6,7 @@ export interface JwtPayload {
 export interface JwtUser {
   id: string;
   email: string;
+  emailVerified?: boolean;
 }
 
 export interface JwtRefreshUser extends JwtUser {

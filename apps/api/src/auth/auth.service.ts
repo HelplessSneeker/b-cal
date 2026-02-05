@@ -28,7 +28,11 @@ export class AuthService {
     }
     const isMatch = await bcrypt.compare(pass, user.password);
     if (isMatch) {
-      return { id: user.id, email: user.email };
+      return {
+        id: user.id,
+        email: user.email,
+        emailVerified: user.emailVerified,
+      };
     }
     return null;
   }
@@ -141,7 +145,7 @@ export class AuthService {
       { email },
       {
         secret: jwtConstants.mailSecret,
-        expiresIn: '1d',
+        expiresIn: '1h',
       },
     );
 

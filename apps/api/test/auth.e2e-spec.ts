@@ -75,6 +75,15 @@ describe('AuthController (e2e)', () => {
       const cookies = extractCookies(response);
       expect(getCookieValue(cookies, 'access_token')).toBeDefined();
       expect(getCookieValue(cookies, 'refresh_token')).toBeDefined();
+
+      // Verify the email so subsequent login tests can work
+      const user = await prisma.user.findUnique({
+        where: { email: testUser.email },
+      });
+      await request(app.getHttpServer())
+        .get('/auth/verify-email')
+        .query({ token: user!.verificationToken })
+        .expect(200);
     });
 
     it('should return 409 when email already exists', async () => {
@@ -282,6 +291,371 @@ describe('AuthController (e2e)', () => {
         .get('/auth/me')
         .set('Cookie', ['access_token=invalid-token'])
         .expect(401);
+    });
+  });
+
+  describe('GET /auth/verify-email', () => {
+    const verifyEmailUser = {
+      email: `verify-email-${Date.now()}@example.com`,
+      password: 'testpassword123!',
+    };
+
+    beforeAll(async () => {
+      // Create a fresh user for email verification tests
+      await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send(verifyEmailUser);
+    });
+
+    afterAll(async () => {
+      await prisma.user.deleteMany({
+        where: { email: verifyEmailUser.email },
+      });
+    });
+
+    it('should verify email with valid token', async () => {
+      // Get the verification token from the database
+      const user = await prisma.user.findUnique({
+        where: { email: verifyEmailUser.email },
+      });
+      expect(user).toBeDefined();
+      expect(user!.verificationToken).toBeDefined();
+      expect(user!.emailVerified).toBe(false);
+
+      const response = await request(app.getHttpServer())
+        .get('/auth/verify-email')
+        .query({ token: user!.verificationToken })
+        .expect(200);
+
+      const body = response.body as MessageResponse;
+      expect(body.message).toBe('Email verified');
+
+      // Verify the user is now marked as verified
+      const updatedUser = await prisma.user.findUnique({
+        where: { email: verifyEmailUser.email },
+      });
+      expect(updatedUser!.emailVerified).toBe(true);
+      expect(updatedUser!.verificationToken).toBeNull();
+    });
+
+    it('should return 400 for invalid token', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/auth/verify-email')
+        .query({ token: 'invalid-token' })
+        .expect(400);
+
+      const body = response.body as ErrorResponse;
+      expect(body.message).toBe('Invalid or expired token');
+    });
+
+    it('should return 400 for empty token', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/auth/verify-email')
+        .query({ token: '' })
+        .expect(400);
+
+      const body = response.body as ErrorResponse;
+      expect(body.message).toContain('token should not be empty');
+    });
+
+    it('should return 400 for missing token', async () => {
+      await request(app.getHttpServer())
+        .get('/auth/verify-email')
+        .expect(400);
+    });
+
+    it('should return 400 when token is already used', async () => {
+      // Create another user
+      const anotherUser = {
+        email: `verify-used-${Date.now()}@example.com`,
+        password: 'testpassword123!',
+      };
+      await request(app.getHttpServer()).post('/auth/signup').send(anotherUser);
+
+      const user = await prisma.user.findUnique({
+        where: { email: anotherUser.email },
+      });
+      const verificationToken = user!.verificationToken;
+
+      // First verification should succeed
+      await request(app.getHttpServer())
+        .get('/auth/verify-email')
+        .query({ token: verificationToken })
+        .expect(200);
+
+      // Second verification with same token should fail (token is now null in DB)
+      const response = await request(app.getHttpServer())
+        .get('/auth/verify-email')
+        .query({ token: verificationToken })
+        .expect(400);
+
+      const body = response.body as ErrorResponse;
+      expect(body.message).toBe('Invalid or expired token');
+
+      // Cleanup
+      await prisma.user.delete({ where: { email: anotherUser.email } });
+    });
+  });
+
+  describe('POST /auth/forgot-password', () => {
+    it('should return success message for existing email', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/forgot-password')
+        .send({ email: testUser.email })
+        .expect(201);
+
+      const body = response.body as MessageResponse;
+      expect(body.message).toBe('If that email exists, we sent a reset link');
+
+      // Verify reset token was set in database
+      const user = await prisma.user.findUnique({
+        where: { email: testUser.email },
+      });
+      expect(user!.resetToken).toBeDefined();
+      expect(user!.resetToken).not.toBeNull();
+    });
+
+    it('should return success message for non-existent email (security)', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/forgot-password')
+        .send({ email: 'nonexistent@example.com' })
+        .expect(201);
+
+      const body = response.body as MessageResponse;
+      expect(body.message).toBe('If that email exists, we sent a reset link');
+    });
+
+    it('should return 400 for invalid email format', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/forgot-password')
+        .send({ email: 'invalid-email' })
+        .expect(400);
+
+      const body = response.body as ErrorResponse;
+      expect(body.message).toContain('email must be an email');
+    });
+
+    it('should return 400 for missing email', async () => {
+      await request(app.getHttpServer())
+        .post('/auth/forgot-password')
+        .send({})
+        .expect(400);
+    });
+  });
+
+  describe('POST /auth/reset-password', () => {
+    const resetPasswordUser = {
+      email: `reset-pw-${Date.now()}@example.com`,
+      password: 'oldpassword123!',
+    };
+
+    beforeAll(async () => {
+      // Create a fresh user for password reset tests
+      await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send(resetPasswordUser);
+
+      // Verify the email so the user can login after password reset
+      const user = await prisma.user.findUnique({
+        where: { email: resetPasswordUser.email },
+      });
+      await request(app.getHttpServer())
+        .get('/auth/verify-email')
+        .query({ token: user!.verificationToken });
+    });
+
+    afterAll(async () => {
+      await prisma.user.deleteMany({
+        where: { email: resetPasswordUser.email },
+      });
+    });
+
+    it('should reset password with valid token', async () => {
+      // Request password reset
+      await request(app.getHttpServer())
+        .post('/auth/forgot-password')
+        .send({ email: resetPasswordUser.email });
+
+      // Get the reset token from database
+      const user = await prisma.user.findUnique({
+        where: { email: resetPasswordUser.email },
+      });
+      expect(user!.resetToken).toBeDefined();
+
+      const newPassword = 'newpassword123!';
+
+      // Reset password
+      const response = await request(app.getHttpServer())
+        .post('/auth/reset-password')
+        .send({
+          token: user!.resetToken,
+          password: newPassword,
+        })
+        .expect(201);
+
+      const body = response.body as MessageResponse;
+      expect(body.message).toBe('Password changed successfully');
+
+      // Verify reset token is cleared
+      const updatedUser = await prisma.user.findUnique({
+        where: { email: resetPasswordUser.email },
+      });
+      expect(updatedUser!.resetToken).toBeNull();
+
+      // Verify can login with new password
+      const loginResponse = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email: resetPasswordUser.email, password: newPassword })
+        .expect(201);
+
+      const loginBody = loginResponse.body as MessageResponse;
+      expect(loginBody.message).toBe('Login successful');
+    });
+
+    it('should return 400 for invalid token', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/reset-password')
+        .send({
+          token: 'invalid-token',
+          password: 'newpassword123!',
+        })
+        .expect(400);
+
+      const body = response.body as ErrorResponse;
+      expect(body.message).toBe('Invalid or expired token');
+    });
+
+    it('should return 400 for empty token', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/reset-password')
+        .send({
+          token: '',
+          password: 'newpassword123!',
+        })
+        .expect(400);
+
+      const body = response.body as ErrorResponse;
+      expect(body.message).toContain('token should not be empty');
+    });
+
+    it('should return 400 for weak password', async () => {
+      // Request password reset first
+      await request(app.getHttpServer())
+        .post('/auth/forgot-password')
+        .send({ email: resetPasswordUser.email });
+
+      const user = await prisma.user.findUnique({
+        where: { email: resetPasswordUser.email },
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/reset-password')
+        .send({
+          token: user!.resetToken,
+          password: 'weak',
+        })
+        .expect(400);
+
+      const body = response.body as ErrorResponse;
+      expect(body.message).toContain(
+        'Password must be at least 8 characters and contain at least one number and one symbol',
+      );
+    });
+
+    it('should return 400 for password without symbol', async () => {
+      await request(app.getHttpServer())
+        .post('/auth/forgot-password')
+        .send({ email: resetPasswordUser.email });
+
+      const user = await prisma.user.findUnique({
+        where: { email: resetPasswordUser.email },
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/reset-password')
+        .send({
+          token: user!.resetToken,
+          password: 'password123',
+        })
+        .expect(400);
+
+      const body = response.body as ErrorResponse;
+      expect(body.message).toContain(
+        'Password must be at least 8 characters and contain at least one number and one symbol',
+      );
+    });
+
+    it(
+      'should return 400 when token is already used',
+      async () => {
+        // Create another user for this test
+        const anotherUser = {
+          email: `reset-used-${Date.now()}@example.com`,
+          password: 'oldpassword123!',
+        };
+        await request(app.getHttpServer())
+          .post('/auth/signup')
+          .send(anotherUser);
+
+        // Get user and verify email first (not strictly needed for reset, but good practice)
+        const createdUser = await prisma.user.findUnique({
+          where: { email: anotherUser.email },
+        });
+        await request(app.getHttpServer())
+          .get('/auth/verify-email')
+          .query({ token: createdUser!.verificationToken });
+
+        // Request password reset
+        await request(app.getHttpServer())
+          .post('/auth/forgot-password')
+          .send({ email: anotherUser.email });
+
+        const user = await prisma.user.findUnique({
+          where: { email: anotherUser.email },
+        });
+
+        // First reset should succeed
+        await request(app.getHttpServer())
+          .post('/auth/reset-password')
+          .send({
+            token: user!.resetToken,
+            password: 'newpassword123!',
+          })
+          .expect(201);
+
+        // Second reset with same token should fail
+        const response = await request(app.getHttpServer())
+          .post('/auth/reset-password')
+          .send({
+            token: user!.resetToken,
+            password: 'anotherpassword123!',
+          })
+          .expect(400);
+
+        const body = response.body as ErrorResponse;
+        expect(body.message).toBe('Invalid or expired token');
+
+        // Cleanup
+        await prisma.user.delete({ where: { email: anotherUser.email } });
+      },
+      15000,
+    );
+
+    it('should return 400 for missing password', async () => {
+      await request(app.getHttpServer())
+        .post('/auth/forgot-password')
+        .send({ email: resetPasswordUser.email });
+
+      const user = await prisma.user.findUnique({
+        where: { email: resetPasswordUser.email },
+      });
+
+      await request(app.getHttpServer())
+        .post('/auth/reset-password')
+        .send({
+          token: user!.resetToken,
+        })
+        .expect(400);
     });
   });
 });

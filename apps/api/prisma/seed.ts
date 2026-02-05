@@ -76,6 +76,7 @@ async function main() {
     data: {
       email: 'alice@example.com',
       password: hashedPassword,
+      emailVerified: true,
     },
   });
 
@@ -83,6 +84,7 @@ async function main() {
     data: {
       email: 'bob@example.com',
       password: hashedPassword,
+      emailVerified: true,
     },
   });
 

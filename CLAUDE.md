@@ -49,7 +49,7 @@ docker compose up -d                         # Start PostgreSQL
 
 **Frontend State**: Zustand stores for user state and calendar state (view mode, entries, modals).
 
-**API Structure**: NestJS modules (AuthModule, UsersModule, CalendarModule, PrismaModule). Swagger docs at `/api`.
+**API Structure**: NestJS modules (AuthModule, UsersModule, CalendarModule, PrismaModule, MailModule). Swagger docs at `/api`.
 
 **Database**: PostgreSQL via Prisma. Models: User, CalendarEntry.
 
@@ -57,7 +57,7 @@ docker compose up -d                         # Start PostgreSQL
 
 **Web** (`apps/web/.env`): `NEXT_PUBLIC_BACKEND_URL`
 
-**API** (`apps/api/.env`): `PORT`, `FRONTEND_URL`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `SECRET_KEY`, `REFRESH_SECRET_KEY`
+**API** (`apps/api/.env`): `PORT`, `FRONTEND_URL`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `SECRET_KEY`, `REFRESH_SECRET_KEY`, `MAIL_SECRET`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM`
 
 **API Test** (`apps/api/.env.test`): Same as above with `DB_NAME=b_cal_test`
 

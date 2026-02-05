@@ -13,6 +13,7 @@ import { JwtUser } from '../types';
 const mockUser: JwtUser = {
   id: 'user-1',
   email: 'test@example.com',
+  emailVerified: true,
 };
 
 const mockAuthService = {
@@ -39,7 +40,7 @@ describe('LocalStrategy', () => {
   });
 
   describe('validate', () => {
-    it('should return user when credentials are valid', async () => {
+    it('should return user when credentials are valid and email is verified', async () => {
       mockAuthService.validateUser.mockResolvedValue(mockUser);
 
       const result = await strategy.validate('test@example.com', 'password');
@@ -65,6 +66,19 @@ describe('LocalStrategy', () => {
       await expect(
         strategy.validate('test@example.com', 'wrongpassword'),
       ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw UnauthorizedException when email is not verified', async () => {
+      const unverifiedUser: JwtUser = {
+        id: 'user-1',
+        email: 'test@example.com',
+        emailVerified: false,
+      };
+      mockAuthService.validateUser.mockResolvedValue(unverifiedUser);
+
+      await expect(
+        strategy.validate('test@example.com', 'password'),
+      ).rejects.toThrow(new UnauthorizedException('Email not verified'));
     });
 
     it('should call authService.validateUser with correct parameters', async () => {

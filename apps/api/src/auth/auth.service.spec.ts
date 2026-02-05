@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UsersService } from 'src/users/users.service';
@@ -17,6 +21,9 @@ const mockUser = {
   email: 'test@example.com',
   password: 'hashedpassword',
   refreshToken: 'hashedRefreshToken',
+  emailVerified: false,
+  verificationToken: 'verification-token',
+  resetToken: null,
 };
 
 const mockUsersService = {
@@ -24,6 +31,9 @@ const mockUsersService = {
   findById: jest.fn(),
   create: jest.fn(),
   updateRefreshToken: jest.fn(),
+  validateEmail: jest.fn(),
+  setPasswordResetToken: jest.fn(),
+  changePassword: jest.fn(),
 };
 
 const mockJwtService = {
@@ -33,6 +43,7 @@ const mockJwtService = {
 
 const mockMailService = {
   sendVerificationEmail: jest.fn(),
+  sendPasswordResetEmail: jest.fn(),
 };
 
 describe('AuthService', () => {
@@ -63,7 +74,11 @@ describe('AuthService', () => {
 
       const result = await service.validateUser('test@example.com', 'password');
 
-      expect(result).toEqual({ id: mockUser.id, email: mockUser.email });
+      expect(result).toEqual({
+        id: mockUser.id,
+        email: mockUser.email,
+        emailVerified: mockUser.emailVerified,
+      });
       expect(mockUsersService.findOne).toHaveBeenCalledWith('test@example.com');
     });
 
@@ -209,6 +224,181 @@ describe('AuthService', () => {
         'user-1',
         null,
       );
+    });
+  });
+
+  describe('validateEmail', () => {
+    it('should validate email with valid token', async () => {
+      mockJwtService.verify.mockReturnValue({ email: 'test@example.com' });
+      mockUsersService.validateEmail.mockResolvedValue(undefined);
+
+      await service.validateEmail('valid-token');
+
+      expect(mockJwtService.verify).toHaveBeenCalled();
+      expect(mockJwtService.verify.mock.calls[0][0]).toBe('valid-token');
+      expect(mockUsersService.validateEmail).toHaveBeenCalledWith(
+        'test@example.com',
+        'valid-token',
+      );
+    });
+
+    it('should throw BadRequestException for invalid token', async () => {
+      mockJwtService.verify.mockImplementation(() => {
+        throw new Error('invalid token');
+      });
+
+      await expect(service.validateEmail('invalid-token')).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(mockUsersService.validateEmail).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException for expired token', async () => {
+      mockJwtService.verify.mockImplementation(() => {
+        throw new Error('jwt expired');
+      });
+
+      await expect(service.validateEmail('expired-token')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('requestPasswordReset', () => {
+    it('should generate reset token and send email for existing user', async () => {
+      mockUsersService.findOne.mockResolvedValue(mockUser);
+      mockJwtService.signAsync.mockResolvedValue('reset-token');
+      mockUsersService.setPasswordResetToken.mockResolvedValue(undefined);
+      mockMailService.sendPasswordResetEmail.mockResolvedValue(undefined);
+
+      await service.requestPasswordReset('test@example.com');
+
+      expect(mockUsersService.findOne).toHaveBeenCalledWith('test@example.com');
+      expect(mockJwtService.signAsync).toHaveBeenCalledWith(
+        { email: 'test@example.com' },
+        expect.objectContaining({ expiresIn: '1d' }),
+      );
+      expect(mockUsersService.setPasswordResetToken).toHaveBeenCalledWith(
+        'test@example.com',
+        'reset-token',
+      );
+      expect(mockMailService.sendPasswordResetEmail).toHaveBeenCalledWith(
+        'test@example.com',
+        'reset-token',
+      );
+    });
+
+    it('should silently return for non-existent user', async () => {
+      mockUsersService.findOne.mockResolvedValue(null);
+
+      await service.requestPasswordReset('nonexistent@example.com');
+
+      expect(mockUsersService.findOne).toHaveBeenCalledWith(
+        'nonexistent@example.com',
+      );
+      expect(mockJwtService.signAsync).not.toHaveBeenCalled();
+      expect(mockUsersService.setPasswordResetToken).not.toHaveBeenCalled();
+      expect(mockMailService.sendPasswordResetEmail).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('changePassword', () => {
+    const userWithResetToken = {
+      ...mockUser,
+      resetToken: 'valid-reset-token',
+    };
+
+    it('should change password with valid token', async () => {
+      mockJwtService.verify.mockReturnValue({ email: 'test@example.com' });
+      mockUsersService.findOne.mockResolvedValue(userWithResetToken);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed-password');
+      mockUsersService.changePassword.mockResolvedValue(undefined);
+
+      await service.changePassword({
+        token: 'valid-reset-token',
+        password: 'newpassword123!',
+      });
+
+      expect(mockJwtService.verify).toHaveBeenCalled();
+      expect(mockJwtService.verify.mock.calls[0][0]).toBe('valid-reset-token');
+      expect(mockUsersService.findOne).toHaveBeenCalledWith('test@example.com');
+      expect(bcrypt.hash).toHaveBeenCalledWith('newpassword123!', 10);
+      expect(mockUsersService.changePassword).toHaveBeenCalledWith(
+        'test@example.com',
+        'new-hashed-password',
+      );
+    });
+
+    it('should throw BadRequestException for invalid token', async () => {
+      mockJwtService.verify.mockImplementation(() => {
+        throw new Error('invalid token');
+      });
+
+      await expect(
+        service.changePassword({
+          token: 'invalid-token',
+          password: 'newpassword123!',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockUsersService.changePassword).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException for expired token', async () => {
+      mockJwtService.verify.mockImplementation(() => {
+        throw new Error('jwt expired');
+      });
+
+      await expect(
+        service.changePassword({
+          token: 'expired-token',
+          password: 'newpassword123!',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if user not found', async () => {
+      mockJwtService.verify.mockReturnValue({ email: 'test@example.com' });
+      mockUsersService.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.changePassword({
+          token: 'valid-token',
+          password: 'newpassword123!',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockUsersService.changePassword).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException if reset token does not match', async () => {
+      mockJwtService.verify.mockReturnValue({ email: 'test@example.com' });
+      mockUsersService.findOne.mockResolvedValue({
+        ...mockUser,
+        resetToken: 'different-token',
+      });
+
+      await expect(
+        service.changePassword({
+          token: 'valid-token',
+          password: 'newpassword123!',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockUsersService.changePassword).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException if user has no reset token', async () => {
+      mockJwtService.verify.mockReturnValue({ email: 'test@example.com' });
+      mockUsersService.findOne.mockResolvedValue({
+        ...mockUser,
+        resetToken: null,
+      });
+
+      await expect(
+        service.changePassword({
+          token: 'valid-token',
+          password: 'newpassword123!',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockUsersService.changePassword).not.toHaveBeenCalled();
     });
   });
 });

@@ -78,6 +78,15 @@ describe('CalendarController (e2e)', () => {
 
     // Create test user and get cookies
     await request(app.getHttpServer()).post('/auth/signup').send(testUser);
+
+    // Verify the test user's email
+    const testUserRecord = await prisma.user.findUnique({
+      where: { email: testUser.email },
+    });
+    await request(app.getHttpServer())
+      .get('/auth/verify-email')
+      .query({ token: testUserRecord!.verificationToken });
+
     const loginResponse = await request(app.getHttpServer())
       .post('/auth/login')
       .send(testUser);
@@ -91,11 +100,20 @@ describe('CalendarController (e2e)', () => {
 
     // Create another user for isolation tests
     await request(app.getHttpServer()).post('/auth/signup').send(otherUser);
+
+    // Verify the other user's email
+    const otherUserRecord = await prisma.user.findUnique({
+      where: { email: otherUser.email },
+    });
+    await request(app.getHttpServer())
+      .get('/auth/verify-email')
+      .query({ token: otherUserRecord!.verificationToken });
+
     const otherLoginResponse = await request(app.getHttpServer())
       .post('/auth/login')
       .send(otherUser);
     otherUserCookies = extractCookies(otherLoginResponse);
-  });
+  }, 30000);
 
   afterAll(async () => {
     // Clean up calendar entries first (foreign key constraint)
