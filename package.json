@@ -4,10 +4,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=@calendar/web",
+    "dev:api": "turbo run dev --filter=@calendar/api",
+    "build": "turbo run build",
+    "lint": "turbo run lint"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.28.2"
+  "packageManager": "pnpm@10.28.2",
+  "devDependencies": {
+    "turbo": "^2.8.3"
+  }
 }
