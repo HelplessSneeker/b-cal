@@ -99,7 +99,7 @@ describe('CalendarController (e2e)', () => {
 
   afterAll(async () => {
     // Clean up calendar entries first (foreign key constraint)
-    await prisma.calenderEntry.deleteMany({
+    await prisma.calendarEntry.deleteMany({
       where: {
         user: {
           email: { in: [testUser.email, otherUser.email] },

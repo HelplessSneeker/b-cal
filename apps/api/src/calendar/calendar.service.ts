@@ -13,7 +13,7 @@ export class CalendarService {
   constructor(private prismaService: PrismaService) {}
 
   async create(userId: string, createCalendarDto: CreateCalendarDto) {
-    return await this.prismaService.calenderEntry.create({
+    return await this.prismaService.calendarEntry.create({
       data: {
         userId,
         ...createCalendarDto,
@@ -24,7 +24,7 @@ export class CalendarService {
   findAll(userId: string, getCalendarEntriesDto: GetCalendarEntriesDto) {
     const { startDate, endDate } = getCalendarEntriesDto;
 
-    return this.prismaService.calenderEntry.findMany({
+    return this.prismaService.calendarEntry.findMany({
       where: {
         userId,
         ...(startDate && { endDate: { gte: startDate } }),
@@ -34,7 +34,7 @@ export class CalendarService {
   }
 
   async findOne(userId: string, id: string) {
-    const entry = await this.prismaService.calenderEntry.findUnique({
+    const entry = await this.prismaService.calendarEntry.findUnique({
       where: {
         userId,
         id,
@@ -68,7 +68,7 @@ export class CalendarService {
       );
     }
 
-    return await this.prismaService.calenderEntry.update({
+    return await this.prismaService.calendarEntry.update({
       where: {
         userId,
         id,
@@ -82,7 +82,7 @@ export class CalendarService {
   async remove(userId: string, id: string) {
     await this.findOne(userId, id);
 
-    return await this.prismaService.calenderEntry.delete({
+    return await this.prismaService.calendarEntry.delete({
       where: {
         userId,
         id,

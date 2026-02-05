@@ -66,7 +66,7 @@ async function main() {
   console.log('Seeding database...');
 
   // Clear existing data
-  await prisma.calenderEntry.deleteMany();
+  await prisma.calendarEntry.deleteMany();
   await prisma.user.deleteMany();
 
   // Create test users
@@ -94,7 +94,7 @@ async function main() {
   const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   const entries = await Promise.all([
-    prisma.calenderEntry.create({
+    prisma.calendarEntry.create({
       data: {
         title: 'Team Meeting',
         startDate: new Date(now.setHours(10, 0, 0, 0)),
@@ -103,7 +103,7 @@ async function main() {
         userId: user1.id,
       },
     }),
-    prisma.calenderEntry.create({
+    prisma.calendarEntry.create({
       data: {
         title: 'Lunch with Client',
         startDate: new Date(tomorrow.setHours(12, 0, 0, 0)),
@@ -112,7 +112,7 @@ async function main() {
         userId: user1.id,
       },
     }),
-    prisma.calenderEntry.create({
+    prisma.calendarEntry.create({
       data: {
         title: 'Project Deadline',
         startDate: new Date(nextWeek.setHours(9, 0, 0, 0)),
@@ -126,7 +126,7 @@ async function main() {
   // Create dynamic entries relative to current date
   const dynamicEntries = await Promise.all([
     // Today - regular timed event
-    prisma.calenderEntry.create({
+    prisma.calendarEntry.create({
       data: {
         title: 'Morning Standup',
         startDate: getRelativeDate(0, 9, 0),
@@ -136,7 +136,7 @@ async function main() {
       },
     }),
     // Today - whole day event
-    prisma.calenderEntry.create({
+    prisma.calendarEntry.create({
       data: {
         title: 'Focus Day',
         startDate: getWholeDayDate(0),
@@ -147,7 +147,7 @@ async function main() {
       },
     }),
     // Tomorrow - regular event
-    prisma.calenderEntry.create({
+    prisma.calendarEntry.create({
       data: {
         title: 'Code Review Session',
         startDate: getRelativeDate(1, 14, 0),
@@ -157,7 +157,7 @@ async function main() {
       },
     }),
     // Multi-day event (3 days starting tomorrow)
-    prisma.calenderEntry.create({
+    prisma.calendarEntry.create({
       data: {
         title: 'Team Offsite',
         startDate: getWholeDayDate(1),
@@ -168,7 +168,7 @@ async function main() {
       },
     }),
     // Next week - whole day event
-    prisma.calenderEntry.create({
+    prisma.calendarEntry.create({
       data: {
         title: 'Company Holiday',
         startDate: getWholeDayDate(7),
@@ -178,7 +178,7 @@ async function main() {
       },
     }),
     // Multi-day event spanning 5 days (starting in 10 days)
-    prisma.calenderEntry.create({
+    prisma.calendarEntry.create({
       data: {
         title: 'Conference Week',
         startDate: getWholeDayDate(10),
@@ -189,7 +189,7 @@ async function main() {
       },
     }),
     // Future regular event (2 weeks out)
-    prisma.calenderEntry.create({
+    prisma.calendarEntry.create({
       data: {
         title: 'Quarterly Review',
         startDate: getRelativeDate(14, 10, 0),
@@ -199,7 +199,7 @@ async function main() {
       },
     }),
     // Future event (3 weeks out)
-    prisma.calenderEntry.create({
+    prisma.calendarEntry.create({
       data: {
         title: 'Product Launch',
         startDate: getRelativeDate(21, 9, 0),

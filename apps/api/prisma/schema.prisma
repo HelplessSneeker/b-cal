@@ -21,10 +21,10 @@ model User {
   password     String
   refreshToken String?
 
-  calendarEntry CalenderEntry[]
+  calendarEntry CalendarEntry[]
 }
 
-model CalenderEntry {
+model CalendarEntry {
   id String @id @default(uuid())
 
   title     String
