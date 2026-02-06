@@ -359,9 +359,7 @@ describe('AuthController (e2e)', () => {
     });
 
     it('should return 400 for missing token', async () => {
-      await request(app.getHttpServer())
-        .get('/auth/verify-email')
-        .expect(400);
+      await request(app.getHttpServer()).get('/auth/verify-email').expect(400);
     });
 
     it('should return 400 when token is already used', async () => {
@@ -585,61 +583,55 @@ describe('AuthController (e2e)', () => {
       );
     });
 
-    it(
-      'should return 400 when token is already used',
-      async () => {
-        // Create another user for this test
-        const anotherUser = {
-          email: `reset-used-${Date.now()}@example.com`,
-          password: 'oldpassword123!',
-        };
-        await request(app.getHttpServer())
-          .post('/auth/signup')
-          .send(anotherUser);
+    it('should return 400 when token is already used', async () => {
+      // Create another user for this test
+      const anotherUser = {
+        email: `reset-used-${Date.now()}@example.com`,
+        password: 'oldpassword123!',
+      };
+      await request(app.getHttpServer()).post('/auth/signup').send(anotherUser);
 
-        // Get user and verify email first (not strictly needed for reset, but good practice)
-        const createdUser = await prisma.user.findUnique({
-          where: { email: anotherUser.email },
-        });
-        await request(app.getHttpServer())
-          .get('/auth/verify-email')
-          .query({ token: createdUser!.verificationToken });
+      // Get user and verify email first (not strictly needed for reset, but good practice)
+      const createdUser = await prisma.user.findUnique({
+        where: { email: anotherUser.email },
+      });
+      await request(app.getHttpServer())
+        .get('/auth/verify-email')
+        .query({ token: createdUser!.verificationToken });
 
-        // Request password reset
-        await request(app.getHttpServer())
-          .post('/auth/forgot-password')
-          .send({ email: anotherUser.email });
+      // Request password reset
+      await request(app.getHttpServer())
+        .post('/auth/forgot-password')
+        .send({ email: anotherUser.email });
 
-        const user = await prisma.user.findUnique({
-          where: { email: anotherUser.email },
-        });
+      const user = await prisma.user.findUnique({
+        where: { email: anotherUser.email },
+      });
 
-        // First reset should succeed
-        await request(app.getHttpServer())
-          .post('/auth/reset-password')
-          .send({
-            token: user!.resetToken,
-            password: 'newpassword123!',
-          })
-          .expect(201);
+      // First reset should succeed
+      await request(app.getHttpServer())
+        .post('/auth/reset-password')
+        .send({
+          token: user!.resetToken,
+          password: 'newpassword123!',
+        })
+        .expect(201);
 
-        // Second reset with same token should fail
-        const response = await request(app.getHttpServer())
-          .post('/auth/reset-password')
-          .send({
-            token: user!.resetToken,
-            password: 'anotherpassword123!',
-          })
-          .expect(400);
+      // Second reset with same token should fail
+      const response = await request(app.getHttpServer())
+        .post('/auth/reset-password')
+        .send({
+          token: user!.resetToken,
+          password: 'anotherpassword123!',
+        })
+        .expect(400);
 
-        const body = response.body as ErrorResponse;
-        expect(body.message).toBe('Invalid or expired token');
+      const body = response.body as ErrorResponse;
+      expect(body.message).toBe('Invalid or expired token');
 
-        // Cleanup
-        await prisma.user.delete({ where: { email: anotherUser.email } });
-      },
-      15000,
-    );
+      // Cleanup
+      await prisma.user.delete({ where: { email: anotherUser.email } });
+    }, 15000);
 
     it('should return 400 for missing password', async () => {
       await request(app.getHttpServer())

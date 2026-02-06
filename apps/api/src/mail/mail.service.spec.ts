@@ -162,7 +162,10 @@ describe('MailService', () => {
     it('should include reset link and expiry notice in email HTML', async () => {
       mockSendMail.mockResolvedValue({ messageId: '123' });
 
-      await service.sendPasswordResetEmail('user@example.com', 'my-reset-token');
+      await service.sendPasswordResetEmail(
+        'user@example.com',
+        'my-reset-token',
+      );
 
       const callArgs = mockSendMail.mock.calls[0][0];
       expect(callArgs.html).toContain('Password Reset');
@@ -339,7 +342,10 @@ describe('MailService', () => {
       const serviceWithoutMailFrom = module.get<MailService>(MailService);
       mockSendMail.mockResolvedValue({ messageId: '123' });
 
-      await serviceWithoutMailFrom.sendVerificationEmail('user@example.com', 'token');
+      await serviceWithoutMailFrom.sendVerificationEmail(
+        'user@example.com',
+        'token',
+      );
 
       expect(mockSendMail).toHaveBeenCalledWith(
         expect.objectContaining({
