@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
@@ -15,6 +16,8 @@ import { ChangePasswordDTO } from './dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
@@ -59,6 +62,7 @@ export class AuthService {
       saltRounds,
     );
     await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
+    this.logger.log(`User logged in: ${user.id}`);
     return tokens;
   }
 
@@ -95,6 +99,7 @@ export class AuthService {
       saltRounds,
     );
     await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
+    this.logger.log(`User signed up: ${user.id}`);
     return tokens;
   }
 
@@ -128,10 +133,12 @@ export class AuthService {
         secret: jwtConstants.mailSecret,
       });
     } catch {
+      this.logger.error('Email verification failed: invalid or expired token');
       throw new BadRequestException('Invalid or expired token');
     }
 
     await this.usersService.validateEmail(payload.email, token);
+    this.logger.log(`Email verified: ${payload.email}`);
   }
 
   async requestPasswordReset(email: string) {
@@ -151,6 +158,7 @@ export class AuthService {
 
     await this.usersService.setPasswordResetToken(email, resetToken);
     await this.mailService.sendPasswordResetEmail(email, resetToken);
+    this.logger.log(`Password reset requested: ${email}`);
   }
 
   async changePassword(changePasswordDTO: ChangePasswordDTO) {
@@ -160,11 +168,15 @@ export class AuthService {
         secret: jwtConstants.mailSecret,
       });
     } catch {
+      this.logger.error('Password change failed: invalid or expired token');
       throw new BadRequestException('Invalid or expired token');
     }
 
     const user = await this.usersService.findOne(payload.email);
     if (!user || user.resetToken !== changePasswordDTO.token) {
+      this.logger.error(
+        `Password change failed: token mismatch for ${payload.email}`,
+      );
       throw new BadRequestException('Invalid or expired token');
     }
 
@@ -174,9 +186,11 @@ export class AuthService {
     );
 
     await this.usersService.changePassword(payload.email, hashedPassword);
+    this.logger.log(`Password changed: ${payload.email}`);
   }
 
   async logout(userId: string) {
     await this.usersService.updateRefreshToken(userId, null);
+    this.logger.log(`User logged out: ${userId}`);
   }
 }

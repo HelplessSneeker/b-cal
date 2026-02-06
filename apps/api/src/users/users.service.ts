@@ -1,9 +1,11 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from 'generated/prisma/client';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async findOne(email: string): Promise<User | null> {
@@ -25,9 +27,11 @@ export class UsersService {
     password: string;
     verificationToken: string;
   }) {
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data,
     });
+    this.logger.log(`User created: ${user.id}`);
+    return user;
   }
 
   async updateRefreshToken(id: string, refreshToken: string | null) {
@@ -43,6 +47,7 @@ export class UsersService {
     });
 
     if (!user || user.verificationToken !== verificationToken) {
+      this.logger.error(`Email validation failed: invalid token for ${email}`);
       throw new BadRequestException('Invalid or expired token');
     }
 
@@ -68,6 +73,9 @@ export class UsersService {
     const user = await this.findOne(email);
 
     if (!user || !user.resetToken) {
+      this.logger.error(
+        `Password change failed: user not found or no reset token for ${email}`,
+      );
       throw new BadRequestException('User not found');
     }
 

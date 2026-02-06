@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateCalendarDto } from './dto/create-calendar.dto';
@@ -10,15 +11,19 @@ import { GetCalendarEntriesDto } from './dto/get-calendar-entries.dto';
 
 @Injectable()
 export class CalendarService {
+  private readonly logger = new Logger(CalendarService.name);
+
   constructor(private prismaService: PrismaService) {}
 
   async create(userId: string, createCalendarDto: CreateCalendarDto) {
-    return await this.prismaService.calendarEntry.create({
+    const entry = await this.prismaService.calendarEntry.create({
       data: {
         userId,
         ...createCalendarDto,
       },
     });
+    this.logger.log(`Calendar entry created: ${entry.id} for user ${userId}`);
+    return entry;
   }
 
   findAll(userId: string, getCalendarEntriesDto: GetCalendarEntriesDto) {
@@ -42,6 +47,7 @@ export class CalendarService {
     });
 
     if (!entry) {
+      this.logger.error(`Calendar entry not found: ${id} for user ${userId}`);
       throw new NotFoundException(`Calendar entry with id ${id} not found`);
     }
 
@@ -63,12 +69,15 @@ export class CalendarService {
     );
 
     if (startDate > endDate) {
+      this.logger.error(
+        `Calendar entry update failed: invalid date range for ${id}`,
+      );
       throw new BadRequestException(
         'startDate must be before or equal to endDate',
       );
     }
 
-    return await this.prismaService.calendarEntry.update({
+    const entry = await this.prismaService.calendarEntry.update({
       where: {
         userId,
         id,
@@ -77,16 +86,20 @@ export class CalendarService {
         ...updateCalendarDto,
       },
     });
+    this.logger.log(`Calendar entry updated: ${id}`);
+    return entry;
   }
 
   async remove(userId: string, id: string) {
     await this.findOne(userId, id);
 
-    return await this.prismaService.calendarEntry.delete({
+    const entry = await this.prismaService.calendarEntry.delete({
       where: {
         userId,
         id,
       },
     });
+    this.logger.log(`Calendar entry deleted: ${id}`);
+    return entry;
   }
 }

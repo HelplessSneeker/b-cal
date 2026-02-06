@@ -26,12 +26,9 @@ export class CalendarController {
     @User('id') userId: string,
     @Body() createCalendarDto: CreateCalendarDto,
   ) {
-    const calendar = await this.calendarService.create(
-      userId,
-      createCalendarDto,
-    );
+    await this.calendarService.create(userId, createCalendarDto);
 
-    return { message: `Calendar entry with id ${calendar.id} created` };
+    return { message: `Calendar entry created` };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -63,22 +60,18 @@ export class CalendarController {
     @Param('id') id: string,
     @Body() updateCalendarDto: UpdateCalendarDto,
   ) {
-    const calendarEntry = await this.calendarService.update(
-      userId,
-      id,
-      updateCalendarDto,
-    );
+    await this.calendarService.update(userId, id, updateCalendarDto);
 
     return {
-      message: `Calander entry with id ${calendarEntry.id} has been updated`,
+      message: `Calander entry has been updated`,
     };
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async remove(@User('id') userId: string, @Param('id') id: string) {
-    const calendarEntry = await this.calendarService.remove(userId, id);
+    await this.calendarService.remove(userId, id);
 
-    return { message: `Deletd Calendar entry with id ${calendarEntry.id}` };
+    return { message: `Deletd Calendar entry` };
   }
 }

@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Transporter } from 'nodemailer';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class MailService {
+  private readonly logger = new Logger(MailService.name);
   private transporter: Transporter | null = null;
   private transporterPromise: Promise<Transporter> | null = null;
 
@@ -48,9 +49,9 @@ export class MailService {
     // Development: use Ethereal test account
     const testAccount = await nodemailer.createTestAccount();
 
-    console.log(`Ethereal User: ${testAccount.user}`);
-    console.log(`Ethereal Pass: ${testAccount.pass}`);
-    console.log(`Preview URL: https://ethereal.email`);
+    this.logger.debug(`Ethereal User: ${testAccount.user}`);
+    this.logger.debug(`Ethereal Pass: ${testAccount.pass}`);
+    this.logger.debug(`Preview URL: https://ethereal.email`);
 
     return nodemailer.createTransport({
       host: 'smtp.ethereal.email',
@@ -78,7 +79,7 @@ export class MailService {
 
     if (this.config.get<string>('NODE_ENV') !== 'production') {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      console.log(`Preview: ${nodemailer.getTestMessageUrl(info)}`);
+      this.logger.debug(`Preview: ${nodemailer.getTestMessageUrl(info)}`);
     }
 
     return info;
