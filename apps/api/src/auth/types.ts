@@ -1,12 +1,13 @@
 export interface JwtPayload {
   sub: string;
   email: string;
+  emailVerified: boolean;
 }
 
 export interface JwtUser {
   id: string;
   email: string;
-  emailVerified?: boolean;
+  emailVerified: boolean;
 }
 
 export interface JwtRefreshUser extends JwtUser {

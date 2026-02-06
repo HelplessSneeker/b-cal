@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils/utils"
+import { validatePassword } from "@/lib/utils/password"
 import { login, signup } from "@/lib/api/auth"
 import { Button } from "@/components/ui/button"
 import {
@@ -24,19 +25,6 @@ import { Spinner } from "./ui/spinner"
 
 interface LoginFormProps extends React.ComponentProps<"div"> {
   isSignup?: boolean
-}
-
-function validatePassword(password: string): string | null {
-  if (password.length < 8) {
-    return "Password must be at least 8 characters"
-  }
-  if (!/\d/.test(password)) {
-    return "Password must contain at least one number"
-  }
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-    return "Password must contain at least one symbol"
-  }
-  return null
 }
 
 export function LoginForm({
@@ -76,9 +64,13 @@ export function LoginForm({
     setIsLoading(false)
 
     if (result.success) {
-      const redirectTo = searchParams.get("from") || "/"
-      router.push(redirectTo)
-      router.refresh()
+      if (isSignup) {
+        router.push("/check-email")
+      } else {
+        const redirectTo = searchParams.get("from") || "/"
+        router.push(redirectTo)
+        router.refresh()
+      }
     }
   }
 
@@ -114,7 +106,7 @@ export function LoginForm({
                   <div className="flex items-center">
                     <FieldLabel htmlFor="password">Password</FieldLabel>
                     <a
-                      href="#"
+                      href="/forgot-password"
                       className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                     >
                       Forgot your password?

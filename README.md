@@ -1,6 +1,21 @@
 # b-cal
 
-A calendar application with a Next.js frontend and NestJS API backend.
+A full-stack calendar application built as a Turborepo monorepo.
+
+## Tech Stack
+
+- **Frontend**: Next.js 16, React 19, Tailwind CSS v4, shadcn/ui, Zustand
+- **Backend**: NestJS 11, Prisma 7, PostgreSQL 16, Passport JWT
+- **Tooling**: Turborepo, pnpm workspaces, TypeScript, ESLint, Docker
+
+## Features
+
+- Calendar with Day, Week, and Month views
+- Create, edit, and delete calendar entries (timed and all-day)
+- Cookie-based JWT authentication (access + refresh tokens)
+- Email verification on signup
+- Password reset via email
+- Swagger API documentation
 
 ## Prerequisites
 
@@ -59,6 +74,8 @@ pnpm dev:web    # Frontend at http://localhost:8080
 pnpm dev:api    # API at http://localhost:3000
 ```
 
+The API Swagger docs are available at [http://localhost:3000/api](http://localhost:3000/api).
+
 ## Project Structure
 
 ```
@@ -70,10 +87,22 @@ b-cal/
 └── package.json
 ```
 
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start both web and API in watch mode |
+| `pnpm dev:web` | Start only the frontend |
+| `pnpm dev:api` | Start only the API |
+| `pnpm build` | Build all packages |
+| `pnpm lint` | Lint all packages |
+
+See individual app READMEs for app-specific commands.
+
 ## Documentation
 
-- [API Documentation](apps/api/README.md) - NestJS backend setup, available scripts, API endpoints
-- [Web Documentation](apps/web/README.md) - Next.js frontend setup, project structure, features
+- [API Documentation](apps/api/README.md) - NestJS backend setup, endpoints, database schema
+- [Web Documentation](apps/web/README.md) - Next.js frontend setup, project structure, auth flows
 
 ## Test Users
 

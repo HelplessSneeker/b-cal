@@ -14,6 +14,7 @@ const mockAuthService = {
   signup: jest.fn(),
   refreshTokens: jest.fn(),
   logout: jest.fn(),
+  resendVerificationEmail: jest.fn(),
 };
 
 const mockUser = {
@@ -60,7 +61,11 @@ describe('AuthController', () => {
     it('should set cookies and return success message', async () => {
       mockAuthService.login.mockResolvedValue(mockTokens);
       const res = mockResponse();
-      const user: JwtUser = { id: mockUser.id, email: mockUser.email };
+      const user: JwtUser = {
+        id: mockUser.id,
+        email: mockUser.email,
+        emailVerified: true,
+      };
 
       const result = await controller.login(user, res as Response);
 
@@ -90,6 +95,7 @@ describe('AuthController', () => {
       const user: JwtRefreshUser = {
         id: 'user-1',
         email: 'test@example.com',
+        emailVerified: true,
         refreshToken: 'rt',
       };
       const res = mockResponse();
@@ -119,14 +125,31 @@ describe('AuthController', () => {
   });
 
   describe('me', () => {
-    it('should return user id and email', () => {
-      const user: JwtUser = { id: 'user-1', email: 'test@example.com' };
+    it('should return user data including emailVerified', () => {
+      const user: JwtUser = {
+        id: 'user-1',
+        email: 'test@example.com',
+        emailVerified: true,
+      };
 
       const result = controller.me(user);
 
       expect(result).toEqual({
-        data: { id: 'user-1', email: 'test@example.com' },
+        data: { id: 'user-1', email: 'test@example.com', emailVerified: true },
       });
+    });
+  });
+
+  describe('resendVerification', () => {
+    it('should call resendVerificationEmail and return success message', async () => {
+      mockAuthService.resendVerificationEmail.mockResolvedValue(undefined);
+
+      const result = await controller.resendVerification('user-1');
+
+      expect(result).toEqual({ message: 'Verification email sent' });
+      expect(mockAuthService.resendVerificationEmail).toHaveBeenCalledWith(
+        'user-1',
+      );
     });
   });
 });

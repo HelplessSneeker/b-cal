@@ -18,6 +18,7 @@ interface UserResponse {
   data: {
     id: string;
     email: string;
+    emailVerified: boolean;
   };
 }
 
@@ -171,6 +172,41 @@ describe('AuthController (e2e)', () => {
         .send({ email: 'nonexistent@example.com', password: 'anypassword' })
         .expect(401);
     });
+
+    it('should allow login when email is not verified', async () => {
+      const unverifiedUser = {
+        email: `unverified-login-${Date.now()}@example.com`,
+        password: 'testpassword123!',
+      };
+
+      // Create unverified user
+      await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send(unverifiedUser)
+        .expect(201);
+
+      // Confirm the user is not verified in DB
+      const dbUser = await prisma.user.findUnique({
+        where: { email: unverifiedUser.email },
+      });
+      expect(dbUser!.emailVerified).toBe(false);
+
+      // Login should succeed so user can resend verification
+      const response = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send(unverifiedUser)
+        .expect(201);
+
+      const body = response.body as MessageResponse;
+      expect(body.message).toBe('Login successful');
+
+      const cookies = extractCookies(response);
+      expect(getCookieValue(cookies, 'access_token')).toBeDefined();
+      expect(getCookieValue(cookies, 'refresh_token')).toBeDefined();
+
+      // Cleanup
+      await prisma.user.delete({ where: { email: unverifiedUser.email } });
+    });
   });
 
   describe('POST /auth/refresh', () => {
@@ -280,6 +316,7 @@ describe('AuthController (e2e)', () => {
       const { data } = response.body as UserResponse;
       expect(data).toHaveProperty('id');
       expect(data).toHaveProperty('email', testUser.email);
+      expect(data).toHaveProperty('emailVerified', true);
     });
 
     it('should return 401 without cookies', async () => {
@@ -392,6 +429,76 @@ describe('AuthController (e2e)', () => {
 
       // Cleanup
       await prisma.user.delete({ where: { email: anotherUser.email } });
+    });
+  });
+
+  describe('POST /auth/resend-verification', () => {
+    const unverifiedUser = {
+      email: `resend-verify-${Date.now()}@example.com`,
+      password: 'testpassword123!',
+    };
+
+    let unverifiedCookies: string[];
+
+    beforeAll(async () => {
+      const signupResponse = await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send(unverifiedUser);
+      unverifiedCookies = extractCookies(signupResponse);
+    });
+
+    afterAll(async () => {
+      await prisma.user.deleteMany({
+        where: { email: unverifiedUser.email },
+      });
+    });
+
+    it('should resend verification email for unverified user', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/resend-verification')
+        .set('Cookie', unverifiedCookies)
+        .expect(201);
+
+      const body = response.body as MessageResponse;
+      expect(body.message).toBe('Verification email sent');
+
+      // Verify a new verification token was set
+      const user = await prisma.user.findUnique({
+        where: { email: unverifiedUser.email },
+      });
+      expect(user!.verificationToken).toBeDefined();
+      expect(user!.verificationToken).not.toBeNull();
+    });
+
+    it('should return 400 when email is already verified', async () => {
+      // Verify the email first
+      const user = await prisma.user.findUnique({
+        where: { email: unverifiedUser.email },
+      });
+      await request(app.getHttpServer())
+        .get('/auth/verify-email')
+        .query({ token: user!.verificationToken })
+        .expect(200);
+
+      // Now try to resend — need fresh cookies with emailVerified: true
+      const loginResponse = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send(unverifiedUser);
+      const verifiedCookies = extractCookies(loginResponse);
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/resend-verification')
+        .set('Cookie', verifiedCookies)
+        .expect(400);
+
+      const body = response.body as ErrorResponse;
+      expect(body.message).toBe('Email already verified');
+    });
+
+    it('should return 401 without authentication', async () => {
+      await request(app.getHttpServer())
+        .post('/auth/resend-verification')
+        .expect(401);
     });
   });
 

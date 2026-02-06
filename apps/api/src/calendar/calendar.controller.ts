@@ -13,14 +13,15 @@ import { CalendarService } from './calendar.service';
 import { CreateCalendarDto } from './dto/create-calendar.dto';
 import { UpdateCalendarDto } from './dto/update-calendar.dto';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { EmailVerifiedGuard } from 'src/auth/guard/email-verified.guard';
 import { User } from 'src/auth/decorators/user.decorator';
 import { GetCalendarEntriesDto } from './dto/get-calendar-entries.dto';
 
+@UseGuards(JwtAuthGuard, EmailVerifiedGuard)
 @Controller('calendar')
 export class CalendarController {
   constructor(private readonly calendarService: CalendarService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Post()
   async create(
     @User('id') userId: string,
@@ -31,7 +32,6 @@ export class CalendarController {
     return { message: `Calendar entry created` };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(
     @User('id') userId: string,
@@ -45,7 +45,6 @@ export class CalendarController {
     return { data: calendarEntries };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOne(@User('id') userId: string, @Param('id') id: string) {
     const calendarEntry = await this.calendarService.findOne(userId, id);
@@ -53,7 +52,6 @@ export class CalendarController {
     return { data: calendarEntry };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async update(
     @User('id') userId: string,
@@ -67,7 +65,6 @@ export class CalendarController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async remove(@User('id') userId: string, @Param('id') id: string) {
     await this.calendarService.remove(userId, id);

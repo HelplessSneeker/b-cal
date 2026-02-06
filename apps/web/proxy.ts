@@ -1,16 +1,21 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-const PUBLIC_ROUTES = ["/login", "/signup"]
+const AUTH_ROUTES = ["/login", "/signup", "/forgot-password", "/reset-password"]
+const OPEN_ROUTES = ["/verify-email", "/check-email"]
 const AUTH_COOKIE_NAME = "access_token"
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isAuthenticated = request.cookies.has(AUTH_COOKIE_NAME)
 
-  // Allow public routes
-  if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
-    // Redirect authenticated users away from auth pages
+  // Allow verification routes regardless of auth state
+  if (OPEN_ROUTES.some((route) => pathname.startsWith(route))) {
+    return NextResponse.next()
+  }
+
+  // Auth pages: redirect authenticated users to the app
+  if (AUTH_ROUTES.some((route) => pathname.startsWith(route))) {
     if (isAuthenticated) {
       return NextResponse.redirect(new URL("/", request.url))
     }

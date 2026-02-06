@@ -55,7 +55,7 @@ describe('CalendarController', () => {
       const result = await controller.create('user-1', createDto);
 
       expect(result).toEqual({
-        message: 'Calendar entry with id entry-1 created',
+        message: 'Calendar entry created',
       });
       expect(mockCalendarService.create).toHaveBeenCalledWith(
         'user-1',
@@ -111,7 +111,7 @@ describe('CalendarController', () => {
       const result = await controller.update('user-1', 'entry-1', updateDto);
 
       expect(result).toEqual({
-        message: 'Calander entry with id entry-1 has been updated',
+        message: 'Calander entry has been updated',
       });
       expect(mockCalendarService.update).toHaveBeenCalledWith(
         'user-1',
@@ -128,7 +128,7 @@ describe('CalendarController', () => {
       const result = await controller.remove('user-1', 'entry-1');
 
       expect(result).toEqual({
-        message: 'Deletd Calendar entry with id entry-1',
+        message: 'Deletd Calendar entry',
       });
       expect(mockCalendarService.remove).toHaveBeenCalledWith(
         'user-1',

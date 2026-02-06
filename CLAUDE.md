@@ -45,13 +45,15 @@ docker compose up -d                         # Start PostgreSQL
 
 ## Architecture
 
-**Authentication**: Cookie-based JWT auth (httpOnly cookies, not Bearer headers). Access tokens expire in 1h, refresh tokens in 7d.
+**Authentication**: Cookie-based JWT auth (httpOnly cookies, not Bearer headers). Access tokens expire in 1h, refresh tokens in 7d. Email verification is required after signup — unverified users are redirected to `/check-email`. Password reset is supported via email with 1h token expiry.
 
 **Frontend State**: Zustand stores for user state and calendar state (view mode, entries, modals).
 
 **API Structure**: NestJS modules (AuthModule, UsersModule, CalendarModule, PrismaModule, MailModule). Swagger docs at `/api`.
 
-**Database**: PostgreSQL via Prisma. Models: User, CalendarEntry.
+**Database**: PostgreSQL via Prisma. Models: User (with emailVerified, verificationToken, resetToken fields), CalendarEntry.
+
+**Email**: Nodemailer-based mail service. Uses Ethereal test accounts in development (preview URLs logged to console). Production requires SMTP configuration.
 
 ## Environment
 
@@ -63,5 +65,5 @@ docker compose up -d                         # Start PostgreSQL
 
 ## Test Users (after seeding)
 
-- `alice@example.com` / `password123!`
-- `bob@example.com` / `password123!`
+- `alice@example.com` / `password123!` (email verified)
+- `bob@example.com` / `password123!` (email verified)

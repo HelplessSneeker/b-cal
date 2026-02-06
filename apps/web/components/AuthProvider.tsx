@@ -24,6 +24,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (cancelled) return
 
       if (userData) {
+        if (!userData.emailVerified) {
+          router.push("/check-email")
+          return
+        }
         setUser(userData)
       } else {
         // Token was invalid/expired - proxy didn't catch it

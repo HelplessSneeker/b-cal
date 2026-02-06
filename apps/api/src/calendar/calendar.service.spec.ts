@@ -72,22 +72,22 @@ describe('CalendarService', () => {
   });
 
   describe('findAll', () => {
-    it('should return all entries for user without date filters', () => {
+    it('should return all entries for user without date filters', async () => {
       const entries = [mockCalendarEntry];
       mockPrismaService.calendarEntry.findMany.mockResolvedValue(entries);
 
-      service.findAll('user-1', {});
+      await service.findAll('user-1', {});
 
       expect(mockPrismaService.calendarEntry.findMany).toHaveBeenCalledWith({
         where: { userId: 'user-1' },
       });
     });
 
-    it('should apply startDate filter when provided', () => {
+    it('should apply startDate filter when provided', async () => {
       const startDate = '2026-01-01';
       mockPrismaService.calendarEntry.findMany.mockResolvedValue([]);
 
-      service.findAll('user-1', { startDate });
+      await service.findAll('user-1', { startDate });
 
       expect(mockPrismaService.calendarEntry.findMany).toHaveBeenCalledWith({
         where: {
@@ -97,11 +97,11 @@ describe('CalendarService', () => {
       });
     });
 
-    it('should apply endDate filter when provided', () => {
+    it('should apply endDate filter when provided', async () => {
       const endDate = '2026-01-31';
       mockPrismaService.calendarEntry.findMany.mockResolvedValue([]);
 
-      service.findAll('user-1', { endDate });
+      await service.findAll('user-1', { endDate });
 
       expect(mockPrismaService.calendarEntry.findMany).toHaveBeenCalledWith({
         where: {
@@ -111,12 +111,12 @@ describe('CalendarService', () => {
       });
     });
 
-    it('should apply both date filters when provided', () => {
+    it('should apply both date filters when provided', async () => {
       const startDate = '2026-01-01';
       const endDate = '2026-01-31';
       mockPrismaService.calendarEntry.findMany.mockResolvedValue([]);
 
-      service.findAll('user-1', { startDate, endDate });
+      await service.findAll('user-1', { startDate, endDate });
 
       expect(mockPrismaService.calendarEntry.findMany).toHaveBeenCalledWith({
         where: {

@@ -43,8 +43,13 @@ export class AuthService {
   private async generateTokens(user: {
     id: string;
     email: string;
+    emailVerified: boolean;
   }): Promise<TokenResponse> {
-    const payload = { email: user.email, sub: user.id };
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      emailVerified: user.emailVerified,
+    };
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(payload),
       this.jwtService.signAsync(payload, {
@@ -124,6 +129,29 @@ export class AuthService {
     );
     await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
     return tokens;
+  }
+
+  async resendVerificationEmail(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    if (user.emailVerified) {
+      throw new BadRequestException('Email already verified');
+    }
+
+    const verificationToken = await this.jwtService.signAsync(
+      { email: user.email },
+      {
+        secret: jwtConstants.mailSecret,
+        expiresIn: '1d',
+      },
+    );
+
+    await this.usersService.updateVerificationToken(user.id, verificationToken);
+    await this.mailService.sendVerificationEmail(user.email, verificationToken);
+    this.logger.log(`Verification email resent: ${user.id}`);
   }
 
   async validateEmail(token: string) {

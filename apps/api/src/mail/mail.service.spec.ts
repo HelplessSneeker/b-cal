@@ -61,7 +61,9 @@ describe('MailService', () => {
       const mockInfo = { messageId: '123' };
       mockSendMail.mockResolvedValue(mockInfo);
 
-      const result = await service.sendMail(mailOptions);
+      const result = (await service.sendMail(mailOptions)) as {
+        messageId: string;
+      };
 
       expect(result).toEqual(mockInfo);
       expect(mockSendMail).toHaveBeenCalledWith(mailOptions);
@@ -120,14 +122,19 @@ describe('MailService', () => {
 
       await service.sendVerificationEmail('user@example.com', 'verify-token');
 
-      expect(mockSendMail).toHaveBeenCalledWith({
-        from: 'test@b-cal.dev',
-        to: 'user@example.com',
-        subject: 'Verify your email',
-        html: expect.stringContaining(
-          'http://localhost:8080/verify-email?token=verify-token',
-        ),
-      });
+      expect(mockSendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          from: 'test@b-cal.dev',
+          to: 'user@example.com',
+          subject: 'Verify your email',
+        }),
+      );
+      const sentHtml = String(
+        (mockSendMail.mock.calls[0] as [{ html: string }])[0].html,
+      );
+      expect(sentHtml).toContain(
+        'http://localhost:8080/verify-email?token=verify-token',
+      );
     });
 
     it('should include verification link in email HTML', async () => {
@@ -135,7 +142,7 @@ describe('MailService', () => {
 
       await service.sendVerificationEmail('user@example.com', 'my-token');
 
-      const callArgs = mockSendMail.mock.calls[0][0];
+      const callArgs = (mockSendMail.mock.calls[0] as [{ html: string }])[0];
       expect(callArgs.html).toContain('Email Verification');
       expect(callArgs.html).toContain(
         'href="http://localhost:8080/verify-email?token=my-token"',
@@ -149,14 +156,19 @@ describe('MailService', () => {
 
       await service.sendPasswordResetEmail('user@example.com', 'reset-token');
 
-      expect(mockSendMail).toHaveBeenCalledWith({
-        from: 'test@b-cal.dev',
-        to: 'user@example.com',
-        subject: 'Reset your password',
-        html: expect.stringContaining(
-          'http://localhost:8080/reset-password?token=reset-token',
-        ),
-      });
+      expect(mockSendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          from: 'test@b-cal.dev',
+          to: 'user@example.com',
+          subject: 'Reset your password',
+        }),
+      );
+      const sentHtml = String(
+        (mockSendMail.mock.calls[0] as [{ html: string }])[0].html,
+      );
+      expect(sentHtml).toContain(
+        'http://localhost:8080/reset-password?token=reset-token',
+      );
     });
 
     it('should include reset link and expiry notice in email HTML', async () => {
@@ -167,7 +179,7 @@ describe('MailService', () => {
         'my-reset-token',
       );
 
-      const callArgs = mockSendMail.mock.calls[0][0];
+      const callArgs = (mockSendMail.mock.calls[0] as [{ html: string }])[0];
       expect(callArgs.html).toContain('Password Reset');
       expect(callArgs.html).toContain(
         'href="http://localhost:8080/reset-password?token=my-reset-token"',

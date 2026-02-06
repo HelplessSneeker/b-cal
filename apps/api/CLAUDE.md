@@ -81,6 +81,7 @@ src/
 - `POST /auth/refresh` — JwtRefreshAuthGuard validates refresh token, issues new token pair
 - `POST /auth/logout` — JwtAuthGuard required, clears cookies and invalidates refresh token
 - `GET /auth/me` — JwtAuthGuard required, returns `{ id, email }`
+- `POST /auth/resend-verification` — JwtAuthGuard required, resends verification email with new token
 - `GET /auth/verify-email?token=` — validates email verification token, sets `emailVerified: true`
 - `POST /auth/forgot-password` — sends password reset email (silent on non-existent email for security)
 - `POST /auth/reset-password` — changes password using reset token (token + new password in body)
@@ -98,7 +99,7 @@ src/
 
 **Strategies:** LocalStrategy (bcrypt, 10 rounds), JwtStrategy (reads access_token cookie), JwtRefreshStrategy (reads refresh_token cookie).
 
-**Guards:** LocalAuthGuard, JwtAuthGuard, JwtRefreshAuthGuard — use on protected routes.
+**Guards:** LocalAuthGuard, JwtAuthGuard, JwtRefreshAuthGuard, EmailVerifiedGuard — use on protected routes. EmailVerifiedGuard can be combined with JwtAuthGuard to restrict access to verified users only (throws ForbiddenException if email not verified).
 
 **Custom decorators:** `@User()` — extracts JwtUser (`{ id, email }`) from request in JWT-protected routes.
 

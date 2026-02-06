@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UsersService } from 'src/users/users.service';
 import { MailService } from 'src/mail/mail.service';
+import { JwtUser } from './types';
 import * as bcrypt from 'bcrypt';
 
 jest.mock('bcrypt');
@@ -31,6 +32,7 @@ const mockUsersService = {
   findById: jest.fn(),
   create: jest.fn(),
   updateRefreshToken: jest.fn(),
+  updateVerificationToken: jest.fn(),
   validateEmail: jest.fn(),
   setPasswordResetToken: jest.fn(),
   changePassword: jest.fn(),
@@ -108,7 +110,7 @@ describe('AuthService', () => {
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-refresh');
       mockUsersService.updateRefreshToken.mockResolvedValue(undefined);
 
-      const result = await service.login(mockUser as any);
+      const result = await service.login(mockUser as JwtUser);
 
       expect(result).toEqual({
         access_token: 'access-token',
@@ -134,6 +136,7 @@ describe('AuthService', () => {
       mockUsersService.create.mockResolvedValue({
         id: 'new-user',
         email: 'new@example.com',
+        emailVerified: false,
       });
       mockMailService.sendVerificationEmail.mockResolvedValue(undefined);
       mockUsersService.updateRefreshToken.mockResolvedValue(undefined);
@@ -235,7 +238,10 @@ describe('AuthService', () => {
       await service.validateEmail('valid-token');
 
       expect(mockJwtService.verify).toHaveBeenCalled();
-      expect(mockJwtService.verify.mock.calls[0][0]).toBe('valid-token');
+      expect(mockJwtService.verify).toHaveBeenCalledWith(
+        'valid-token',
+        expect.any(Object),
+      );
       expect(mockUsersService.validateEmail).toHaveBeenCalledWith(
         'test@example.com',
         'valid-token',
@@ -264,6 +270,50 @@ describe('AuthService', () => {
     });
   });
 
+  describe('resendVerificationEmail', () => {
+    it('should generate new token and send verification email', async () => {
+      mockUsersService.findById.mockResolvedValue(mockUser);
+      mockJwtService.signAsync.mockResolvedValue('new-verification-token');
+      mockUsersService.updateVerificationToken.mockResolvedValue(undefined);
+      mockMailService.sendVerificationEmail.mockResolvedValue(undefined);
+
+      await service.resendVerificationEmail('user-1');
+
+      expect(mockUsersService.findById).toHaveBeenCalledWith('user-1');
+      expect(mockJwtService.signAsync).toHaveBeenCalledWith(
+        { email: mockUser.email },
+        expect.objectContaining({ expiresIn: '1d' }),
+      );
+      expect(mockUsersService.updateVerificationToken).toHaveBeenCalledWith(
+        'user-1',
+        'new-verification-token',
+      );
+      expect(mockMailService.sendVerificationEmail).toHaveBeenCalledWith(
+        mockUser.email,
+        'new-verification-token',
+      );
+    });
+
+    it('should throw BadRequestException if user not found', async () => {
+      mockUsersService.findById.mockResolvedValue(null);
+
+      await expect(service.resendVerificationEmail('bad-id')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException if email already verified', async () => {
+      mockUsersService.findById.mockResolvedValue({
+        ...mockUser,
+        emailVerified: true,
+      });
+
+      await expect(service.resendVerificationEmail('user-1')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
   describe('requestPasswordReset', () => {
     it('should generate reset token and send email for existing user', async () => {
       mockUsersService.findOne.mockResolvedValue(mockUser);
@@ -276,7 +326,7 @@ describe('AuthService', () => {
       expect(mockUsersService.findOne).toHaveBeenCalledWith('test@example.com');
       expect(mockJwtService.signAsync).toHaveBeenCalledWith(
         { email: 'test@example.com' },
-        expect.objectContaining({ expiresIn: '1d' }),
+        expect.objectContaining({ expiresIn: '1h' }),
       );
       expect(mockUsersService.setPasswordResetToken).toHaveBeenCalledWith(
         'test@example.com',
@@ -320,7 +370,10 @@ describe('AuthService', () => {
       });
 
       expect(mockJwtService.verify).toHaveBeenCalled();
-      expect(mockJwtService.verify.mock.calls[0][0]).toBe('valid-reset-token');
+      expect(mockJwtService.verify).toHaveBeenCalledWith(
+        'valid-reset-token',
+        expect.any(Object),
+      );
       expect(mockUsersService.findOne).toHaveBeenCalledWith('test@example.com');
       expect(bcrypt.hash).toHaveBeenCalledWith('newpassword123!', 10);
       expect(mockUsersService.changePassword).toHaveBeenCalledWith(

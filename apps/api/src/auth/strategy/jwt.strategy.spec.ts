@@ -28,10 +28,11 @@ describe('JwtStrategy', () => {
   });
 
   describe('validate', () => {
-    it('should return user object with id and email from payload', () => {
+    it('should return user object with id, email, and emailVerified from payload', () => {
       const payload: JwtPayload = {
         sub: 'user-123',
         email: 'test@example.com',
+        emailVerified: true,
       };
 
       const result = strategy.validate(payload);
@@ -39,6 +40,7 @@ describe('JwtStrategy', () => {
       expect(result).toEqual({
         id: 'user-123',
         email: 'test@example.com',
+        emailVerified: true,
       });
     });
 
@@ -46,12 +48,14 @@ describe('JwtStrategy', () => {
       const payload: JwtPayload = {
         sub: 'different-user-id',
         email: 'another@example.com',
+        emailVerified: false,
       };
 
       const result = strategy.validate(payload);
 
       expect(result.id).toBe('different-user-id');
       expect(result.email).toBe('another@example.com');
+      expect(result.emailVerified).toBe(false);
     });
   });
 });

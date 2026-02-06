@@ -86,7 +86,11 @@ describe('UsersService', () => {
 
   describe('create', () => {
     it('should create and return a new user', async () => {
-      const input = { email: 'new@example.com', password: 'hashed' };
+      const input = {
+        email: 'new@example.com',
+        password: 'hashed',
+        verificationToken: 'token',
+      };
       mockPrisma.user.create.mockResolvedValue({
         id: 'user-2',
         ...input,

@@ -46,6 +46,7 @@ describe('JwtRefreshStrategy', () => {
       const payload: JwtPayload = {
         sub: 'user-123',
         email: 'test@example.com',
+        emailVerified: false,
       };
 
       const result = strategy.validate(mockRequest, payload);
@@ -67,6 +68,7 @@ describe('JwtRefreshStrategy', () => {
       const payload: JwtPayload = {
         sub: 'user-456',
         email: 'another@example.com',
+        emailVerified: false,
       };
 
       const result = strategy.validate(mockRequest, payload);
@@ -84,6 +86,7 @@ describe('JwtRefreshStrategy', () => {
       const payload: JwtPayload = {
         sub: 'specific-user-id',
         email: 'user@example.com',
+        emailVerified: false,
       };
 
       const result = strategy.validate(mockRequest, payload);

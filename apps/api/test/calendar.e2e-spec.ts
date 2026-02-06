@@ -32,6 +32,7 @@ interface UserResponse {
   data: {
     id: string;
     email: string;
+    emailVerified: boolean;
   };
 }
 
@@ -41,9 +42,16 @@ function extractCookies(response: request.Response): string[] {
   return Array.isArray(cookies) ? cookies : [cookies];
 }
 
-function extractIdFromMessage(body: MessageResponse): string {
-  const match = body.message.match(/id (\S+)/);
-  return match ? match[1] : '';
+async function findEntryByTitle(
+  prismaService: PrismaService,
+  title: string,
+  userEmail: string,
+): Promise<string> {
+  const entry = await prismaService.calendarEntry.findFirst({
+    where: { title, user: { email: userEmail } },
+    orderBy: { startDate: 'desc' },
+  });
+  return entry!.id;
 }
 
 describe('CalendarController (e2e)', () => {
@@ -131,6 +139,53 @@ describe('CalendarController (e2e)', () => {
     await app.close();
   });
 
+  describe('Email verification guard', () => {
+    const unverifiedUser = {
+      email: `calendar-unverified-${Date.now()}@example.com`,
+      password: 'testpassword123!',
+    };
+
+    let unverifiedCookies: string[];
+
+    beforeAll(async () => {
+      const signupResponse = await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send(unverifiedUser);
+      unverifiedCookies = extractCookies(signupResponse);
+    });
+
+    afterAll(async () => {
+      await prisma.user.deleteMany({
+        where: { email: unverifiedUser.email },
+      });
+    });
+
+    it('should return 403 for unverified user on POST /calendar', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/calendar')
+        .set('Cookie', unverifiedCookies)
+        .send({
+          title: 'Test',
+          startDate: '2025-01-15T10:00:00.000Z',
+          endDate: '2025-01-15T11:00:00.000Z',
+        })
+        .expect(403);
+
+      const body = response.body as ErrorResponse;
+      expect(body.message).toBe('Email not verified');
+    });
+
+    it('should return 403 for unverified user on GET /calendar', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/calendar')
+        .set('Cookie', unverifiedCookies)
+        .expect(403);
+
+      const body = response.body as ErrorResponse;
+      expect(body.message).toBe('Email not verified');
+    });
+  });
+
   describe('POST /calendar', () => {
     const validEntry = {
       title: 'Test Meeting',
@@ -147,7 +202,7 @@ describe('CalendarController (e2e)', () => {
         .expect(201);
 
       const body = response.body as MessageResponse;
-      expect(body.message).toMatch(/Calendar entry with id .+ created/);
+      expect(body.message).toBe('Calendar entry created');
     });
 
     it('should create a calendar entry without optional content', async () => {
@@ -164,7 +219,7 @@ describe('CalendarController (e2e)', () => {
         .expect(201);
 
       const body = response.body as MessageResponse;
-      expect(body.message).toMatch(/Calendar entry with id .+ created/);
+      expect(body.message).toBe('Calendar entry created');
     });
 
     it('should create a calendar entry with wholeDay set to true', async () => {
@@ -175,14 +230,17 @@ describe('CalendarController (e2e)', () => {
         wholeDay: true,
       };
 
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post('/calendar')
         .set('Cookie', userCookies)
         .send(wholeDayEntry)
         .expect(201);
 
-      const body = response.body as MessageResponse;
-      const entryId = extractIdFromMessage(body);
+      const entryId = await findEntryByTitle(
+        prisma,
+        'All Day Event',
+        testUser.email,
+      );
 
       const getResponse = await request(app.getHttpServer())
         .get(`/calendar/${entryId}`)
@@ -435,7 +493,7 @@ describe('CalendarController (e2e)', () => {
     let testEntryId: string;
 
     beforeAll(async () => {
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post('/calendar')
         .set('Cookie', userCookies)
         .send({
@@ -444,7 +502,11 @@ describe('CalendarController (e2e)', () => {
           endDate: '2025-03-10T15:00:00.000Z',
           content: 'Entry for testing findOne',
         });
-      testEntryId = extractIdFromMessage(response.body as MessageResponse);
+      testEntryId = await findEntryByTitle(
+        prisma,
+        'Specific Entry',
+        testUser.email,
+      );
     });
 
     it('should return a specific calendar entry', async () => {
@@ -478,7 +540,7 @@ describe('CalendarController (e2e)', () => {
 
     it("should return 404 when accessing another user's entry", async () => {
       // Create entry as other user
-      const createResponse = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post('/calendar')
         .set('Cookie', otherUserCookies)
         .send({
@@ -486,8 +548,10 @@ describe('CalendarController (e2e)', () => {
           startDate: '2025-03-15T09:00:00.000Z',
           endDate: '2025-03-15T10:00:00.000Z',
         });
-      const otherEntryId = extractIdFromMessage(
-        createResponse.body as MessageResponse,
+      const otherEntryId = await findEntryByTitle(
+        prisma,
+        'Private Entry',
+        otherUser.email,
       );
 
       // Try to access as main user
@@ -507,7 +571,11 @@ describe('CalendarController (e2e)', () => {
     let updateEntryId: string;
 
     beforeEach(async () => {
-      const response = await request(app.getHttpServer())
+      await prisma.calendarEntry.deleteMany({
+        where: { title: 'Entry to Update', user: { email: testUser.email } },
+      });
+
+      await request(app.getHttpServer())
         .post('/calendar')
         .set('Cookie', userCookies)
         .send({
@@ -516,7 +584,11 @@ describe('CalendarController (e2e)', () => {
           endDate: '2025-04-10T11:00:00.000Z',
           content: 'Original content',
         });
-      updateEntryId = extractIdFromMessage(response.body as MessageResponse);
+      updateEntryId = await findEntryByTitle(
+        prisma,
+        'Entry to Update',
+        testUser.email,
+      );
     });
 
     it('should update a calendar entry title', async () => {
@@ -527,9 +599,7 @@ describe('CalendarController (e2e)', () => {
         .expect(200);
 
       const body = response.body as MessageResponse;
-      expect(body.message).toMatch(
-        /Calander entry with id .+ has been updated/,
-      );
+      expect(body.message).toBe('Calander entry has been updated');
 
       // Verify the update
       const getResponse = await request(app.getHttpServer())
@@ -628,7 +698,7 @@ describe('CalendarController (e2e)', () => {
 
     it("should return 404 when updating another user's entry", async () => {
       // Create entry as other user
-      const createResponse = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post('/calendar')
         .set('Cookie', otherUserCookies)
         .send({
@@ -636,8 +706,10 @@ describe('CalendarController (e2e)', () => {
           startDate: '2025-04-20T09:00:00.000Z',
           endDate: '2025-04-20T10:00:00.000Z',
         });
-      const otherEntryId = extractIdFromMessage(
-        createResponse.body as MessageResponse,
+      const otherEntryId = await findEntryByTitle(
+        prisma,
+        'Other User Entry',
+        otherUser.email,
       );
 
       // Try to update as main user
@@ -658,7 +730,7 @@ describe('CalendarController (e2e)', () => {
     let deleteEntryId: string;
 
     beforeEach(async () => {
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post('/calendar')
         .set('Cookie', userCookies)
         .send({
@@ -666,7 +738,11 @@ describe('CalendarController (e2e)', () => {
           startDate: '2025-05-10T10:00:00.000Z',
           endDate: '2025-05-10T11:00:00.000Z',
         });
-      deleteEntryId = extractIdFromMessage(response.body as MessageResponse);
+      deleteEntryId = await findEntryByTitle(
+        prisma,
+        'Entry to Delete',
+        testUser.email,
+      );
     });
 
     it('should delete a calendar entry', async () => {
@@ -676,7 +752,7 @@ describe('CalendarController (e2e)', () => {
         .expect(200);
 
       const body = response.body as MessageResponse;
-      expect(body.message).toMatch(/Deletd Calendar entry with id/);
+      expect(body.message).toBe('Deletd Calendar entry');
 
       // Verify deletion
       await request(app.getHttpServer())
@@ -704,7 +780,7 @@ describe('CalendarController (e2e)', () => {
 
     it("should return 404 when deleting another user's entry", async () => {
       // Create entry as other user
-      const createResponse = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post('/calendar')
         .set('Cookie', otherUserCookies)
         .send({
@@ -712,8 +788,10 @@ describe('CalendarController (e2e)', () => {
           startDate: '2025-05-20T09:00:00.000Z',
           endDate: '2025-05-20T10:00:00.000Z',
         });
-      const otherEntryId = extractIdFromMessage(
-        createResponse.body as MessageResponse,
+      const otherEntryId = await findEntryByTitle(
+        prisma,
+        'Other User Entry to Delete',
+        otherUser.email,
       );
 
       // Try to delete as main user
