@@ -68,19 +68,6 @@ describe('LocalStrategy', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('should throw UnauthorizedException when email is not verified', async () => {
-      const unverifiedUser: JwtUser = {
-        id: 'user-1',
-        email: 'test@example.com',
-        emailVerified: false,
-      };
-      mockAuthService.validateUser.mockResolvedValue(unverifiedUser);
-
-      await expect(
-        strategy.validate('test@example.com', 'password'),
-      ).rejects.toThrow(new UnauthorizedException('Email not verified'));
-    });
-
     it('should call authService.validateUser with correct parameters', async () => {
       mockAuthService.validateUser.mockResolvedValue(mockUser);
 

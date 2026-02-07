@@ -90,7 +90,9 @@ describe('MailService', () => {
     });
 
     it('should log preview URL in non-production environment', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const loggerSpy = jest
+        .spyOn(service['logger'], 'debug')
+        .mockImplementation();
       mockSendMail.mockResolvedValue({ messageId: '123' });
 
       await service.sendMail({
@@ -99,10 +101,10 @@ describe('MailService', () => {
         html: '<p>Test</p>',
       });
 
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         'Preview: https://ethereal.email/message/123',
       );
-      consoleSpy.mockRestore();
+      loggerSpy.mockRestore();
     });
 
     it('should reuse existing transporter on subsequent calls', async () => {
@@ -303,7 +305,9 @@ describe('MailService', () => {
     });
 
     it('should not log preview URL in production', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const loggerSpy = jest
+        .spyOn(productionService['logger'], 'debug')
+        .mockImplementation();
       mockSendMail.mockResolvedValue({ messageId: '123' });
 
       await productionService.sendMail({
@@ -312,10 +316,10 @@ describe('MailService', () => {
         html: '<p>Test</p>',
       });
 
-      expect(consoleSpy).not.toHaveBeenCalledWith(
+      expect(loggerSpy).not.toHaveBeenCalledWith(
         expect.stringContaining('Preview:'),
       );
-      consoleSpy.mockRestore();
+      loggerSpy.mockRestore();
     });
   });
 
