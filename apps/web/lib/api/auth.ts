@@ -124,6 +124,20 @@ export async function refreshToken(): Promise<AuthResponse> {
   }
 }
 
+export async function deleteUser(): Promise<AuthResponse> {
+  try {
+    await api("/user", {
+      method: "DELETE",
+    })
+    return { success: true }
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return { success: false, error: error.message }
+    }
+    return { success: false, error: "An unexpected error occurred" }
+  }
+}
+
 export async function getMe(): Promise<User | null> {
   try {
     const user = await api<User>("/auth/me", {

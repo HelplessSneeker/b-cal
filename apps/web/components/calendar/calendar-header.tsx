@@ -1,14 +1,15 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
-import { toast } from "sonner"
-import { logout } from "@/lib/api/auth"
+import { logout, deleteUser } from "@/lib/api/auth"
 import { useUserStore } from "@/lib/stores/userStore"
 import { useCalendarStore, CalendarView } from "@/lib/stores/calendarStore"
 import { getWeekNumber } from "@/lib/calendar/date-utils"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Input } from "@/components/ui/input"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +18,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Field, FieldLabel } from "@/components/ui/field"
 
 function getAvatarInitials(email: string): string {
   const [localPart, domain] = email.split("@")
@@ -51,6 +61,10 @@ export function CalendarHeader() {
   const { view, currentDate, setView, setCurrentDate } = useCalendarStore()
   const initials = user?.email ? getAvatarInitials(user.email) : "?"
 
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [confirmEmail, setConfirmEmail] = useState("")
+  const [isDeleting, setIsDeleting] = useState(false)
+
   const handleTodayClick = () => {
     setCurrentDate(new Date())
   }
@@ -75,82 +89,124 @@ export function CalendarHeader() {
     setCurrentDate(newDate)
   }
 
-  const handleAvatarMenuClick = (action: string) => {
-    toast.info(`${action} clicked`)
-  }
-
   const handleLogout = async () => {
     await logout()
     clearUser()
     router.push("/login")
   }
 
+  const handleDelete = async () => {
+    setIsDeleting(true)
+    const result = await deleteUser()
+    if (result.success) {
+      clearUser()
+      router.push("/login")
+    }
+    setIsDeleting(false)
+  }
+
   return (
-    <header className="flex items-center justify-between border-b py-4 pr-6">
-      <div className="flex w-64 items-center justify-between pl-4">
-        <h1 className="text-2xl font-bold">Calendar</h1>
-        <Button variant="outline" size="sm" onClick={handleTodayClick}>
-          Today
-        </Button>
-      </div>
+    <>
+      <header className="flex items-center justify-between border-b py-4 pr-6">
+        <div className="flex w-64 items-center justify-between pl-4">
+          <h1 className="text-2xl font-bold">Calendar</h1>
+          <Button variant="outline" size="sm" onClick={handleTodayClick}>
+            Today
+          </Button>
+        </div>
 
-      <div className="flex flex-1 items-center justify-center gap-2">
-        <Button variant="ghost" size="icon" onClick={() => handleNavigate(-1)}>
-          <ChevronLeftIcon className="size-4" />
-        </Button>
-        <span className="text-muted-foreground">
-          {formatDateDisplay(currentDate, view)}
-        </span>
-        <Button variant="ghost" size="icon" onClick={() => handleNavigate(1)}>
-          <ChevronRightIcon className="size-4" />
-        </Button>
-      </div>
+        <div className="flex flex-1 items-center justify-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => handleNavigate(-1)}>
+            <ChevronLeftIcon className="size-4" />
+          </Button>
+          <span className="text-muted-foreground">
+            {formatDateDisplay(currentDate, view)}
+          </span>
+          <Button variant="ghost" size="icon" onClick={() => handleNavigate(1)}>
+            <ChevronRightIcon className="size-4" />
+          </Button>
+        </div>
 
-      <div className="flex items-center gap-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              {view}
-              <ChevronDownIcon className="ml-1 size-4" />
+        <div className="flex items-center gap-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                {view}
+                <ChevronDownIcon className="ml-1 size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleViewChange(CalendarView.Day)}>
+                Day
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleViewChange(CalendarView.Week)}>
+                Week
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleViewChange(CalendarView.Month)}>
+                Month
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <Avatar>
+                  <AvatarFallback>{initials}</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                Logout
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                Delete Account
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={(open) => {
+        setDeleteDialogOpen(open)
+        if (!open) setConfirmEmail("")
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Account</DialogTitle>
+            <DialogDescription>
+              This action is permanent and cannot be undone. All your data will be
+              deleted. Type your email address to confirm.
+            </DialogDescription>
+          </DialogHeader>
+          <Field>
+            <FieldLabel>Email</FieldLabel>
+            <Input
+              placeholder={user?.email}
+              value={confirmEmail}
+              onChange={(e) => setConfirmEmail(e.target.value)}
+            />
+          </Field>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleViewChange(CalendarView.Day)}>
-              Day
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleViewChange(CalendarView.Week)}>
-              Week
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleViewChange(CalendarView.Month)}>
-              Month
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <Avatar>
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
+            <Button
+              variant="destructive"
+              disabled={confirmEmail !== user?.email || isDeleting}
+              onClick={handleDelete}
+            >
+              {isDeleting ? "Deleting..." : "Delete Account"}
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleAvatarMenuClick("Settings")}>
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleAvatarMenuClick("Profile")}>
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onClick={handleLogout}>
-              Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </header>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

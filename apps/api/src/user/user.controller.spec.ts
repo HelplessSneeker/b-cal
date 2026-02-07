@@ -31,11 +31,13 @@ describe('UserController', () => {
   describe('delete', () => {
     it('should delete the user and return success message', async () => {
       mockUserService.deleteUser.mockResolvedValue(undefined);
+      const mockRes = { clearCookie: jest.fn() } as any;
 
-      const result = await controller.delete('user-1');
+      const result = await controller.delete('user-1', mockRes);
 
       expect(result).toEqual({ message: 'Successfully deleted user' });
       expect(mockUserService.deleteUser).toHaveBeenCalledWith('user-1');
+      expect(mockRes.clearCookie).toHaveBeenCalledTimes(2);
     });
   });
 });
