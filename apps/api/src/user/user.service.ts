@@ -3,8 +3,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from 'generated/prisma/client';
 
 @Injectable()
-export class UsersService {
-  private readonly logger = new Logger(UsersService.name);
+export class UserService {
+  private readonly logger = new Logger(UserService.name);
 
   constructor(private prisma: PrismaService) {}
 
@@ -93,6 +93,14 @@ export class UsersService {
       data: {
         password,
         resetToken: null,
+      },
+    });
+  }
+
+  async deleteUser(userId: string) {
+    await this.prisma.user.delete({
+      where: {
+        id: userId,
       },
     });
   }

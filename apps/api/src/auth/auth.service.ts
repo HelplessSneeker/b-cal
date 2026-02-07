@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from 'src/users/users.service';
+import { UserService } from 'src/user/user.service';
 import { JwtUser, TokenResponse } from './types';
 import { SignupDto } from './dto/signup.dto';
 import { jwtConstants, saltRounds } from './constants';
@@ -19,13 +19,13 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    private usersService: UsersService,
+    private userService: UserService,
     private jwtService: JwtService,
     private mailService: MailService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<JwtUser | null> {
-    const user = await this.usersService.findOne(email);
+    const user = await this.userService.findOne(email);
     if (!user) {
       return null;
     }
@@ -66,7 +66,7 @@ export class AuthService {
       tokens.refresh_token,
       saltRounds,
     );
-    await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
+    await this.userService.updateRefreshToken(user.id, hashedRefreshToken);
     this.logger.log(`User logged in: ${user.id}`);
     return tokens;
   }
@@ -74,7 +74,7 @@ export class AuthService {
   async signup(signupDto: SignupDto): Promise<TokenResponse> {
     const { email, password } = signupDto;
 
-    const existingUser = await this.usersService.findOne(email);
+    const existingUser = await this.userService.findOne(email);
 
     if (existingUser) {
       throw new ConflictException('Email already registered');
@@ -90,7 +90,7 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    const user = await this.usersService.create({
+    const user = await this.userService.create({
       email,
       password: hashedPassword,
       verificationToken,
@@ -103,7 +103,7 @@ export class AuthService {
       tokens.refresh_token,
       saltRounds,
     );
-    await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
+    await this.userService.updateRefreshToken(user.id, hashedRefreshToken);
     this.logger.log(`User signed up: ${user.id}`);
     return tokens;
   }
@@ -112,7 +112,7 @@ export class AuthService {
     userId: string,
     refreshToken: string,
   ): Promise<TokenResponse> {
-    const user = await this.usersService.findById(userId);
+    const user = await this.userService.findById(userId);
     if (!user || !user.refreshToken) {
       throw new ForbiddenException('Access denied');
     }
@@ -127,12 +127,12 @@ export class AuthService {
       tokens.refresh_token,
       saltRounds,
     );
-    await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
+    await this.userService.updateRefreshToken(user.id, hashedRefreshToken);
     return tokens;
   }
 
   async resendVerificationEmail(userId: string) {
-    const user = await this.usersService.findById(userId);
+    const user = await this.userService.findById(userId);
     if (!user) {
       throw new BadRequestException('User not found');
     }
@@ -149,7 +149,7 @@ export class AuthService {
       },
     );
 
-    await this.usersService.updateVerificationToken(user.id, verificationToken);
+    await this.userService.updateVerificationToken(user.id, verificationToken);
     await this.mailService.sendVerificationEmail(user.email, verificationToken);
     this.logger.log(`Verification email resent: ${user.id}`);
   }
@@ -165,12 +165,12 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired token');
     }
 
-    await this.usersService.validateEmail(payload.email, token);
+    await this.userService.validateEmail(payload.email, token);
     this.logger.log(`Email verified: ${payload.email}`);
   }
 
   async requestPasswordReset(email: string) {
-    const user = await this.usersService.findOne(email);
+    const user = await this.userService.findOne(email);
 
     if (!user) {
       return;
@@ -184,7 +184,7 @@ export class AuthService {
       },
     );
 
-    await this.usersService.setPasswordResetToken(email, resetToken);
+    await this.userService.setPasswordResetToken(email, resetToken);
     await this.mailService.sendPasswordResetEmail(email, resetToken);
     this.logger.log(`Password reset requested: ${email}`);
   }
@@ -200,7 +200,7 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired token');
     }
 
-    const user = await this.usersService.findOne(payload.email);
+    const user = await this.userService.findOne(payload.email);
     if (!user || user.resetToken !== changePasswordDTO.token) {
       this.logger.error(
         `Password change failed: token mismatch for ${payload.email}`,
@@ -213,12 +213,12 @@ export class AuthService {
       saltRounds,
     );
 
-    await this.usersService.changePassword(payload.email, hashedPassword);
+    await this.userService.changePassword(payload.email, hashedPassword);
     this.logger.log(`Password changed: ${payload.email}`);
   }
 
   async logout(userId: string) {
-    await this.usersService.updateRefreshToken(userId, null);
+    await this.userService.updateRefreshToken(userId, null);
     this.logger.log(`User logged out: ${userId}`);
   }
 }

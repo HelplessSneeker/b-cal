@@ -5,7 +5,7 @@ const mockPrismaModule = {
 };
 jest.mock('src/prisma/prisma.service', () => mockPrismaModule);
 
-import { UsersService } from './users.service';
+import { UserService } from './user.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 const mockUser = {
@@ -20,21 +20,22 @@ const mockPrisma = {
     findUnique: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
+    delete: jest.fn(),
   },
 };
 
-describe('UsersService', () => {
-  let service: UsersService;
+describe('UserService', () => {
+  let service: UserService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        UsersService,
+        UserService,
         { provide: PrismaService, useValue: mockPrisma },
       ],
     }).compile();
 
-    service = module.get<UsersService>(UsersService);
+    service = module.get<UserService>(UserService);
     jest.clearAllMocks();
   });
 
@@ -128,6 +129,18 @@ describe('UsersService', () => {
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: 'user-1' },
         data: { refreshToken: null },
+      });
+    });
+  });
+
+  describe('deleteUser', () => {
+    it('should delete the user by id', async () => {
+      mockPrisma.user.delete.mockResolvedValue(mockUser);
+
+      await service.deleteUser('user-1');
+
+      expect(mockPrisma.user.delete).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
       });
     });
   });
