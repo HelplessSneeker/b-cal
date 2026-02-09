@@ -23,12 +23,12 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
         transport:
           process.env.NODE_ENV !== 'production'
             ? {
-              target: 'pino-pretty',
-              options: {
-                colorize: true,
-                ignore: 'req,res', // Hide req/res in dev for cleaner logs
-              },
-            }
+                target: 'pino-pretty',
+                options: {
+                  colorize: true,
+                  ignore: 'req,res', // Hide req/res in dev for cleaner logs
+                },
+              }
             : undefined,
       },
     }),
@@ -58,4 +58,4 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

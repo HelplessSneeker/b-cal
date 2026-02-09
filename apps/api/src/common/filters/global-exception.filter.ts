@@ -1,10 +1,4 @@
-import {
-  ArgumentsHost,
-  Catch,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+import { ArgumentsHost, Catch, HttpException, Logger } from '@nestjs/common';
 import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { Response } from 'express';
 

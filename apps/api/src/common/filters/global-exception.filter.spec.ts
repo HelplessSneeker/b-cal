@@ -1,4 +1,5 @@
 import {
+  ArgumentsHost,
   BadRequestException,
   ConflictException,
   ForbiddenException,
@@ -16,7 +17,7 @@ const mockSwitchToHttp = jest.fn().mockReturnValue({
   getResponse: mockGetResponse,
   getRequest: mockGetRequest,
 });
-const mockHost = { switchToHttp: mockSwitchToHttp } as any;
+const mockHost = { switchToHttp: mockSwitchToHttp } as Partial<ArgumentsHost>;
 
 const mockSuperCatch = jest.fn();
 
@@ -40,7 +41,7 @@ describe('GlobalExceptionFilter', () => {
 
   it('should handle BadRequestException (400)', () => {
     const exception = new BadRequestException('Invalid input');
-    filter.catch(exception, mockHost);
+    filter.catch(exception, mockHost as ArgumentsHost);
 
     expect(mockStatus).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
     expect(mockJson).toHaveBeenCalledWith(
@@ -53,7 +54,7 @@ describe('GlobalExceptionFilter', () => {
 
   it('should handle UnauthorizedException (401)', () => {
     const exception = new UnauthorizedException('Login failed');
-    filter.catch(exception, mockHost);
+    filter.catch(exception, mockHost as ArgumentsHost);
 
     expect(mockStatus).toHaveBeenCalledWith(HttpStatus.UNAUTHORIZED);
     expect(mockJson).toHaveBeenCalledWith(
@@ -66,7 +67,7 @@ describe('GlobalExceptionFilter', () => {
 
   it('should handle ForbiddenException (403)', () => {
     const exception = new ForbiddenException('Access denied');
-    filter.catch(exception, mockHost);
+    filter.catch(exception, mockHost as ArgumentsHost);
 
     expect(mockStatus).toHaveBeenCalledWith(HttpStatus.FORBIDDEN);
     expect(mockJson).toHaveBeenCalledWith(
@@ -79,7 +80,7 @@ describe('GlobalExceptionFilter', () => {
 
   it('should handle NotFoundException (404)', () => {
     const exception = new NotFoundException('Not found');
-    filter.catch(exception, mockHost);
+    filter.catch(exception, mockHost as ArgumentsHost);
 
     expect(mockStatus).toHaveBeenCalledWith(HttpStatus.NOT_FOUND);
     expect(mockJson).toHaveBeenCalledWith(
@@ -92,7 +93,7 @@ describe('GlobalExceptionFilter', () => {
 
   it('should handle ConflictException (409)', () => {
     const exception = new ConflictException('Email already registered');
-    filter.catch(exception, mockHost);
+    filter.catch(exception, mockHost as ArgumentsHost);
 
     expect(mockStatus).toHaveBeenCalledWith(HttpStatus.CONFLICT);
     expect(mockJson).toHaveBeenCalledWith(
@@ -109,7 +110,7 @@ describe('GlobalExceptionFilter', () => {
       message: ['email must be an email', 'password is too short'],
       error: 'Bad Request',
     });
-    filter.catch(exception, mockHost);
+    filter.catch(exception, mockHost as ArgumentsHost);
 
     expect(mockStatus).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
     expect(mockJson).toHaveBeenCalledWith({
@@ -121,7 +122,7 @@ describe('GlobalExceptionFilter', () => {
 
   it('should delegate non-HTTP exceptions to SentryGlobalFilter', () => {
     const exception = new Error('Something broke');
-    filter.catch(exception, mockHost);
+    filter.catch(exception, mockHost as ArgumentsHost);
 
     expect(mockSuperCatch).toHaveBeenCalledWith(exception, mockHost);
     expect(mockStatus).not.toHaveBeenCalled();
@@ -129,7 +130,7 @@ describe('GlobalExceptionFilter', () => {
 
   it('should delegate non-Error exceptions to SentryGlobalFilter', () => {
     const exception = 'string error';
-    filter.catch(exception, mockHost);
+    filter.catch(exception, mockHost as ArgumentsHost);
 
     expect(mockSuperCatch).toHaveBeenCalledWith(exception, mockHost);
     expect(mockStatus).not.toHaveBeenCalled();
