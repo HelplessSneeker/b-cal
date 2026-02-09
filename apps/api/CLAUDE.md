@@ -38,7 +38,7 @@ Or from monorepo root:
 
 PostgreSQL 16 runs via `docker-compose.yml`. Environment variables in `.env` (dev) and `.env.test` (e2e tests):
 - `PORT` (default 3000), `FRONTEND_URL` (CORS origin)
-- `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`
+- `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `DB_HOST`
 - `SECRET_KEY` (access token), `REFRESH_SECRET_KEY` (refresh token), `MAIL_SECRET_KEY` (email tokens)
 - `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM` (production email; dev uses Ethereal)
 
@@ -62,17 +62,21 @@ E2e tests use a separate database (`b_cal_test`) configured in `.env.test`. Runn
 
 ## Architecture
 
-**Modules:** AppModule imports ConfigModule, LoggerModule (nestjs-pino), ThrottlerModule, PrismaModule (global), AuthModule, UserModule, CalendarModule, MailModule.
+**Modules:** AppModule imports ConfigModule, LoggerModule (nestjs-pino), ThrottlerModule, SentryModule, PrismaModule (global), AuthModule, UserModule, CalendarModule, MailModule, HealthModule.
 
 **File structure:**
 ```
 src/
 ├── auth/           # Auth controller, service, strategies, guards, decorators, validators
-├── user/           # UserController, UserService for user operations (account deletion)
 ├── calendar/       # CalendarController, CalendarService, DTOs, validators
+├── common/filters/ # GlobalExceptionFilter (Sentry-integrated)
+├── config/         # env.validation.ts (runtime env var validation via class-validator)
+├── health/         # HealthController, HealthModule (@nestjs/terminus)
 ├── mail/           # MailModule, MailService (nodemailer)
 ├── prisma/         # PrismaModule (global), PrismaService
-└── main.ts         # Bootstrap with CORS, cookies, validation pipe
+├── user/           # UserController, UserService for user operations (account deletion)
+├── instrument.ts   # Sentry SDK initialization (imported before NestFactory.create)
+└── main.ts         # Bootstrap with CORS, cookies, validation pipe, Helmet, CSP
 ```
 
 **Auth flow:** Tokens stored in httpOnly cookies (not Bearer headers). Refresh tokens are bcrypt-hashed in DB.
@@ -89,6 +93,9 @@ src/
 **Email verification:** On signup, a JWT verification token (1d expiry) is generated and emailed to the user. The frontend link points to `/verify-email?token=...`.
 
 **Password reset:** User requests reset via email, receives a JWT reset token (1h expiry) stored in `resetToken`. Token is validated and cleared on successful password change.
+
+**Health endpoint:**
+- `GET /health` — returns database, memory, and disk health status (no auth required, throttle-exempt)
 
 **User endpoints:** All require JwtAuthGuard + EmailVerifiedGuard.
 - `DELETE /user` — delete user account, clears auth cookies
@@ -110,15 +117,23 @@ src/
 - `@IsValidPassword()` — enforces password complexity (8+ chars, number, symbol)
 - `@IsStartBeforeEnd()` — validates startDate ≤ endDate on calendar DTOs
 
-**Prisma schema:** `User` (id, email, password, refreshToken, verificationToken, emailVerified, resetToken) and `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId→User).
+**Prisma schema:** `User` (id, email, password, refreshToken, verificationToken, emailVerified, resetToken) and `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId→User). CalendarEntry has an index on `userId` for query performance.
 
 **Mail service:** Uses nodemailer. In development, auto-creates Ethereal test accounts (preview URLs logged to console). In production, requires `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS` env vars.
 
-**Rate limiting:** Global throttling via `@nestjs/throttler` (10 requests per 60 seconds, applied as APP_GUARD).
+**Rate limiting:** Global throttling via `@nestjs/throttler` (60 requests per 60 seconds, applied as APP_GUARD). Auth endpoints (login, signup, forgot-password, reset-password, resend-verification) have stricter limits: 5 requests per 60 seconds.
+
+**Error monitoring:** Sentry integration via `@sentry/nestjs`. Initialized in `instrument.ts` (must be imported before anything else in `main.ts`). Uses `pinoIntegration()` for log forwarding. A custom `GlobalExceptionFilter` extends `SentryGlobalFilter` — HTTP exceptions are returned directly without Sentry reporting; unexpected exceptions are captured and return 500.
+
+**Health checks:** `GET /health` endpoint (throttle-exempt) via `@nestjs/terminus`. Checks database (Prisma ping), heap memory (150MB threshold), and disk usage (90% threshold).
+
+**Security headers:** Helmet middleware with HSTS (1-year max-age, includeSubDomains, preload) and strict CSP (self-only defaults; unsafe-inline scripts/styles and data: images allowed in development only; frame-ancestors and object-src set to none).
+
+**Environment validation:** Runtime validation of all required env vars on startup (`src/config/env.validation.ts`). Uses class-validator decorators. Mail settings (`MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`) are only required in production.
 
 **Logging:** Structured logging via `nestjs-pino`. In development, uses `pino-pretty` with colorized output (req/res hidden). In production, outputs JSON logs at `info` level.
 
-**API docs:** Swagger at `/api`.
+**API docs:** Swagger at `/api` (development only — disabled in production).
 
 ## Code Style
 

@@ -146,6 +146,15 @@ The calendar supports Day/Week/Month views (all implemented):
 - Automatic toast notifications for success/error responses
 - All requests include credentials for cookie-based auth
 
+### Security Headers
+
+`next.config.ts` sets the following headers on all routes:
+- `X-Content-Type-Options: nosniff` — prevents MIME sniffing
+- `Referrer-Policy: strict-origin-when-cross-origin` — controls referrer information
+- `X-Frame-Options: DENY` — prevents clickjacking
+- `Permissions-Policy: camera=(), microphone=(), geolocation=()` — disables browser features
+- `poweredByHeader: false` — hides the `X-Powered-By: Next.js` header
+
 ### Styling
 
 - Tailwind CSS v4 with CSS variables for theming (defined in `app/globals.css`)

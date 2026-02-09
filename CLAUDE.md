@@ -49,9 +49,17 @@ docker compose up -d                         # Start PostgreSQL
 
 **Frontend State**: Zustand stores for user state and calendar state (view mode, entries, modals).
 
-**API Structure**: NestJS modules (AuthModule, UserModule, CalendarModule, PrismaModule, MailModule). Swagger docs at `/api`.
+**API Structure**: NestJS modules (AuthModule, UserModule, CalendarModule, PrismaModule, MailModule, HealthModule). Swagger docs at `/api` (development only — disabled in production).
 
-**Rate Limiting**: Global throttling via `@nestjs/throttler` (10 requests per 60 seconds).
+**Error Monitoring**: Sentry integration (`@sentry/nestjs`) with a custom `GlobalExceptionFilter` that captures unexpected errors and sends them to Sentry. HTTP exceptions are returned normally without being reported.
+
+**Health Checks**: `GET /health` endpoint via `@nestjs/terminus` — monitors database connectivity, heap memory (150MB threshold), and disk usage (90% threshold).
+
+**Security Headers**: Helmet middleware on the API (HSTS with 1-year max-age, strict CSP). Frontend sets `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, and `Permissions-Policy` via Next.js headers config.
+
+**Rate Limiting**: Global throttling via `@nestjs/throttler` (60 requests per 60 seconds). Auth endpoints (login, signup, forgot-password, reset-password, resend-verification) are stricter at 5 requests per 60 seconds.
+
+**Environment Validation**: Runtime validation of all required environment variables on startup via class-validator. Mail settings are only required in production.
 
 **Logging**: Structured logging via `nestjs-pino`. Pretty-printed in development, JSON in production.
 
@@ -63,7 +71,7 @@ docker compose up -d                         # Start PostgreSQL
 
 **Web** (`apps/web/.env`): `NEXT_PUBLIC_BACKEND_URL`
 
-**API** (`apps/api/.env`): `PORT`, `FRONTEND_URL`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `SECRET_KEY`, `REFRESH_SECRET_KEY`, `MAIL_SECRET_KEY`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM`
+**API** (`apps/api/.env`): `PORT`, `FRONTEND_URL`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `DB_HOST`, `SECRET_KEY`, `REFRESH_SECRET_KEY`, `MAIL_SECRET_KEY`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM`
 
 **API Test** (`apps/api/.env.test`): Same as above with `DB_NAME=b_cal_test`
 
