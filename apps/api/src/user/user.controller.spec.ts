@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import * as express from 'express';
 
 jest.mock('generated/prisma/client', () => ({
   PrismaClient: class PrismaClient {},
@@ -31,9 +32,12 @@ describe('UserController', () => {
   describe('delete', () => {
     it('should delete the user and return success message', async () => {
       mockUserService.deleteUser.mockResolvedValue(undefined);
-      const mockRes = { clearCookie: jest.fn() } as any;
+      const mockRes = { clearCookie: jest.fn() } as Partial<express.Response>;
 
-      const result = await controller.delete('user-1', mockRes);
+      const result = await controller.delete(
+        'user-1',
+        mockRes as express.Response,
+      );
 
       expect(result).toEqual({ message: 'Successfully deleted user' });
       expect(mockUserService.deleteUser).toHaveBeenCalledWith('user-1');

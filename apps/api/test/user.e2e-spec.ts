@@ -31,7 +31,12 @@ describe('UserController (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.use(cookieParser());
-    app.useGlobalPipes(new ValidationPipe());
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      }),
+    );
     await app.init();
 
     prisma = moduleFixture.get<PrismaService>(PrismaService);
