@@ -39,7 +39,7 @@ Or from monorepo root:
 PostgreSQL 16 runs via `docker-compose.yml`. Environment variables in `.env` (dev) and `.env.test` (e2e tests):
 - `PORT` (default 3000), `FRONTEND_URL` (CORS origin)
 - `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`
-- `SECRET_KEY` (access token), `REFRESH_SECRET_KEY` (refresh token), `MAIL_SECRET` (email tokens)
+- `SECRET_KEY` (access token), `REFRESH_SECRET_KEY` (refresh token), `MAIL_SECRET_KEY` (email tokens)
 - `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM` (production email; dev uses Ethereal)
 
 ## Database Seeding
@@ -62,13 +62,13 @@ E2e tests use a separate database (`b_cal_test`) configured in `.env.test`. Runn
 
 ## Architecture
 
-**Modules:** AppModule imports ConfigModule, PrismaModule (global), AuthModule, UsersModule, CalendarModule, MailModule.
+**Modules:** AppModule imports ConfigModule, LoggerModule (nestjs-pino), ThrottlerModule, PrismaModule (global), AuthModule, UserModule, CalendarModule, MailModule.
 
 **File structure:**
 ```
 src/
 ├── auth/           # Auth controller, service, strategies, guards, decorators, validators
-├── users/          # UsersService for database operations
+├── user/           # UserController, UserService for user operations (account deletion)
 ├── calendar/       # CalendarController, CalendarService, DTOs, validators
 ├── mail/           # MailModule, MailService (nodemailer)
 ├── prisma/         # PrismaModule (global), PrismaService
@@ -90,6 +90,9 @@ src/
 
 **Password reset:** User requests reset via email, receives a JWT reset token (1h expiry) stored in `resetToken`. Token is validated and cleared on successful password change.
 
+**User endpoints:** All require JwtAuthGuard + EmailVerifiedGuard.
+- `DELETE /user` — delete user account, clears auth cookies
+
 **Calendar endpoints:** All require JwtAuthGuard.
 - `POST /calendar` — create entry (title, startDate, endDate required; content, wholeDay optional)
 - `GET /calendar` — list user's entries; optional `startDate`/`endDate` query params for date range filtering
@@ -110,6 +113,10 @@ src/
 **Prisma schema:** `User` (id, email, password, refreshToken, verificationToken, emailVerified, resetToken) and `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId→User).
 
 **Mail service:** Uses nodemailer. In development, auto-creates Ethereal test accounts (preview URLs logged to console). In production, requires `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS` env vars.
+
+**Rate limiting:** Global throttling via `@nestjs/throttler` (10 requests per 60 seconds, applied as APP_GUARD).
+
+**Logging:** Structured logging via `nestjs-pino`. In development, uses `pino-pretty` with colorized output (req/res hidden). In production, outputs JSON logs at `info` level.
 
 **API docs:** Swagger at `/api`.
 
