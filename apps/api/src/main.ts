@@ -10,18 +10,43 @@ import helmet from 'helmet';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   app.useLogger(app.get(Logger));
-  app.use(helmet());
 
-  const config = new DocumentBuilder()
-    .setTitle('Calendar API')
-    .setDescription(
-      'A simple API for authentication and Calendar Functionality',
-    )
-    .setVersion('0.1')
-    .addTag('b-cal')
-    .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  app.use(
+    helmet({
+      hsts: {
+        maxAge: 31_536_000,
+        includeSubDomains: true,
+        preload: true,
+      },
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", ...(!isProduction ? ["'unsafe-inline'"] : [])],
+          styleSrc: ["'self'", ...(!isProduction ? ["'unsafe-inline'"] : [])],
+          imgSrc: ["'self'", ...(!isProduction ? ['data:'] : [])],
+          connectSrc: ["'self'"],
+          fontSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          frameAncestors: ["'none'"],
+        },
+      },
+    }),
+  );
+
+  if (!isProduction) {
+    const config = new DocumentBuilder()
+      .setTitle('Calendar API')
+      .setDescription(
+        'A simple API for authentication and Calendar Functionality',
+      )
+      .setVersion('0.1')
+      .addTag('b-cal')
+      .build();
+    const documentFactory = () => SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, documentFactory);
+  }
 
   app.enableCors({
     origin: process.env.FRONTEND_URL ?? 'http://localhost:8080',
