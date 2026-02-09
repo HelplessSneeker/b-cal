@@ -15,6 +15,7 @@ import { JwtRefreshAuthGuard } from './guard/jwt-refresh-auth.guard';
 import type { JwtUser, JwtRefreshUser } from './types';
 import { SignupDto } from './dto/signup.dto';
 import { ApiBody } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { LoginDto } from './dto/login.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { cookieConfig } from './constants';
@@ -46,6 +47,7 @@ export class AuthController {
     res.clearCookie(cookieConfig.refreshToken.name, cookieConfig.options);
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @ApiBody({ type: LoginDto })
   @UseGuards(LocalAuthGuard)
   @Post('login')
@@ -58,6 +60,7 @@ export class AuthController {
     return { message: 'Login successful' };
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('signup')
   async signup(
     @Body() signupDto: SignupDto,
@@ -99,6 +102,7 @@ export class AuthController {
     return { data: user };
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @UseGuards(JwtAuthGuard)
   @Post('resend-verification')
   async resendVerification(@User('id') userId: string) {
@@ -113,6 +117,7 @@ export class AuthController {
     return { message: 'Email verified' };
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @ApiBody({ type: RequestPasswordResetDTO })
   @Post('forgot-password')
   async forgotPassword(
@@ -123,6 +128,7 @@ export class AuthController {
     return { message: 'If that email exists, we sent a reset link' };
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @ApiBody({ type: ChangePasswordDTO })
   @Post('reset-password')
   async resetPassword(@Body() changePasswordDTO: ChangePasswordDTO) {
