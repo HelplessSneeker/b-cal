@@ -51,21 +51,21 @@ class EnvironmentVariables {
   @IsNotEmpty()
   MAIL_SECRET_KEY: string;
 
-  @ValidateIf((o) => o.NODE_ENV === 'production')
+  @ValidateIf((o: { NODE_ENV?: string }) => o.NODE_ENV === 'production')
   @IsString()
   @IsNotEmpty()
   MAIL_HOST: string;
 
-  @ValidateIf((o) => o.NODE_ENV === 'production')
+  @ValidateIf((o: { NODE_ENV?: string }) => o.NODE_ENV === 'production')
   @IsNumberString()
   MAIL_PORT: string;
 
-  @ValidateIf((o) => o.NODE_ENV === 'production')
+  @ValidateIf((o: { NODE_ENV?: string }) => o.NODE_ENV === 'production')
   @IsString()
   @IsNotEmpty()
   MAIL_USER: string;
 
-  @ValidateIf((o) => o.NODE_ENV === 'production')
+  @ValidateIf((o: { NODE_ENV?: string }) => o.NODE_ENV === 'production')
   @IsString()
   @IsNotEmpty()
   MAIL_PASS: string;

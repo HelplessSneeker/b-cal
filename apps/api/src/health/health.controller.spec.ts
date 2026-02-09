@@ -64,7 +64,7 @@ describe('HealthController', () => {
   it('should return health check result', async () => {
     const result = await controller.check();
 
-    expect(healthCheckService.check).toHaveBeenCalledWith(
+    expect(healthCheckService.check.bind(this)).toHaveBeenCalledWith(
       expect.arrayContaining([expect.any(Function)]),
     );
     expect(result.status).toBe('ok');
