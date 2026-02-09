@@ -1,10 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from 'src/app.module';
 import { PrismaService } from 'src/prisma/prisma.service';
 import cookieParser from 'cookie-parser';
+
+class TestThrottlerGuard extends ThrottlerGuard {
+  override async canActivate(): Promise<boolean> {
+    return true;
+  }
+}
 
 interface ErrorResponse {
   message: string | string[];
@@ -75,7 +82,10 @@ describe('CalendarController (e2e)', () => {
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(ThrottlerGuard)
+      .useClass(TestThrottlerGuard)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.use(cookieParser());

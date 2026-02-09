@@ -7,7 +7,7 @@ import * as path from 'path';
 dotenv.config({ path: path.resolve(__dirname, '../.env.test'), quiet: true });
 
 export default async function globalSetup() {
-  const { DB_USER, DB_PASSWORD, DB_PORT, DB_NAME } = process.env;
+  const { DB_USER, DB_PASSWORD, DB_PORT, DB_NAME, DB_HOST } = process.env;
 
   console.log(`\nSetting up test database: ${DB_NAME}`);
 
@@ -15,7 +15,7 @@ export default async function globalSetup() {
   const client = new Client({
     user: DB_USER,
     password: DB_PASSWORD,
-    host: 'localhost',
+    host: DB_HOST,
     port: Number(DB_PORT),
     database: 'postgres',
   });

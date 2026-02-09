@@ -1,10 +1,37 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication, Module, ValidationPipe } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { LoggerModule } from 'nestjs-pino';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from 'src/app.module';
+import { AuthModule } from 'src/auth/auth.module';
+import { CalendarModule } from 'src/calendar/calendar.module';
+import { PrismaModule } from 'src/prisma/prisma.module';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UserModule } from 'src/user/user.module';
+import { MailModule } from 'src/mail/mail.module';
 import cookieParser from 'cookie-parser';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot(),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        level: 'silent',
+      },
+    }),
+    ThrottlerModule.forRoot({
+      throttlers: [{ ttl: 60000, limit: 100000 }],
+    }),
+    CalendarModule,
+    PrismaModule,
+    AuthModule,
+    UserModule,
+    MailModule,
+  ],
+})
+class TestAppModule {}
 
 interface ErrorResponse {
   message: string | string[];
@@ -45,7 +72,7 @@ describe('AuthController (e2e)', () => {
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [TestAppModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
