@@ -22,7 +22,7 @@ Run from this directory (`apps/api`):
 - `pnpm run lint` — ESLint with auto-fix
 - `pnpm run format` — Prettier formatting
 - `pnpm run test` — run unit tests (Jest 30)
-- `pnpm run test -- --testPathPatterns=<pattern>` — run specific tests (note: Jest 30 uses `--testPathPatterns`, not `--testPathPattern`)
+- `npx jest --testPathPatterns="<pattern>"` — run specific tests (`pnpm test --` misparses the flag; use `npx jest` directly instead. Jest 30 uses `--testPathPatterns`, not `--testPathPattern`)
 - `pnpm run test:cov` — run tests with coverage
 - `pnpm run test:e2e` — run e2e tests (uses separate test database)
 - `pnpm run prisma:seed` — seed database with test data (prompts for confirmation, use `--force` to skip)
