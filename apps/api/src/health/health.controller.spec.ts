@@ -63,8 +63,8 @@ describe('HealthController', () => {
 
   it('should return health check result', async () => {
     const result = await controller.check();
-
-    expect(healthCheckService.check.bind(this)).toHaveBeenCalledWith(
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(healthCheckService.check).toHaveBeenCalledWith(
       expect.arrayContaining([expect.any(Function)]),
     );
     expect(result.status).toBe('ok');
