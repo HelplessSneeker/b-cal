@@ -73,6 +73,10 @@ class EnvironmentVariables {
   @IsOptional()
   @IsString()
   MAIL_FROM?: string;
+
+  @IsOptional()
+  @IsString()
+  SENTRY_DSN?: string;
 }
 
 export function validate(config: Record<string, unknown>) {
