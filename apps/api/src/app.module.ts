@@ -9,6 +9,7 @@ import { UserModule } from './user/user.module';
 import { MailModule } from './mail/mail.module';
 import { LoggerModule } from 'nestjs-pino';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
     AuthModule,
     UserModule,
     MailModule,
+    HealthModule,
   ],
   providers: [
     {
