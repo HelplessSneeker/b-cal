@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { validate } from './config/env.validation';
 import { CalendarModule } from './calendar/calendar.module';
@@ -10,9 +10,12 @@ import { MailModule } from './mail/mail.module';
 import { LoggerModule } from 'nestjs-pino';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from './health/health.module';
+import { SentryModule } from '@sentry/nestjs/setup';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule.forRoot({ validate }),
     LoggerModule.forRoot({
       pinoHttp: {
@@ -20,12 +23,12 @@ import { HealthModule } from './health/health.module';
         transport:
           process.env.NODE_ENV !== 'production'
             ? {
-                target: 'pino-pretty',
-                options: {
-                  colorize: true,
-                  ignore: 'req,res', // Hide req/res in dev for cleaner logs
-                },
-              }
+              target: 'pino-pretty',
+              options: {
+                colorize: true,
+                ignore: 'req,res', // Hide req/res in dev for cleaner logs
+              },
+            }
             : undefined,
       },
     }),
@@ -46,9 +49,13 @@ import { HealthModule } from './health/health.module';
   ],
   providers: [
     {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
+    },
+    {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }
