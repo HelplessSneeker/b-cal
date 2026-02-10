@@ -173,6 +173,17 @@ Swagger documentation is available at `/api` when the server is running.
 - `wholeDay` (nullable)
 - `userId` (foreign key to User)
 
+## Run Docker container (from mono repo root)
+
+```bash
+# Build the Image
+docker build -f apps/api/Dockerfile -t b-cal-api .
+
+# Run Container
+docker run --name b-cal-api -p 3000:3000 --network=host --env-file apps/api/.env b-cal-api
+
+```
+
 ## License
 
 UNLICENSED
