@@ -1,0 +1,26 @@
+# Dependencies (installed fresh in Docker)
+**/node_modules
+
+# Build outputs (built fresh in Docker)
+**/dist
+**/.next
+**/.turbo
+**/generated
+**/coverage
+
+# Environment files (provided at runtime)
+**/.env
+**/.env.test
+**/.env.local
+**/.env.*.local
+
+# Git
+.git
+
+# Logs
+**/*.log
+
+# Misc
+*.md
+.nvim.lua
+.prettierrc
