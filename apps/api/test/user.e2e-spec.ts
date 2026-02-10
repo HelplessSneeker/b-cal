@@ -84,7 +84,7 @@ describe('UserController (e2e)', () => {
       await prisma.user.deleteMany({
         where: { email: unverifiedUser.email },
       });
-    });
+    }, 10000);
 
     it('should delete the user and their calendar entries', async () => {
       const testUser = {

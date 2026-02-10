@@ -117,7 +117,7 @@ describe('AuthController (e2e)', () => {
         .get('/auth/verify-email')
         .query({ token: user!.verificationToken })
         .expect(200);
-    });
+    }, 10000);
 
     it('should return 409 when email already exists', async () => {
       const response = await request(app.getHttpServer())

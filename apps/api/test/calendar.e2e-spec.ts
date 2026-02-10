@@ -614,7 +614,7 @@ describe('CalendarController (e2e)', () => {
         .expect(200);
 
       const body = response.body as MessageResponse;
-      expect(body.message).toBe('Calander entry has been updated');
+      expect(body.message).toBe('Calendar entry has been updated');
 
       // Verify the update
       const getResponse = await request(app.getHttpServer())
@@ -767,7 +767,7 @@ describe('CalendarController (e2e)', () => {
         .expect(200);
 
       const body = response.body as MessageResponse;
-      expect(body.message).toBe('Deletd Calendar entry');
+      expect(body.message).toBe('Deleted calendar entry');
 
       // Verify deletion
       await request(app.getHttpServer())

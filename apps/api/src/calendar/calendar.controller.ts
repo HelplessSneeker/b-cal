@@ -61,7 +61,7 @@ export class CalendarController {
     await this.calendarService.update(userId, id, updateCalendarDto);
 
     return {
-      message: `Calander entry has been updated`,
+      message: `Calendar entry has been updated`,
     };
   }
 
@@ -69,6 +69,6 @@ export class CalendarController {
   async remove(@User('id') userId: string, @Param('id') id: string) {
     await this.calendarService.remove(userId, id);
 
-    return { message: `Deletd Calendar entry` };
+    return { message: `Deleted calendar entry` };
   }
 }
