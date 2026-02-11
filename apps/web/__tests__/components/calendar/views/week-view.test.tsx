@@ -1,0 +1,78 @@
+import { describe, it, expect, vi, beforeEach } from "vitest"
+import { render, screen, resetStores } from "../../../test-utils"
+import { WeekView } from "@/components/calendar/views/week-view"
+import { useCalendarStore, type CalendarEntry } from "@/lib/stores/calendarStore"
+
+vi.mock("@/components/calendar/current-time-indicator", () => ({
+  CurrentTimeIndicator: () => null,
+}))
+
+beforeEach(() => {
+  resetStores()
+})
+
+// June 18, 2025 is a Wednesday
+const currentDate = new Date(2025, 5, 18)
+
+const wednesdayEntry: CalendarEntry = {
+  id: "wed-1",
+  title: "Wednesday Meeting",
+  startDate: new Date(2025, 5, 18, 14, 0),
+  endDate: new Date(2025, 5, 18, 15, 0),
+  wholeDay: false,
+}
+
+const allDayEntry: CalendarEntry = {
+  id: "allday-1",
+  title: "Team Offsite",
+  startDate: new Date(2025, 5, 16, 0, 0), // Monday
+  endDate: new Date(2025, 5, 16, 23, 59),
+  wholeDay: true,
+}
+
+describe("WeekView", () => {
+  it("renders 7 day headers starting from Monday", () => {
+    useCalendarStore.setState({ currentDate, entries: [] })
+    render(<WeekView />)
+
+    // German short weekday names (format varies by Node/ICU version)
+    const weekdays = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
+    for (const day of weekdays) {
+      expect(
+        screen.getByText((content) => content.startsWith(day))
+      ).toBeInTheDocument()
+    }
+  })
+
+  it("shows timed entries in correct day column", () => {
+    useCalendarStore.setState({
+      currentDate,
+      entries: [wednesdayEntry],
+    })
+    render(<WeekView />)
+    expect(screen.getByText("Wednesday Meeting")).toBeInTheDocument()
+  })
+
+  it("shows all-day entries in the all-day row", () => {
+    useCalendarStore.setState({
+      currentDate,
+      entries: [allDayEntry],
+    })
+    render(<WeekView />)
+    expect(screen.getByText("all-day")).toBeInTheDocument()
+    expect(screen.getByText("Team Offsite")).toBeInTheDocument()
+  })
+
+  it("highlights today's date", () => {
+    // Set currentDate to a week containing today
+    const today = new Date()
+    useCalendarStore.setState({ currentDate: today, entries: [] })
+    render(<WeekView />)
+
+    const todayNumber = today.getDate().toString()
+    const todayEl = screen.getByText(todayNumber, {
+      selector: ".bg-primary",
+    })
+    expect(todayEl).toBeInTheDocument()
+  })
+})
