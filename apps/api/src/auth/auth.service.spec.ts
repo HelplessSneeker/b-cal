@@ -315,9 +315,10 @@ describe('AuthService', () => {
   });
 
   describe('requestPasswordReset', () => {
-    it('should generate reset token and send email for existing user', async () => {
+    it('should generate reset token, hash it, and send email for existing user', async () => {
       mockUserService.findOne.mockResolvedValue(mockUser);
       mockJwtService.signAsync.mockResolvedValue('reset-token');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-reset-token');
       mockUserService.setPasswordResetToken.mockResolvedValue(undefined);
       mockMailService.sendPasswordResetEmail.mockResolvedValue(undefined);
 
@@ -328,9 +329,10 @@ describe('AuthService', () => {
         { email: 'test@example.com' },
         expect.objectContaining({ expiresIn: '1h' }),
       );
+      expect(bcrypt.hash).toHaveBeenCalledWith('reset-token', 10);
       expect(mockUserService.setPasswordResetToken).toHaveBeenCalledWith(
         'test@example.com',
-        'reset-token',
+        'hashed-reset-token',
       );
       expect(mockMailService.sendPasswordResetEmail).toHaveBeenCalledWith(
         'test@example.com',
@@ -361,6 +363,7 @@ describe('AuthService', () => {
     it('should change password with valid token', async () => {
       mockJwtService.verify.mockReturnValue({ email: 'test@example.com' });
       mockUserService.findOne.mockResolvedValue(userWithResetToken);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed-password');
       mockUserService.changePassword.mockResolvedValue(undefined);
 
@@ -375,6 +378,10 @@ describe('AuthService', () => {
         expect.any(Object),
       );
       expect(mockUserService.findOne).toHaveBeenCalledWith('test@example.com');
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        'valid-reset-token',
+        userWithResetToken.resetToken,
+      );
       expect(bcrypt.hash).toHaveBeenCalledWith('newpassword123!', 10);
       expect(mockUserService.changePassword).toHaveBeenCalledWith(
         'test@example.com',
@@ -426,8 +433,9 @@ describe('AuthService', () => {
       mockJwtService.verify.mockReturnValue({ email: 'test@example.com' });
       mockUserService.findOne.mockResolvedValue({
         ...mockUser,
-        resetToken: 'different-token',
+        resetToken: 'hashed-different-token',
       });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(
         service.changePassword({
@@ -444,6 +452,7 @@ describe('AuthService', () => {
         ...mockUser,
         resetToken: null,
       });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(
         service.changePassword({

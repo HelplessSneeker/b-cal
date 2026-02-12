@@ -184,7 +184,9 @@ export class AuthService {
       },
     );
 
-    await this.userService.setPasswordResetToken(email, resetToken);
+    const hashedResetToken = await bcrypt.hash(resetToken, saltRounds);
+
+    await this.userService.setPasswordResetToken(email, hashedResetToken);
     await this.mailService.sendPasswordResetEmail(email, resetToken);
     this.logger.log(`Password reset requested: ${email}`);
   }
@@ -201,7 +203,11 @@ export class AuthService {
     }
 
     const user = await this.userService.findOne(payload.email);
-    if (!user || user.resetToken !== changePasswordDTO.token) {
+    const isMatch = user?.resetToken
+      ? await bcrypt.compare(changePasswordDTO.token, user.resetToken)
+      : false;
+
+    if (!user || !isMatch) {
       this.logger.error(
         `Password change failed: token mismatch for ${payload.email}`,
       );

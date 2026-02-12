@@ -11,7 +11,18 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserModule } from 'src/user/user.module';
 import { MailModule } from 'src/mail/mail.module';
+import { MailService } from 'src/mail/mail.service';
 import cookieParser from 'cookie-parser';
+
+class TestMailService {
+  lastResetTokenByEmail = new Map<string, string>();
+
+  async sendVerificationEmail() {}
+
+  async sendPasswordResetEmail(email: string, token: string) {
+    this.lastResetTokenByEmail.set(email, token);
+  }
+}
 
 @Module({
   imports: [
@@ -64,6 +75,7 @@ function getCookieValue(cookies: string[], name: string): string | undefined {
 describe('AuthController (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
+  let testMailService: TestMailService;
 
   const testUser = {
     email: `e2e-test-${Date.now()}@example.com`,
@@ -71,9 +83,14 @@ describe('AuthController (e2e)', () => {
   };
 
   beforeAll(async () => {
+    testMailService = new TestMailService();
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [TestAppModule],
-    }).compile();
+    })
+      .overrideProvider(MailService)
+      .useValue(testMailService)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.use(cookieParser());
@@ -613,11 +630,11 @@ describe('AuthController (e2e)', () => {
         .post('/auth/forgot-password')
         .send({ email: resetPasswordUser.email });
 
-      // Get the reset token from database
-      const user = await prisma.user.findUnique({
-        where: { email: resetPasswordUser.email },
-      });
-      expect(user!.resetToken).toBeDefined();
+      // Get the plain reset token captured from the mail service
+      const resetToken = testMailService.lastResetTokenByEmail.get(
+        resetPasswordUser.email,
+      );
+      expect(resetToken).toBeDefined();
 
       const newPassword = 'newpassword123!';
 
@@ -625,7 +642,7 @@ describe('AuthController (e2e)', () => {
       const response = await request(app.getHttpServer())
         .post('/auth/reset-password')
         .send({
-          token: user!.resetToken,
+          token: resetToken,
           password: newPassword,
         })
         .expect(201);
@@ -681,14 +698,14 @@ describe('AuthController (e2e)', () => {
         .post('/auth/forgot-password')
         .send({ email: resetPasswordUser.email });
 
-      const user = await prisma.user.findUnique({
-        where: { email: resetPasswordUser.email },
-      });
+      const resetToken = testMailService.lastResetTokenByEmail.get(
+        resetPasswordUser.email,
+      );
 
       const response = await request(app.getHttpServer())
         .post('/auth/reset-password')
         .send({
-          token: user!.resetToken,
+          token: resetToken,
           password: 'weak',
         })
         .expect(400);
@@ -704,14 +721,14 @@ describe('AuthController (e2e)', () => {
         .post('/auth/forgot-password')
         .send({ email: resetPasswordUser.email });
 
-      const user = await prisma.user.findUnique({
-        where: { email: resetPasswordUser.email },
-      });
+      const resetToken = testMailService.lastResetTokenByEmail.get(
+        resetPasswordUser.email,
+      );
 
       const response = await request(app.getHttpServer())
         .post('/auth/reset-password')
         .send({
-          token: user!.resetToken,
+          token: resetToken,
           password: 'password123',
         })
         .expect(400);
@@ -743,15 +760,15 @@ describe('AuthController (e2e)', () => {
         .post('/auth/forgot-password')
         .send({ email: anotherUser.email });
 
-      const user = await prisma.user.findUnique({
-        where: { email: anotherUser.email },
-      });
+      const resetToken = testMailService.lastResetTokenByEmail.get(
+        anotherUser.email,
+      );
 
       // First reset should succeed
       await request(app.getHttpServer())
         .post('/auth/reset-password')
         .send({
-          token: user!.resetToken,
+          token: resetToken,
           password: 'newpassword123!',
         })
         .expect(201);
@@ -760,7 +777,7 @@ describe('AuthController (e2e)', () => {
       const response = await request(app.getHttpServer())
         .post('/auth/reset-password')
         .send({
-          token: user!.resetToken,
+          token: resetToken,
           password: 'anotherpassword123!',
         })
         .expect(400);
@@ -777,14 +794,14 @@ describe('AuthController (e2e)', () => {
         .post('/auth/forgot-password')
         .send({ email: resetPasswordUser.email });
 
-      const user = await prisma.user.findUnique({
-        where: { email: resetPasswordUser.email },
-      });
+      const resetToken = testMailService.lastResetTokenByEmail.get(
+        resetPasswordUser.email,
+      );
 
       await request(app.getHttpServer())
         .post('/auth/reset-password')
         .send({
-          token: user!.resetToken,
+          token: resetToken,
         })
         .expect(400);
     });
