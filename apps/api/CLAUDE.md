@@ -34,6 +34,10 @@ Or from monorepo root:
 
 - `pnpm run dev:api` — run API in watch mode via Turborepo
 
+## Docker
+
+Multi-stage Dockerfile (`Dockerfile`) using Node 22 Alpine. Builds with `pnpm deploy --legacy --prod` for a minimal production image. Includes a healthcheck on `/health`. Exposes port 3000.
+
 ## Infrastructure
 
 PostgreSQL 16 runs via `docker-compose.yml`. Environment variables in `.env` (dev) and `.env.test` (e2e tests):
@@ -41,6 +45,7 @@ PostgreSQL 16 runs via `docker-compose.yml`. Environment variables in `.env` (de
 - `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `DB_HOST`
 - `SECRET_KEY` (access token), `REFRESH_SECRET_KEY` (refresh token), `MAIL_SECRET_KEY` (email tokens)
 - `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM` (production email; dev uses Ethereal)
+- `SENTRY_DSN` (optional — Sentry error tracking DSN)
 
 ## Database Seeding
 
@@ -79,7 +84,9 @@ src/
 └── main.ts         # Bootstrap with CORS, cookies, validation pipe, Helmet, CSP
 ```
 
-**Auth flow:** Tokens stored in httpOnly cookies (not Bearer headers). Refresh tokens are bcrypt-hashed in DB.
+**Global payload limit:** 1MB for JSON and URL-encoded bodies (configured in `main.ts`).
+
+**Auth flow:** Tokens stored in httpOnly cookies (not Bearer headers). Refresh tokens and reset tokens are bcrypt-hashed in DB.
 - `POST /auth/signup` — creates user, sends verification email, sets token cookies. Password: min 8 chars, requires number + symbol.
 - `POST /auth/login` — LocalAuthGuard validates email+password, sets access_token (1h) + refresh_token (7d) cookies
 - `POST /auth/refresh` — JwtRefreshAuthGuard validates refresh token, issues new token pair
@@ -92,7 +99,7 @@ src/
 
 **Email verification:** On signup, a JWT verification token (1d expiry) is generated and emailed to the user. The frontend link points to `/verify-email?token=...`.
 
-**Password reset:** User requests reset via email, receives a JWT reset token (1h expiry) stored in `resetToken`. Token is validated and cleared on successful password change.
+**Password reset:** User requests reset via email, receives a JWT reset token (1h expiry). The token is bcrypt-hashed before storage in `resetToken`. On password change, the plain token is compared against the hash and cleared on success.
 
 **Health endpoint:**
 - `GET /health` — returns database, memory, and disk health status (no auth required, throttle-exempt)
@@ -117,7 +124,9 @@ src/
 - `@IsValidPassword()` — enforces password complexity (8+ chars, number, symbol)
 - `@IsStartBeforeEnd()` — validates startDate ≤ endDate on calendar DTOs
 
-**Prisma schema:** `User` (id, email, password, refreshToken, verificationToken, emailVerified, resetToken) and `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId→User). CalendarEntry has an index on `userId` for query performance.
+**DTO max lengths:** `MaxLength` constraints on all string fields — email: 254, password: 128, title: 255, content: 5000.
+
+**Prisma schema:** `User` (id, email, password, refreshToken, verificationToken, emailVerified, resetToken) and `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId→User). Indexes: User has `@@index([email])`. CalendarEntry has `@@index([userId])`, `@@index([startDate])`, `@@index([endDate])`, and `@@index([endDate, startDate])`.
 
 **Mail service:** Uses nodemailer. In development, auto-creates Ethereal test accounts (preview URLs logged to console). In production, requires `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS` env vars.
 

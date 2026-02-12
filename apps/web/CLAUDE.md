@@ -22,6 +22,7 @@ Run from this directory (`apps/web`):
 pnpm dev      # Start development server (http://localhost:8080)
 pnpm build    # Production build
 pnpm lint     # Run ESLint
+pnpm test     # Run integration tests (Vitest)
 ```
 
 Or from the monorepo root:
@@ -30,6 +31,10 @@ Or from the monorepo root:
 pnpm dev --filter=web      # Start web dev server
 pnpm build --filter=web    # Build web only
 ```
+
+## Docker
+
+Multi-stage Dockerfile using Node 22 Alpine with Next.js standalone output. Requires `NEXT_PUBLIC_BACKEND_URL` as a build arg. Exposes port 8080.
 
 ## Architecture
 
@@ -44,6 +49,9 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
   - `app/verify-email/` - Email verification callback (`?token=...`), validates token and redirects to `/`
   - `app/forgot-password/` - Password reset request form (enter email)
   - `app/reset-password/` - Password reset form (`?token=...`), enter new password
+  - `app/error.tsx` - Error boundary with retry button
+  - `app/global-error.tsx` - Root error boundary (catches layout-level errors)
+  - `app/not-found.tsx` - Custom 404 page
   - `app/page.tsx` - Main calendar page (protected by AuthProvider)
 - `components/` - React components
   - `components/ui/` - shadcn/ui primitives (avatar, button, calendar, card, checkbox, dialog, dropdown-menu, field, input, label, loading, scroll-area, separator, sonner, spinner, textarea)
@@ -82,9 +90,11 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
     - `date-utils.ts` - Date manipulation (getStartOfWeek, getEndOfWeek, getStartOfMonth, getEndOfMonth, getMonthGridDates)
     - `calendar-constants.ts` - Layout constants (HOUR_HEIGHT=60, SLOT_HEIGHT=30, TIME_COLUMN_WIDTH, START_HOUR, END_HOUR)
     - `time-utils.ts` - Time position calculations (getEventTopPosition, getEventHeight, formatHour, getTimeFromPosition)
+  - `lib/hooks/` - Custom React hooks
+    - `useCalendarData.ts` - Fetches calendar entries for a 3-month window around the current date, with smart caching to avoid redundant requests
   - `lib/stores/` - Zustand stores for client state
     - `userStore.ts` - Current authenticated user (id, email, emailVerified)
-    - `calendarStore.ts` - Calendar view state, entries, and modal state
+    - `calendarStore.ts` - Calendar view state, entries, and modal state. Uses an `entryMap` (Map by ID) for deduplication, with `loadedRanges` to track fetched date windows and avoid re-fetching.
 - `proxy.ts` - Next.js middleware for route protection (auth routes, open routes, protected routes)
 
 ### Authentication
@@ -111,10 +121,11 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
 
 - Zustand for client-side state (`lib/stores/`)
 - `useUserStore` - Current authenticated user (id, email, emailVerified)
-- `useCalendarStore` - Calendar view state (Day/Week/Month), current date, entries array, and entry modal state
+- `useCalendarStore` - Calendar view state (Day/Week/Month), current date, entries, and entry modal state
   - `CalendarEntry` interface: id, startDate, endDate, title, wholeDay, content?
+  - Smart caching: `entryMap` (Map by ID) for deduplication, `loadedRanges` to track fetched windows, `mergeEntries` to incrementally add data
   - Modal actions: openEntryModal, closeEntryModal
-  - Entry actions: addEntry, updateEntry, deleteEntry, setEntries
+  - Entry actions: addEntry, updateEntry, deleteEntry, mergeEntries, clearCache
 
 ### Calendar Views
 
@@ -161,6 +172,14 @@ The calendar supports Day/Week/Month views (all implemented):
 - shadcn/ui configured with "new-york" style and lucide icons (`components.json`)
 - Dark mode via `.dark` class on ancestor elements
 - Use `cn()` from `@/lib/utils/utils` for conditional class merging
+
+### Testing
+
+- Vitest with jsdom environment, React Testing Library, and `@testing-library/user-event`
+- Config: `vitest.config.mts`, setup: `vitest.setup.ts`
+- Tests in `__tests__/` directory (components, pages)
+- Shared test utilities in `__tests__/test-utils.ts`
+- Run: `pnpm test` (or `pnpm test` from monorepo root via Turborepo)
 
 ### Path Aliases
 

@@ -21,6 +21,7 @@ pnpm dev:web      # Start only the web frontend (port 8080)
 pnpm dev:api      # Start only the API (port 3000)
 pnpm build        # Build all packages
 pnpm lint         # Lint all packages
+pnpm test         # Run all tests (API unit + web integration)
 ```
 
 From individual app directories (`apps/web/` or `apps/api/`):
@@ -43,9 +44,16 @@ pnpm prisma:seed                             # Seed database with test data
 docker compose up -d                         # Start PostgreSQL
 ```
 
+## Docker
+
+Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerfile`). A root `.dockerignore` excludes node_modules, build outputs, env files, and logs.
+
+- **API**: Node 22 Alpine, runs `node dist/src/main`, exposes port 3000, includes a healthcheck on `/health`
+- **Web**: Node 22 Alpine, uses Next.js standalone output, exposes port 8080. Requires `NEXT_PUBLIC_BACKEND_URL` as a build arg.
+
 ## Architecture
 
-**Authentication**: Cookie-based JWT auth (httpOnly cookies, not Bearer headers). Access tokens expire in 1h, refresh tokens in 7d. Email verification is required after signup — unverified users are redirected to `/check-email`. Password reset is supported via email with 1h token expiry.
+**Authentication**: Cookie-based JWT auth (httpOnly cookies, not Bearer headers). Access tokens expire in 1h, refresh tokens in 7d. Email verification is required after signup — unverified users are redirected to `/check-email`. Password reset is supported via email with 1h token expiry. Both refresh tokens and reset tokens are bcrypt-hashed before storage.
 
 **Frontend State**: Zustand stores for user state and calendar state (view mode, entries, modals).
 
@@ -63,7 +71,9 @@ docker compose up -d                         # Start PostgreSQL
 
 **Logging**: Structured logging via `nestjs-pino`. Pretty-printed in development, JSON in production.
 
-**Database**: PostgreSQL via Prisma. Models: User (with emailVerified, verificationToken, resetToken fields), CalendarEntry.
+**Input Validation**: Global payload limit of 1MB (JSON + URL-encoded). DTO string fields have max length constraints (title: 255, content: 5000, email: 254, password: 128).
+
+**Database**: PostgreSQL via Prisma. Models: User (with emailVerified, verificationToken, resetToken fields), CalendarEntry. Indexes on User.email, CalendarEntry.userId, CalendarEntry.startDate, CalendarEntry.endDate, and a composite (endDate, startDate) index.
 
 **Email**: Nodemailer-based mail service. Uses Ethereal test accounts in development (preview URLs logged to console). Production requires SMTP configuration.
 
@@ -71,7 +81,7 @@ docker compose up -d                         # Start PostgreSQL
 
 **Web** (`apps/web/.env`): `NEXT_PUBLIC_BACKEND_URL`
 
-**API** (`apps/api/.env`): `PORT`, `FRONTEND_URL`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `DB_HOST`, `SECRET_KEY`, `REFRESH_SECRET_KEY`, `MAIL_SECRET_KEY`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM`
+**API** (`apps/api/.env`): `PORT`, `FRONTEND_URL`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `DB_HOST`, `SECRET_KEY`, `REFRESH_SECRET_KEY`, `MAIL_SECRET_KEY`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM`, `SENTRY_DSN` (optional)
 
 **API Test** (`apps/api/.env.test`): Same as above with `DB_NAME=b_cal_test`
 
