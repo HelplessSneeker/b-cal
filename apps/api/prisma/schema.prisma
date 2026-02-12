@@ -26,6 +26,8 @@ model User {
   resetToken        String?
 
   calendarEntry CalendarEntry[]
+
+  @@index([email])
 }
 
 model CalendarEntry {
@@ -42,4 +44,7 @@ model CalendarEntry {
   userId String
 
   @@index([userId])
+  @@index([startDate])
+  @@index([endDate])
+  @@index([endDate, startDate])
 }
