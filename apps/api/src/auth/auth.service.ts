@@ -13,6 +13,7 @@ import { jwtConstants, saltRounds } from './constants';
 import * as bcrypt from 'bcrypt';
 import { MailService } from 'src/mail/mail.service';
 import { ChangePasswordDTO } from './dto/change-password.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +23,7 @@ export class AuthService {
     private userService: UserService,
     private jwtService: JwtService,
     private mailService: MailService,
+    private prisma: PrismaService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<JwtUser | null> {
@@ -90,20 +92,31 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    const user = await this.userService.create({
-      email,
-      password: hashedPassword,
-      verificationToken,
+    const { user, tokens } = await this.prisma.$transaction(async (tx) => {
+      const user = await this.userService.create(
+        {
+          email,
+          password: hashedPassword,
+          verificationToken,
+        },
+        tx,
+      );
+      const tokens = await this.generateTokens(user);
+      const hashedRefreshToken = await bcrypt.hash(
+        tokens.refresh_token,
+        saltRounds,
+      );
+      await this.userService.updateRefreshToken(
+        user.id,
+        hashedRefreshToken,
+        tx,
+      );
+
+      return { user, tokens };
     });
 
     await this.mailService.sendVerificationEmail(email, verificationToken);
 
-    const tokens = await this.generateTokens(user);
-    const hashedRefreshToken = await bcrypt.hash(
-      tokens.refresh_token,
-      saltRounds,
-    );
-    await this.userService.updateRefreshToken(user.id, hashedRefreshToken);
     this.logger.log(`User signed up: ${user.id}`);
     return tokens;
   }
@@ -122,12 +135,20 @@ export class AuthService {
       throw new ForbiddenException('Access denied');
     }
 
-    const tokens = await this.generateTokens(user);
-    const hashedRefreshToken = await bcrypt.hash(
-      tokens.refresh_token,
-      saltRounds,
-    );
-    await this.userService.updateRefreshToken(user.id, hashedRefreshToken);
+    const tokens = await this.prisma.$transaction(async (tx) => {
+      const tokens = await this.generateTokens(user);
+      const hashedRefreshToken = await bcrypt.hash(
+        tokens.refresh_token,
+        saltRounds,
+      );
+      await this.userService.updateRefreshToken(
+        user.id,
+        hashedRefreshToken,
+        tx,
+      );
+      return tokens;
+    });
+
     return tokens;
   }
 
@@ -214,12 +235,15 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired token');
     }
 
-    const hashedPassword = await bcrypt.hash(
-      changePasswordDTO.password,
-      saltRounds,
-    );
+    await this.prisma.$transaction(async (tx) => {
+      const hashedPassword = await bcrypt.hash(
+        changePasswordDTO.password,
+        saltRounds,
+      );
 
-    await this.userService.changePassword(payload.email, hashedPassword);
+      await this.userService.changePassword(payload.email, hashedPassword, tx);
+    });
+
     this.logger.log(`Password changed: ${payload.email}`);
   }
 

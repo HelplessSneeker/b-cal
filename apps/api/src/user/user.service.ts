@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { User } from 'generated/prisma/client';
+import { Prisma, User } from 'generated/prisma/client';
 
 @Injectable()
 export class UserService {
@@ -8,8 +8,12 @@ export class UserService {
 
   constructor(private prisma: PrismaService) {}
 
-  async findOne(email: string): Promise<User | null> {
-    return this.prisma.user.findUnique({
+  async findOne(
+    email: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<User | null> {
+    const client = tx ?? this.prisma;
+    return client.user.findUnique({
       where: {
         email,
       },
@@ -22,12 +26,16 @@ export class UserService {
     });
   }
 
-  async create(data: {
-    email: string;
-    password: string;
-    verificationToken: string;
-  }) {
-    const user = await this.prisma.user.create({
+  async create(
+    data: {
+      email: string;
+      password: string;
+      verificationToken: string;
+    },
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    const user = await client.user.create({
       data,
     });
     this.logger.log(`User created: ${user.id}`);
@@ -41,8 +49,13 @@ export class UserService {
     });
   }
 
-  async updateRefreshToken(id: string, refreshToken: string | null) {
-    return this.prisma.user.update({
+  async updateRefreshToken(
+    id: string,
+    refreshToken: string | null,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    return client.user.update({
       where: { id },
       data: { refreshToken },
     });
@@ -76,8 +89,13 @@ export class UserService {
     });
   }
 
-  async changePassword(email: string, password: string) {
-    const user = await this.findOne(email);
+  async changePassword(
+    email: string,
+    password: string,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    const user = await this.findOne(email, tx);
 
     if (!user || !user.resetToken) {
       this.logger.error(
@@ -86,7 +104,7 @@ export class UserService {
       throw new BadRequestException('User not found');
     }
 
-    await this.prisma.user.update({
+    await client.user.update({
       where: {
         id: user.id,
       },

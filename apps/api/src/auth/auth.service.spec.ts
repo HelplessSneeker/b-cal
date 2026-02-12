@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
 import { MailService } from 'src/mail/mail.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtUser } from './types';
 import * as bcrypt from 'bcrypt';
 
@@ -48,6 +49,10 @@ const mockMailService = {
   sendPasswordResetEmail: jest.fn(),
 };
 
+const mockPrismaService = {
+  $transaction: jest.fn((fn) => fn(mockPrismaService)),
+};
+
 describe('AuthService', () => {
   let service: AuthService;
 
@@ -58,6 +63,7 @@ describe('AuthService', () => {
         { provide: UserService, useValue: mockUserService },
         { provide: JwtService, useValue: mockJwtService },
         { provide: MailService, useValue: mockMailService },
+        { provide: PrismaService, useValue: mockPrismaService },
       ],
     }).compile();
 
@@ -150,11 +156,14 @@ describe('AuthService', () => {
         access_token: 'access-token',
         refresh_token: 'refresh-token',
       });
-      expect(mockUserService.create).toHaveBeenCalledWith({
-        email: 'new@example.com',
-        password: 'hashedpw',
-        verificationToken: 'verification-token',
-      });
+      expect(mockUserService.create).toHaveBeenCalledWith(
+        {
+          email: 'new@example.com',
+          password: 'hashedpw',
+          verificationToken: 'verification-token',
+        },
+        mockPrismaService,
+      );
       expect(mockMailService.sendVerificationEmail).toHaveBeenCalledWith(
         'new@example.com',
         'verification-token',
@@ -386,6 +395,7 @@ describe('AuthService', () => {
       expect(mockUserService.changePassword).toHaveBeenCalledWith(
         'test@example.com',
         'new-hashed-password',
+        mockPrismaService,
       );
     });
 
