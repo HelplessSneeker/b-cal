@@ -1,0 +1,69 @@
+name: Test
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm test
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: root
+          POSTGRES_DB: b_cal_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U root -d b_cal_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PORT: 3001
+      FRONTEND_URL: http://localhost:8080
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: b_cal_test
+      DB_PORT: 5432
+      DB_HOST: localhost
+      SECRET_KEY: TEST_SECRET_KEY
+      REFRESH_SECRET_KEY: TEST_REFRESH_SECRET_KEY
+      MAIL_SECRET_KEY: TEST_MAIL_SECRET_KEY
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm prisma:generate
+        working-directory: apps/api
+
+      - name: Run e2e tests
+        run: pnpm test:e2e
+        working-directory: apps/api
