@@ -112,3 +112,7 @@ After running `pnpm prisma:seed` in the API:
 |-------|----------|
 | alice@example.com | password123! |
 | bob@example.com | password123! |
+
+## Continues Integration
+
+on merge into main github workflows run ensuring working code
