@@ -50,6 +50,7 @@ const mockMailService = {
 };
 
 const mockPrismaService = {
+  // eslint-disable-next-line
   $transaction: jest.fn((fn) => fn(mockPrismaService)),
 };
 
@@ -63,6 +64,7 @@ describe('AuthService', () => {
         { provide: UserService, useValue: mockUserService },
         { provide: JwtService, useValue: mockJwtService },
         { provide: MailService, useValue: mockMailService },
+        // eslint-disable-next-line
         { provide: PrismaService, useValue: mockPrismaService },
       ],
     }).compile();
