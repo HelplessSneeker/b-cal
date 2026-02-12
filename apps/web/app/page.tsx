@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect, useCallback } from "react"
 import { AuthProvider } from "@/components/AuthProvider"
 import { CalendarHeader } from "@/components/calendar/calendar-header"
 import { CalendarSidebar } from "@/components/calendar/calendar-sidebar"
@@ -9,19 +8,12 @@ import { WeekView } from "@/components/calendar/views/week-view"
 import { MonthView } from "@/components/calendar/views/month-view"
 import { CalendarView, useCalendarStore } from "@/lib/stores/calendarStore"
 import { EntryModal } from "@/components/entry-modal"
-import { getEntries } from "@/lib/api/calendar"
+import { useCalendarData } from "@/lib/hooks/useCalendarData"
 
 function CalendarPage() {
-  const { setEntries, view } = useCalendarStore()
+  const view = useCalendarStore((s) => s.view)
 
-  const fetchEntries = useCallback(async () => {
-    const entries = await getEntries()
-    setEntries(entries)
-  }, [setEntries])
-
-  useEffect(() => {
-    fetchEntries()
-  }, [fetchEntries])
+  useCalendarData()
 
   return (
     <div className="flex h-screen flex-col">

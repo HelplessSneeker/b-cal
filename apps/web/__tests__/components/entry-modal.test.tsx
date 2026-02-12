@@ -77,6 +77,7 @@ describe("EntryModal", () => {
       isEntryModalOpen: true,
       editingEntry: testEntry,
       entries: [testEntry],
+      entryMap: new Map([[testEntry.id, testEntry]]),
     })
 
     const user = userEvent.setup()
@@ -106,6 +107,7 @@ describe("EntryModal", () => {
       isEntryModalOpen: true,
       editingEntry: testEntry,
       entries: [testEntry],
+      entryMap: new Map([[testEntry.id, testEntry]]),
     })
 
     const user = userEvent.setup()
