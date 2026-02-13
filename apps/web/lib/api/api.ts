@@ -22,19 +22,44 @@ export class ApiError extends Error {
   }
 }
 
+let csrfToken: string | null = null
+
+export async function fetchCsrfToken(): Promise<void> {
+  try {
+    const response = await fetch(`${BACKEND_URL}/auth/csrf-token`, {
+      credentials: "include",
+    })
+    if (response.ok) {
+      const json = await response.json()
+      csrfToken = json.data?.csrfToken ?? null
+    }
+  } catch {
+    // CSRF token fetch failed — will retry on next mutation
+  }
+}
+
 export async function api<T = unknown>(
   endpoint: string,
   options: ApiRequestOptions = {}
 ): Promise<T> {
   const { body, showSuccessToast = true, ...fetchOptions } = options
 
+  const method = (fetchOptions.method ?? "GET").toUpperCase()
+  const isStateChanging = method !== "GET" && method !== "HEAD" && method !== "OPTIONS"
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(fetchOptions.headers as Record<string, string>),
+  }
+
+  if (isStateChanging && csrfToken) {
+    headers["x-csrf-token"] = csrfToken
+  }
+
   const config: RequestInit = {
     ...fetchOptions,
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...fetchOptions.headers,
-    },
+    headers,
   }
 
   if (body !== undefined) {
@@ -42,7 +67,21 @@ export async function api<T = unknown>(
   }
 
   try {
-    const response = await fetch(`${BACKEND_URL}${endpoint}`, config)
+    let response = await fetch(`${BACKEND_URL}${endpoint}`, config)
+
+    if (response.status === 403 && isStateChanging) {
+      const json = await response.json().catch(() => ({}))
+      if (json.message && json.message.includes("CSRF")) {
+        csrfToken = null
+        await fetchCsrfToken()
+        if (csrfToken) {
+          headers["x-csrf-token"] = csrfToken
+          config.headers = headers
+          response = await fetch(`${BACKEND_URL}${endpoint}`, config)
+        }
+      }
+    }
+
     const json: ApiResponse<T> = await response.json().catch(() => ({}))
 
     if (!response.ok) {

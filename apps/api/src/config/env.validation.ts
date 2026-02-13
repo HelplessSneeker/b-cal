@@ -51,6 +51,10 @@ class EnvironmentVariables {
   @IsNotEmpty()
   MAIL_SECRET_KEY: string;
 
+  @IsString()
+  @IsNotEmpty()
+  CSRF_SECRET: string;
+
   @ValidateIf((o: { NODE_ENV?: string }) => o.NODE_ENV === 'production')
   @IsString()
   @IsNotEmpty()

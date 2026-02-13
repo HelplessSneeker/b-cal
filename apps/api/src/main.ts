@@ -7,7 +7,11 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
-import { json, urlencoded } from 'express';
+import { json, urlencoded, Request, Response, NextFunction } from 'express';
+import {
+  doubleCsrfProtection,
+  invalidCsrfTokenError,
+} from './csrf/csrf.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -60,6 +64,15 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   app.use(cookieParser());
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    doubleCsrfProtection(req, res, (err?: unknown) => {
+      if (err === invalidCsrfTokenError) {
+        res.status(403).json({ message: 'Invalid CSRF token' });
+        return;
+      }
+      next(err as Error);
+    });
+  });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

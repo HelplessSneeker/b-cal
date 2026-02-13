@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { getMe } from "@/lib/api/auth"
+import { fetchCsrfToken } from "@/lib/api/api"
 import { useUserStore } from "@/lib/stores/userStore"
 import { Loading } from "@/components/ui/loading"
 
@@ -19,6 +20,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (user || hasChecked) return
 
     let cancelled = false
+
+    fetchCsrfToken()
 
     getMe().then((userData) => {
       if (cancelled) return
