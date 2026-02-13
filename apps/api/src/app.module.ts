@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
@@ -13,6 +14,8 @@ import { HealthModule } from './health/health.module';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
+const REQUEST_ID_HEADER = 'X-Request-Id';
+
 @Module({
   imports: [
     SentryModule.forRoot(),
@@ -20,6 +23,12 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+        genReqId: (req, res) => {
+          const id =
+            req.headers[REQUEST_ID_HEADER.toLowerCase()] ?? randomUUID();
+          res.setHeader(REQUEST_ID_HEADER, id);
+          return id;
+        },
         transport:
           process.env.NODE_ENV !== 'production'
             ? {

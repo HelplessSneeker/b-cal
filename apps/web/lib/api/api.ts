@@ -49,6 +49,7 @@ export async function api<T = unknown>(
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "X-Request-Id": crypto.randomUUID(),
     ...(fetchOptions.headers as Record<string, string>),
   }
 
