@@ -23,7 +23,12 @@
       "esbuild",
       "prisma",
       "unrs-resolver"
-    ]
+    ],
+    "overrides": {
+      "lodash@>=4.0.0 <=4.17.22": ">=4.17.23",
+      "hono@<4.11.7": ">=4.11.7",
+      "qs@>=6.7.0 <=6.14.1": ">=6.14.2"
+    }
   },
   "devDependencies": {
     "turbo": "^2.8.3"
