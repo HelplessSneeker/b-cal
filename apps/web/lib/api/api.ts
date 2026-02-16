@@ -23,6 +23,37 @@ export class ApiError extends Error {
 }
 
 let csrfToken: string | null = null
+let refreshPromise: Promise<boolean> | null = null
+
+async function attemptTokenRefresh(): Promise<boolean> {
+  if (refreshPromise) {
+    return refreshPromise
+  }
+
+  refreshPromise = (async () => {
+    try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "X-Request-Id": crypto.randomUUID(),
+      }
+      if (csrfToken) {
+        headers["x-csrf-token"] = csrfToken
+      }
+      const response = await fetch(`${BACKEND_URL}/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+        headers,
+      })
+      return response.ok
+    } catch {
+      return false
+    } finally {
+      refreshPromise = null
+    }
+  })()
+
+  return refreshPromise
+}
 
 export async function fetchCsrfToken(): Promise<void> {
   try {
@@ -80,6 +111,20 @@ export async function api<T = unknown>(
           config.headers = headers
           response = await fetch(`${BACKEND_URL}${endpoint}`, config)
         }
+      }
+    }
+
+    if (response.status === 401 && endpoint !== "/auth/refresh") {
+      const refreshed = await attemptTokenRefresh()
+      if (refreshed) {
+        headers["X-Request-Id"] = crypto.randomUUID()
+        config.headers = headers
+        response = await fetch(`${BACKEND_URL}${endpoint}`, config)
+      }
+
+      if (response.status === 401) {
+        window.location.href = "/login"
+        throw new ApiError("Session expired", 401)
       }
     }
 

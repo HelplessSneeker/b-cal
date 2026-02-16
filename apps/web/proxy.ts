@@ -3,11 +3,14 @@ import type { NextRequest } from "next/server"
 
 const AUTH_ROUTES = ["/login", "/signup", "/forgot-password", "/reset-password"]
 const OPEN_ROUTES = ["/verify-email", "/check-email"]
-const AUTH_COOKIE_NAME = "access_token"
+const ACCESS_TOKEN_COOKIE = "access_token"
+const REFRESH_TOKEN_COOKIE = "refresh_token"
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const isAuthenticated = request.cookies.has(AUTH_COOKIE_NAME)
+  const hasAccessToken = request.cookies.has(ACCESS_TOKEN_COOKIE)
+  const hasRefreshToken = request.cookies.has(REFRESH_TOKEN_COOKIE)
+  const isAuthenticated = hasAccessToken || hasRefreshToken
 
   // Allow verification routes regardless of auth state
   if (OPEN_ROUTES.some((route) => pathname.startsWith(route))) {
