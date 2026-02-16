@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
@@ -5,6 +6,7 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
+import { stripHtmlTags } from '../../common/utils/strip-html-tags';
 import { IsStartBeforeEnd } from '../validators/date-range.validator';
 
 export class CreateCalendarDto {
@@ -15,10 +17,12 @@ export class CreateCalendarDto {
   @IsStartBeforeEnd()
   endDate: string;
 
+  @Transform(({ value }) => (typeof value === 'string' ? stripHtmlTags(value) : value))
   @IsString()
   @MaxLength(255)
   title: string;
 
+  @Transform(({ value }) => (typeof value === 'string' ? stripHtmlTags(value) : value))
   @IsOptional()
   @IsString()
   @MaxLength(5000)

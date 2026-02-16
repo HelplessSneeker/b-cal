@@ -98,6 +98,7 @@ describe('AuthController (e2e)', () => {
       new ValidationPipe({
         whitelist: true,
         forbidNonWhitelisted: true,
+        transform: true,
       }),
     );
     await app.init();

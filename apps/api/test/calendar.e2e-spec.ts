@@ -93,6 +93,7 @@ describe('CalendarController (e2e)', () => {
       new ValidationPipe({
         whitelist: true,
         forbidNonWhitelisted: true,
+        transform: true,
       }),
     );
     await app.init();
@@ -348,6 +349,31 @@ describe('CalendarController (e2e)', () => {
       expect(body.message).toContain(
         'startDate must be before or equal to endDate',
       );
+    });
+
+    it('should strip HTML tags from title and content on create', async () => {
+      await request(app.getHttpServer())
+        .post('/calendar')
+        .set('Cookie', userCookies)
+        .send({
+          title: '<b>HTML</b> Title',
+          startDate: '2025-06-01T10:00:00.000Z',
+          endDate: '2025-06-01T11:00:00.000Z',
+          content: '<script>alert("xss")</script>Safe content',
+        })
+        .expect(201);
+
+      const entryId = await findEntryByTitle(
+        prisma,
+        'HTML Title',
+        testUser.email,
+      );
+      const getResponse = await request(app.getHttpServer())
+        .get(`/calendar/${entryId}`)
+        .set('Cookie', userCookies);
+      const getBody = getResponse.body as DataResponse<CalendarEntry>;
+      expect(getBody.data.title).toBe('HTML Title');
+      expect(getBody.data.content).toBe('alert("xss")Safe content');
     });
 
     it('should return 400 for invalid date format', async () => {
@@ -668,6 +694,24 @@ describe('CalendarController (e2e)', () => {
         .set('Cookie', userCookies);
       const getBody = getResponse.body as DataResponse<CalendarEntry>;
       expect(getBody.data.wholeDay).toBe(true);
+    });
+
+    it('should strip HTML tags from title and content on update', async () => {
+      await request(app.getHttpServer())
+        .patch(`/calendar/${updateEntryId}`)
+        .set('Cookie', userCookies)
+        .send({
+          title: '<em>Updated</em> Title',
+          content: '<div>Updated</div> content',
+        })
+        .expect(200);
+
+      const getResponse = await request(app.getHttpServer())
+        .get(`/calendar/${updateEntryId}`)
+        .set('Cookie', userCookies);
+      const getBody = getResponse.body as DataResponse<CalendarEntry>;
+      expect(getBody.data.title).toBe('Updated Title');
+      expect(getBody.data.content).toBe('Updated content');
     });
 
     it('should return 401 without authentication', async () => {
