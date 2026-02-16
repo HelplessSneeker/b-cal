@@ -119,7 +119,7 @@ export function CalendarHeader() {
           <Button variant="ghost" size="icon" onClick={() => handleNavigate(-1)}>
             <ChevronLeftIcon className="size-4" />
           </Button>
-          <span className="text-muted-foreground">
+          <span className="min-w-48 text-center text-muted-foreground">
             {formatDateDisplay(currentDate, view)}
           </span>
           <Button variant="ghost" size="icon" onClick={() => handleNavigate(1)}>

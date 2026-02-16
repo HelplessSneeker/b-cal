@@ -21,7 +21,7 @@ export function TimeGrid({ children }: TimeGridProps) {
 
   return (
     <ScrollArea className="h-full" viewportRef={viewportRef}>
-      <div className="flex min-w-full">
+      <div className="flex min-w-full pr-2.5">
         <TimeColumn />
         {children}
       </div>
