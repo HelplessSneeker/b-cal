@@ -27,9 +27,9 @@ export class CalendarController {
     @User('id') userId: string,
     @Body() createCalendarDto: CreateCalendarDto,
   ) {
-    await this.calendarService.create(userId, createCalendarDto);
+    const entry = await this.calendarService.create(userId, createCalendarDto);
 
-    return { message: `Calendar entry created` };
+    return { message: `Calendar entry created`, data: entry };
   }
 
   @Get()
@@ -58,10 +58,11 @@ export class CalendarController {
     @Param('id') id: string,
     @Body() updateCalendarDto: UpdateCalendarDto,
   ) {
-    await this.calendarService.update(userId, id, updateCalendarDto);
+    const entry = await this.calendarService.update(userId, id, updateCalendarDto);
 
     return {
       message: `Calendar entry has been updated`,
+      data: entry,
     };
   }
 
