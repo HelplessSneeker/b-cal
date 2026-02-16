@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 const AUTH_ROUTES = ["/login", "/signup", "/forgot-password", "/reset-password"]
-const OPEN_ROUTES = ["/verify-email", "/check-email"]
+const OPEN_ROUTES = ["/verify-email", "/check-email", "/health"]
 const ACCESS_TOKEN_COOKIE = "access_token"
 const REFRESH_TOKEN_COOKIE = "refresh_token"
 
