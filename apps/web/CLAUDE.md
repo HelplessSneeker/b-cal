@@ -83,8 +83,8 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
   - `lib/utils/utils.ts` - `cn()` class merging helper
   - `lib/utils/password.ts` - `validatePassword()` client-side password validation (8+ chars, number, symbol)
   - `lib/api/` - API layer
-    - `api.ts` - Typed `api<T>()` function with error/success toast handling
-    - `auth.ts` - Authentication API functions (login, signup, logout, getMe, forgotPassword, resetPassword, verifyEmail, resendVerification, refreshToken)
+    - `api.ts` - Typed `api<T>()` function with error/success toast handling, silent token refresh on 401, CSRF token management, and `X-Request-Id` header generation
+    - `auth.ts` - Authentication API functions (login, signup, logout, getMe, forgotPassword, resetPassword, verifyEmail, resendVerification, refreshToken, deleteUser)
     - `calendar.ts` - Calendar entry CRUD operations (getEntries, createEntry, updateEntry, deleteEntry)
   - `lib/calendar/` - Calendar utilities
     - `date-utils.ts` - Date manipulation (getStartOfWeek, getEndOfWeek, getStartOfMonth, getEndOfMonth, getMonthGridDates)
@@ -95,12 +95,15 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
   - `lib/stores/` - Zustand stores for client state
     - `userStore.ts` - Current authenticated user (id, email, emailVerified)
     - `calendarStore.ts` - Calendar view state, entries, and modal state. Uses an `entryMap` (Map by ID) for deduplication, with `loadedRanges` to track fetched date windows and avoid re-fetching.
-- `proxy.ts` - Next.js middleware for route protection (auth routes, open routes, protected routes)
+- `proxy.ts` - Route protection logic (auth routes, open routes, protected routes). Exports a `proxy()` function and matcher config.
+- `instrumentation.ts` - Sentry SDK initialization for the Next.js server runtime
+- `sentry.edge.config.ts` - Sentry configuration for the Edge runtime
+- `sentry.server.config.ts` - Sentry configuration for the Node.js server runtime
 
 ### Authentication
 
 - Cookie-based auth with a NestJS backend (configured via `NEXT_PUBLIC_BACKEND_URL`)
-- `AuthProvider` component wraps protected routes, redirects unauthenticated users to `/login` and unverified users to `/check-email`
+- `AuthProvider` component wraps protected routes, redirects unauthenticated users to `/login` and unverified users to `/check-email`, fetches CSRF token on mount
 - User state managed via Zustand store (`useUserStore`) — includes `emailVerified` field
 - `proxy.ts` middleware handles route-level auth:
   - **Auth routes** (`/login`, `/signup`, `/forgot-password`, `/reset-password`): redirect authenticated users to `/`
@@ -152,19 +155,26 @@ The calendar supports Day/Week/Month views (all implemented):
 ### API Layer
 
 - `lib/api/api.ts` provides a typed `api<T>()` function for backend requests
-- `lib/api/auth.ts` provides authentication operations (login, signup, logout, getMe, forgotPassword, resetPassword, verifyEmail, resendVerification, refreshToken)
+- `lib/api/auth.ts` provides authentication operations (login, signup, logout, getMe, forgotPassword, resetPassword, verifyEmail, resendVerification, refreshToken, deleteUser)
 - `lib/api/calendar.ts` provides calendar entry CRUD operations
 - Automatic toast notifications for success/error responses
 - All requests include credentials for cookie-based auth
+- Every request includes an `X-Request-Id` header (`crypto.randomUUID()`) for traceability
+- **Silent token refresh**: On 401 responses (except `/auth/refresh`), automatically attempts a token refresh and retries the original request. Uses promise deduplication to prevent concurrent refresh calls. Redirects to `/login` if refresh also fails.
+- **CSRF handling**: Fetches a CSRF token via `GET /auth/csrf-token` on app mount. Sends the token in the `x-csrf-token` header on state-changing requests (POST, PATCH, DELETE). On CSRF 403 errors, automatically re-fetches the token and retries.
 
 ### Security Headers
 
-`next.config.ts` sets the following headers on all routes:
+`next.config.ts` (wrapped with `withSentryConfig`) sets the following headers on all routes:
 - `X-Content-Type-Options: nosniff` — prevents MIME sniffing
 - `Referrer-Policy: strict-origin-when-cross-origin` — controls referrer information
 - `X-Frame-Options: DENY` — prevents clickjacking
 - `Permissions-Policy: camera=(), microphone=(), geolocation=()` — disables browser features
 - `poweredByHeader: false` — hides the `X-Powered-By: Next.js` header
+
+### Error Monitoring
+
+Sentry integration via `@sentry/nextjs`. Config files: `instrumentation.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`. Uses a `/monitoring` tunnel route to circumvent ad-blockers. Source maps are uploaded in CI.
 
 ### Styling
 

@@ -53,7 +53,9 @@ Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerf
 
 ## Architecture
 
-**Authentication**: Cookie-based JWT auth (httpOnly cookies, not Bearer headers). Access tokens expire in 1h, refresh tokens in 7d. Email verification is required after signup — unverified users are redirected to `/check-email`. Password reset is supported via email with 1h token expiry. Both refresh tokens and reset tokens are bcrypt-hashed before storage.
+**Authentication**: Cookie-based JWT auth (httpOnly cookies, not Bearer headers). Access tokens expire in 1h, refresh tokens in 7d. Email verification is required after signup — unverified users are redirected to `/check-email`. Password reset is supported via email with 1h token expiry. Both refresh tokens and reset tokens are bcrypt-hashed before storage. The frontend implements silent token refresh — on 401 responses, the client automatically attempts a token refresh and retries the original request, with deduplication to prevent concurrent refresh calls.
+
+**CSRF Protection**: Double-submit cookie pattern via `csrf-csrf`. The API sets an httpOnly CSRF cookie (`__Host-csrf-token` in production, `csrf-token` in development) and validates the `x-csrf-token` header on state-changing requests. The frontend fetches a CSRF token on mount via `GET /auth/csrf-token` and auto-retries on CSRF failures.
 
 **Frontend State**: Zustand stores for user state and calendar state (view mode, entries, modals).
 
@@ -69,7 +71,7 @@ Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerf
 
 **Environment Validation**: Runtime validation of all required environment variables on startup via class-validator. Mail settings are only required in production.
 
-**Logging**: Structured logging via `nestjs-pino`. Pretty-printed in development, JSON in production.
+**Logging**: Structured logging via `nestjs-pino`. Pretty-printed in development, JSON in production. Each request is tagged with an `X-Request-Id` header (auto-generated via `randomUUID()` if not provided by the client). Request IDs are included in log entries and error responses for traceability.
 
 **Input Validation**: Global payload limit of 1MB (JSON + URL-encoded). DTO string fields have max length constraints (title: 255, content: 5000, email: 254, password: 128).
 
@@ -81,7 +83,7 @@ Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerf
 
 **Web** (`apps/web/.env`): `NEXT_PUBLIC_BACKEND_URL`
 
-**API** (`apps/api/.env`): `PORT`, `FRONTEND_URL`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `DB_HOST`, `SECRET_KEY`, `REFRESH_SECRET_KEY`, `MAIL_SECRET_KEY`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM`, `SENTRY_DSN` (optional)
+**API** (`apps/api/.env`): `PORT`, `FRONTEND_URL`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `DB_HOST`, `SECRET_KEY`, `REFRESH_SECRET_KEY`, `MAIL_SECRET_KEY`, `CSRF_SECRET`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM`, `SENTRY_DSN` (optional)
 
 **API pool tuning** (all optional): `DB_POOL_MAX` (default: 10), `DB_POOL_IDLE_TIMEOUT_MS` (default: 10000), `DB_POOL_CONNECTION_TIMEOUT_MS` (default: 5000)
 
