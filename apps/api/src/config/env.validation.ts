@@ -81,6 +81,18 @@ class EnvironmentVariables {
   @IsOptional()
   @IsString()
   SENTRY_DSN?: string;
+
+  @IsOptional()
+  @IsNumberString()
+  DB_POOL_MAX?: string;
+
+  @IsOptional()
+  @IsNumberString()
+  DB_POOL_IDLE_TIMEOUT_MS?: string;
+
+  @IsOptional()
+  @IsNumberString()
+  DB_POOL_CONNECTION_TIMEOUT_MS?: string;
 }
 
 export function validate(config: Record<string, unknown>) {

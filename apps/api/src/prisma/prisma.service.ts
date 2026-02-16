@@ -15,15 +15,33 @@ export class PrismaService
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
+    const connectionString = `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env['DB_HOST']}:${process.env.DB_PORT}/${process.env.DB_NAME}?schema=public`;
+
     super({
-      adapter: new PrismaPg({
-        connectionString: `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env['DB_HOST']}:${process.env.DB_PORT}/${process.env.DB_NAME}?schema=public`,
-      }),
+      adapter: new PrismaPg(
+        {
+          connectionString,
+          max: parseInt(process.env.DB_POOL_MAX || '10', 10),
+          idleTimeoutMillis: parseInt(
+            process.env.DB_POOL_IDLE_TIMEOUT_MS || '10000',
+            10,
+          ),
+          connectionTimeoutMillis: parseInt(
+            process.env.DB_POOL_CONNECTION_TIMEOUT_MS || '5000',
+            10,
+          ),
+        },
+        {
+          schema: 'public',
+        },
+      ),
     });
   }
+
   async onModuleInit() {
     await this.$connect();
-    this.logger.log('Database connected');
+    const poolMax = parseInt(process.env.DB_POOL_MAX || '10', 10);
+    this.logger.log(`Database connected (pool max: ${poolMax})`);
   }
 
   async onModuleDestroy() {
