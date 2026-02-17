@@ -47,6 +47,11 @@ const REQUEST_ID_HEADER = 'X-Request-Id';
           ttl: 60000,
           limit: 60,
         },
+        {
+          name: 'mail',
+          ttl: 300000,
+          limit: 300,
+        },
       ],
     }),
     CalendarModule,

@@ -71,7 +71,10 @@ export class AuthController {
     return { message: 'Login successful' };
   }
 
-  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @Throttle({
+    default: { ttl: 60000, limit: 5 },
+    mail: { ttl: 300000, limit: 3 },
+  })
   @Post('signup')
   async signup(
     @Body() signupDto: SignupDto,
@@ -113,7 +116,10 @@ export class AuthController {
     return { data: user };
   }
 
-  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @Throttle({
+    default: { ttl: 60000, limit: 5 },
+    mail: { ttl: 300000, limit: 3 },
+  })
   @UseGuards(JwtAuthGuard)
   @Post('resend-verification')
   async resendVerification(@User('id') userId: string) {
@@ -128,7 +134,10 @@ export class AuthController {
     return { message: 'Email verified' };
   }
 
-  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @Throttle({
+    default: { ttl: 60000, limit: 5 },
+    mail: { ttl: 300000, limit: 3 },
+  })
   @ApiBody({ type: RequestPasswordResetDTO })
   @Post('forgot-password')
   async forgotPassword(
