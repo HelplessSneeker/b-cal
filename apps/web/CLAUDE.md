@@ -95,7 +95,7 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
   - `lib/stores/` - Zustand stores for client state
     - `userStore.ts` - Current authenticated user (id, email, emailVerified)
     - `calendarStore.ts` - Calendar view state, entries, and modal state. Uses an `entryMap` (Map by ID) for deduplication, with `loadedRanges` to track fetched date windows and avoid re-fetching.
-- `proxy.ts` - Route protection logic (auth routes, open routes, protected routes). Exports a `proxy()` function and matcher config. This is the Next.js 16 equivalent of `middleware.ts`.
+- `proxy.ts` - Next.js 16 proxy (replaces `middleware.ts`). Handles route protection (auth routes, open routes, protected routes) and generates a per-request CSP nonce. Sets a strict `Content-Security-Policy` header (script-src with nonce + strict-dynamic, `frame-ancestors 'none'`, `object-src 'none'`; adds `upgrade-insecure-requests` in production). Exports a `proxy()` function and matcher config.
 - `src/config/env.ts` - Environment variable validation (validates `NEXT_PUBLIC_BACKEND_URL` at build time)
 - `instrumentation.ts` - Sentry SDK initialization for the Next.js server runtime
 - `sentry.edge.config.ts` - Sentry configuration for the Edge runtime
@@ -170,9 +170,10 @@ The calendar supports Day/Week/Month views (all implemented):
 
 - `X-Content-Type-Options: nosniff` — prevents MIME sniffing
 - `Referrer-Policy: strict-origin-when-cross-origin` — controls referrer information
-- `X-Frame-Options: DENY` — prevents clickjacking
 - `Permissions-Policy: camera=(), microphone=(), geolocation=()` — disables browser features
 - `poweredByHeader: false` — hides the `X-Powered-By: Next.js` header
+
+Clickjacking protection is handled via CSP `frame-ancestors 'none'` set in `proxy.ts` (not as a separate `X-Frame-Options` header).
 
 ### Error Monitoring
 
@@ -182,7 +183,7 @@ Sentry integration via `@sentry/nextjs`. Config files: `instrumentation.ts`, `se
 
 - Tailwind CSS v4 with CSS variables for theming (defined in `app/globals.css`)
 - shadcn/ui configured with "new-york" style and lucide icons (`components.json`)
-- Dark mode via `.dark` class on ancestor elements
+- Dark mode CSS variables defined via `.dark` class in `globals.css` (`next-themes` is installed but no `ThemeProvider` is configured — dark mode is not currently active)
 - Use `cn()` from `@/lib/utils/utils` for conditional class merging
 
 ### Testing

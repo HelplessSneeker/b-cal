@@ -16,12 +16,15 @@ See `apps/web/CLAUDE.md` and `apps/api/CLAUDE.md` for detailed architecture docu
 From the monorepo root:
 
 ```bash
-pnpm dev          # Start both web and API in watch mode
-pnpm dev:web      # Start only the web frontend (port 8080)
-pnpm dev:api      # Start only the API (port 3000)
-pnpm build        # Build all packages
-pnpm lint         # Lint all packages
-pnpm test         # Run all tests (API unit + web integration)
+pnpm dev            # Start both web and API in watch mode
+pnpm dev:web        # Start only the web frontend (port 8080)
+pnpm dev:api        # Start only the API (port 3000)
+pnpm build          # Build all packages
+pnpm lint           # Lint all packages
+pnpm test           # Run all tests (API unit + web integration)
+pnpm format         # Format all packages (Prettier)
+pnpm format:check   # Check formatting without fixing
+pnpm prisma:studio  # Launch Prisma Studio (API)
 ```
 
 From individual app directories (`apps/web/` or `apps/api/`):
@@ -65,7 +68,11 @@ Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerf
 
 **Health Checks**: `GET /health` endpoint via `@nestjs/terminus` — monitors database connectivity, heap memory (150MB threshold), and disk usage (90% threshold).
 
-**Security Headers**: Helmet middleware on the API (HSTS with 1-year max-age, strict CSP). Frontend sets `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, and `Permissions-Policy` via Next.js headers config.
+**Security Headers**: Helmet middleware on the API (HSTS with 1-year max-age, strict CSP). Frontend sets `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy` via Next.js headers config. Clickjacking protection is via CSP `frame-ancestors 'none'` set in `proxy.ts`.
+
+**CSP**: The frontend `proxy.ts` generates a per-request nonce and sets a strict Content-Security-Policy header (script-src with nonce + strict-dynamic, frame-ancestors none, object-src none). In production, it also adds `upgrade-insecure-requests`.
+
+**Pre-commit Hooks**: Husky runs lint-staged (ESLint + Prettier) and tests on commit.
 
 **Rate Limiting**: Global throttling via `@nestjs/throttler` (60 requests per 60 seconds). Auth endpoints (login, signup, forgot-password, reset-password, resend-verification) are stricter at 5 requests per 60 seconds.
 

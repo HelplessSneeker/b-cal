@@ -2,26 +2,42 @@
 
 A full-stack calendar application built as a Turborepo monorepo.
 
-## Tech Stack
-
-- **Frontend**: Next.js 16, React 19, Tailwind CSS v4, shadcn/ui, Zustand
-- **Backend**: NestJS 11, Prisma 7, PostgreSQL 16, Passport JWT
-- **Tooling**: Turborepo, pnpm workspaces, TypeScript, ESLint, Docker
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
+![Next.js](https://img.shields.io/badge/Next.js_16-000?logo=nextdotjs&logoColor=fff)
+![React](https://img.shields.io/badge/React_19-61DAFB?logo=react&logoColor=000)
+![NestJS](https://img.shields.io/badge/NestJS_11-E0234E?logo=nestjs&logoColor=fff)
+![Prisma](https://img.shields.io/badge/Prisma_7-2D3748?logo=prisma&logoColor=fff)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL_16-4169E1?logo=postgresql&logoColor=fff)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?logo=tailwindcss&logoColor=fff)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=fff)
+![Turborepo](https://img.shields.io/badge/Turborepo-EF4444?logo=turborepo&logoColor=fff)
+![pnpm](https://img.shields.io/badge/pnpm-F69220?logo=pnpm&logoColor=fff)
 
 ## Features
 
-- Calendar with Day, Week, and Month views
+- Calendar with **Day**, **Week**, and **Month** views
 - Create, edit, and delete calendar entries (timed and all-day)
 - Cookie-based JWT authentication (access + refresh tokens)
 - Email verification on signup
 - Password reset via email
-- Swagger API documentation
+- Swagger API documentation (development)
+
+## Project Structure
+
+```
+b-cal/
+├── apps/
+│   ├── api/     # NestJS REST API      → localhost:3000
+│   └── web/     # Next.js frontend     → localhost:8080
+├── turbo.json   # Turborepo pipeline config
+└── package.json # Root scripts & shared devDependencies
+```
 
 ## Prerequisites
 
-- Node.js
-- pnpm
-- Docker and Docker Compose
+- [Node.js](https://nodejs.org/) 22+
+- [pnpm](https://pnpm.io/) 10+
+- [Docker](https://www.docker.com/)
 
 ## Getting Started
 
@@ -67,48 +83,63 @@ From the monorepo root:
 pnpm dev        # Start both web and API
 ```
 
-Or start them individually:
+Or individually:
 
 ```bash
 pnpm dev:web    # Frontend at http://localhost:8080
 pnpm dev:api    # API at http://localhost:3000
 ```
 
-The API Swagger docs are available at [http://localhost:3000/api](http://localhost:3000/api).
+Swagger docs are available at [http://localhost:3000/api](http://localhost:3000/api) during development.
 
-## Project Structure
+### Docker Compose (full stack)
 
+Alternatively, run the entire stack with Docker — no local Node.js or database setup required:
+
+```bash
+docker compose up
 ```
-b-cal/
-├── apps/
-│   ├── api/    # NestJS REST API
-│   └── web/    # Next.js frontend
-├── turbo.json  # Turborepo configuration
-└── package.json
-```
+
+This starts four services:
+
+| Service | Description | Port |
+|---|---|---|
+| `postgres` | PostgreSQL 16 database | 5432 |
+| `migrate` | Runs Prisma migrations, then exits | — |
+| `api` | NestJS API (waits for migrations) | 3000 |
+| `web` | Next.js frontend (waits for API health) | 8080 |
+
+Data is persisted in a `postgres_data` Docker volume. The API uses hardcoded dev secrets — **do not use this compose file in production**.
 
 ## Scripts
 
 | Command | Description |
-|---------|-------------|
+|---|---|
 | `pnpm dev` | Start both web and API in watch mode |
 | `pnpm dev:web` | Start only the frontend |
 | `pnpm dev:api` | Start only the API |
 | `pnpm build` | Build all packages |
 | `pnpm lint` | Lint all packages |
+| `pnpm test` | Run all tests |
+| `pnpm format` | Format all packages with Prettier |
+| `pnpm format:check` | Check formatting without fixing |
 
 See individual app READMEs for app-specific commands.
-
-## Documentation
-
-- [API Documentation](apps/api/README.md) - NestJS backend setup, endpoints, database schema
-- [Web Documentation](apps/web/README.md) - Next.js frontend setup, project structure, auth flows
 
 ## Test Users
 
 After running `pnpm prisma:seed` in the API:
 
 | Email | Password |
-|-------|----------|
-| alice@example.com | password123! |
-| bob@example.com | password123! |
+|---|---|
+| `alice@example.com` | `password123!` |
+| `bob@example.com` | `password123!` |
+
+## Documentation
+
+- **[API](apps/api/README.md)** — NestJS backend: endpoints, database schema, environment setup
+- **[Web](apps/web/README.md)** — Next.js frontend: project structure, auth flows, calendar views
+
+## License
+
+UNLICENSED
