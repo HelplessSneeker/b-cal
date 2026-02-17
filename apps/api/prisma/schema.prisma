@@ -27,6 +27,9 @@ model User {
 
   calendarEntry CalendarEntry[]
 
+  updatedAt DateTime?
+  createdAt DateTime  @default(now())
+
   @@index([email])
 }
 
@@ -42,6 +45,9 @@ model CalendarEntry {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
+
+  updatedAt DateTime?
+  createdAt DateTime  @default(now())
 
   @@index([userId])
   @@index([startDate])

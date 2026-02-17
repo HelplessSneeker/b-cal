@@ -168,7 +168,7 @@ describe('CalendarService', () => {
       expect(result).toEqual(updatedEntry);
       expect(mockPrismaService.calendarEntry.update).toHaveBeenCalledWith({
         where: { userId: 'user-1', id: 'entry-1' },
-        data: updateDto,
+        data: { ...updateDto, updatedAt: expect.any(Date) },
       });
     });
 

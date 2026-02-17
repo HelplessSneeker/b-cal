@@ -84,6 +84,7 @@ export class CalendarService {
       },
       data: {
         ...updateCalendarDto,
+        updatedAt: new Date(),
       },
     });
     this.logger.log(`Calendar entry updated: ${id}`);
