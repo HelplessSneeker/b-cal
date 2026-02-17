@@ -15,7 +15,8 @@
     "prisma:generate": "turbo run prisma:generate --filter=@b-cal/api",
     "prisma:migrate": "turbo run prisma:migrate --filter=@b-cal/api",
     "prisma:seed": "turbo run prisma:seed --filter=@b-cal/api",
-    "prisma:studio": "turbo run prisma:studio --filter=@b-cal/api"
+    "prisma:studio": "turbo run prisma:studio --filter=@b-cal/api",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -36,7 +37,19 @@
       "qs@>=6.7.0 <=6.14.1": ">=6.14.2"
     }
   },
+  "lint-staged": {
+    "apps/web/**/*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "apps/api/**/*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  },
   "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "turbo": "^2.8.3"
   }
 }
