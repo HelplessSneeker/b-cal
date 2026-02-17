@@ -1,4 +1,4 @@
-import type { Event } from "@sentry/nextjs";
+import type { ErrorEvent } from "@sentry/nextjs";
 
 const SENSITIVE_KEYS =
   /^(email|password|token|refreshtoken|resettoken|verificationtoken|authorization|cookie|set-cookie|x-csrf-token|secret)$/i;
@@ -36,7 +36,7 @@ function scrubUrl(url: string): string {
   );
 }
 
-export function beforeSend(event: Event): Event | null {
+export function beforeSend(event: ErrorEvent): ErrorEvent | null {
   // Keep only user ID — strip email, IP, username
   if (event.user) {
     event.user = { id: event.user.id };
@@ -63,8 +63,15 @@ export function beforeSend(event: Event): Event | null {
     }
 
     // Scrub tokens from query string and URL
-    if (event.request.query_string) {
+    if (typeof event.request.query_string === "string") {
       event.request.query_string = scrubUrl(event.request.query_string);
+    } else if (
+      event.request.query_string &&
+      !Array.isArray(event.request.query_string)
+    ) {
+      event.request.query_string = scrubObject(
+        event.request.query_string,
+      ) as Record<string, string>;
     }
     if (event.request.url) {
       event.request.url = scrubUrl(event.request.url);
