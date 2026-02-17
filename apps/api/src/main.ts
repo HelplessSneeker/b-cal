@@ -1,4 +1,5 @@
 import './instrument';
+import * as Sentry from '@sentry/nestjs';
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -12,6 +13,14 @@ import {
   doubleCsrfProtection,
   invalidCsrfTokenError,
 } from './csrf/csrf.config';
+
+process.on('unhandledRejection', (reason: unknown) => {
+  Sentry.captureException(reason);
+});
+
+process.on('uncaughtException', (error: Error) => {
+  Sentry.captureException(error);
+});
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
