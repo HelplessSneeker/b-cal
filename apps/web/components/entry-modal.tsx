@@ -220,10 +220,8 @@ export function EntryModal() {
     try {
       if (editingEntry) {
         const updated = await updateEntryApi(entry)
-        if (updated) {
-          updateEntry(updated)
-          closeEntryModal()
-        }
+        updateEntry(updated)
+        closeEntryModal()
       } else {
         const created = await createEntryApi({
           title: entry.title,
@@ -232,11 +230,11 @@ export function EntryModal() {
           wholeDay: entry.wholeDay,
           content: entry.content,
         })
-        if (created) {
-          addEntry(created)
-          closeEntryModal()
-        }
+        addEntry(created)
+        closeEntryModal()
       }
+    } catch {
+      // Error toast already shown by api()
     } finally {
       setIsSubmitting(false)
     }
@@ -246,11 +244,11 @@ export function EntryModal() {
     if (!editingEntry) return
     setIsSubmitting(true)
     try {
-      const result = await deleteEntryApi(editingEntry.id)
-      if (result.success) {
-        deleteEntry(editingEntry.id)
-        closeEntryModal()
-      }
+      await deleteEntryApi(editingEntry.id)
+      deleteEntry(editingEntry.id)
+      closeEntryModal()
+    } catch {
+      // Error toast already shown by api()
     } finally {
       setIsSubmitting(false)
     }

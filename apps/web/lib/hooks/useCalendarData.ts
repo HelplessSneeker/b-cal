@@ -36,11 +36,17 @@ export function useCalendarData() {
     const { setIsFetching, mergeEntries, addLoadedRange } = useCalendarStore.getState()
     setIsFetching(true)
 
-    getEntries(start, end).then((entries) => {
-      mergeEntries(entries)
-      addLoadedRange(startTs, endTs)
-      setIsFetching(false)
-      inFlightRef.current.delete(key)
-    })
+    getEntries(start, end)
+      .then((entries) => {
+        mergeEntries(entries)
+        addLoadedRange(startTs, endTs)
+      })
+      .catch(() => {
+        // Error toast already shown by api()
+      })
+      .finally(() => {
+        setIsFetching(false)
+        inFlightRef.current.delete(key)
+      })
   }, [view, currentDate])
 }
