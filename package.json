@@ -9,7 +9,13 @@
     "dev:api": "turbo run dev --filter=@b-cal/api",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "format": "turbo run format",
+    "format:check": "turbo run format:check",
+    "prisma:generate": "turbo run prisma:generate --filter=@b-cal/api",
+    "prisma:migrate": "turbo run prisma:migrate --filter=@b-cal/api",
+    "prisma:seed": "turbo run prisma:seed --filter=@b-cal/api",
+    "prisma:studio": "turbo run prisma:studio --filter=@b-cal/api"
   },
   "keywords": [],
   "author": "",
