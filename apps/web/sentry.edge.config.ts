@@ -4,6 +4,7 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import { beforeSend } from "./sentry.before-send";
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -12,5 +13,6 @@ Sentry.init({
 
   enableLogs: true,
 
-  sendDefaultPii: true,
+  // Scrub PII (emails, tokens, cookies) before sending to Sentry
+  beforeSend,
 });

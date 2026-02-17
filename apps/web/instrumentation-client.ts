@@ -3,6 +3,7 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import { beforeSend } from "./sentry.before-send";
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -16,7 +17,8 @@ Sentry.init({
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1.0,
 
-  sendDefaultPii: true,
+  // Scrub PII (emails, tokens, cookies) before sending to Sentry
+  beforeSend,
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
