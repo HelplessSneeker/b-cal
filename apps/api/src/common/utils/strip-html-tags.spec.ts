@@ -14,9 +14,7 @@ describe('stripHtmlTags', () => {
   });
 
   it('should remove script tags and their content markers', () => {
-    expect(stripHtmlTags('<script>alert("xss")</script>')).toBe(
-      'alert("xss")',
-    );
+    expect(stripHtmlTags('<script>alert("xss")</script>')).toBe('alert("xss")');
   });
 
   it('should handle multiple tags', () => {

@@ -58,7 +58,11 @@ export class CalendarController {
     @Param('id') id: string,
     @Body() updateCalendarDto: UpdateCalendarDto,
   ) {
-    const entry = await this.calendarService.update(userId, id, updateCalendarDto);
+    const entry = await this.calendarService.update(
+      userId,
+      id,
+      updateCalendarDto,
+    );
 
     return {
       message: `Calendar entry has been updated`,

@@ -17,12 +17,16 @@ export class CreateCalendarDto {
   @IsStartBeforeEnd()
   endDate: string;
 
-  @Transform(({ value }) => (typeof value === 'string' ? stripHtmlTags(value) : value))
+  @Transform(({ value }) =>
+    typeof value === 'string' ? stripHtmlTags(value) : (value as string),
+  )
   @IsString()
   @MaxLength(255)
   title: string;
 
-  @Transform(({ value }) => (typeof value === 'string' ? stripHtmlTags(value) : value))
+  @Transform(({ value }) =>
+    typeof value === 'string' ? stripHtmlTags(value) : (value as string),
+  )
   @IsOptional()
   @IsString()
   @MaxLength(5000)
