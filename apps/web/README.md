@@ -98,6 +98,7 @@ proxy.ts                # Next.js middleware for route protection
 ## Auth Flows
 
 ### Signup
+
 1. User submits email/password at `/signup`
 2. API creates user and sends verification email
 3. User is redirected to `/check-email`
@@ -105,6 +106,7 @@ proxy.ts                # Next.js middleware for route protection
 5. Token is validated, user is redirected to main app
 
 ### Password Reset
+
 1. User clicks "Forgot password?" on login page
 2. User enters email at `/forgot-password`
 3. API sends reset email (silent on non-existent emails)

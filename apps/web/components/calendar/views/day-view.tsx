@@ -1,44 +1,47 @@
-"use client"
+'use client';
 
-import { useCalendarStore, type CalendarEntry } from "@/lib/stores/calendarStore"
-import { TimeGrid } from "@/components/calendar/time-grid"
-import { DayColumn } from "@/components/calendar/day-column"
-import { AllDaySection } from "@/components/calendar/all-day-section"
+import {
+  useCalendarStore,
+  type CalendarEntry,
+} from '@/lib/stores/calendarStore';
+import { TimeGrid } from '@/components/calendar/time-grid';
+import { DayColumn } from '@/components/calendar/day-column';
+import { AllDaySection } from '@/components/calendar/all-day-section';
 
 function isSameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
-  )
+  );
 }
 
 function formatDayHeader(date: Date): string {
-  return date.toLocaleDateString("de-DE", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  })
+  return date.toLocaleDateString('de-DE', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 }
 
 export function DayView() {
-  const { currentDate, entries, openEntryModal } = useCalendarStore()
+  const { currentDate, entries, openEntryModal } = useCalendarStore();
 
   const dayEntries = entries.filter((entry) =>
-    isSameDay(entry.startDate, currentDate)
-  )
+    isSameDay(entry.startDate, currentDate),
+  );
 
-  const allDayEntries = dayEntries.filter((entry) => entry.wholeDay)
-  const timedEntries = dayEntries.filter((entry) => !entry.wholeDay)
+  const allDayEntries = dayEntries.filter((entry) => entry.wholeDay);
+  const timedEntries = dayEntries.filter((entry) => !entry.wholeDay);
 
   const handleSlotClick = (time: Date) => {
-    openEntryModal(undefined, time)
-  }
+    openEntryModal(undefined, time);
+  };
 
   const handleEntryClick = (entry: CalendarEntry) => {
-    openEntryModal(entry)
-  }
+    openEntryModal(entry);
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -59,5 +62,5 @@ export function DayView() {
         </TimeGrid>
       </div>
     </div>
-  )
+  );
 }

@@ -1,69 +1,73 @@
-import { create } from "zustand"
+import { create } from 'zustand';
 
 export enum CalendarView {
-  Day = "Day",
-  Week = "Week",
-  Month = "Month",
+  Day = 'Day',
+  Week = 'Week',
+  Month = 'Month',
 }
 
 export interface CalendarEntry {
   id: string;
-  startDate: Date
-  endDate: Date
-  title: string
-  wholeDay: boolean
-  content?: string
+  startDate: Date;
+  endDate: Date;
+  title: string;
+  wholeDay: boolean;
+  content?: string;
 }
 
 interface LoadedRange {
-  start: number
-  end: number
+  start: number;
+  end: number;
 }
 
 function mergeRanges(ranges: LoadedRange[]): LoadedRange[] {
-  if (ranges.length === 0) return []
-  const sorted = [...ranges].sort((a, b) => a.start - b.start)
-  const merged: LoadedRange[] = [sorted[0]]
+  if (ranges.length === 0) return [];
+  const sorted = [...ranges].sort((a, b) => a.start - b.start);
+  const merged: LoadedRange[] = [sorted[0]];
   for (let i = 1; i < sorted.length; i++) {
-    const last = merged[merged.length - 1]
+    const last = merged[merged.length - 1];
     if (sorted[i].start <= last.end) {
-      last.end = Math.max(last.end, sorted[i].end)
+      last.end = Math.max(last.end, sorted[i].end);
     } else {
-      merged.push(sorted[i])
+      merged.push(sorted[i]);
     }
   }
-  return merged
+  return merged;
 }
 
-export function isRangeCovered(loadedRanges: LoadedRange[], start: number, end: number): boolean {
-  return loadedRanges.some((r) => r.start <= start && r.end >= end)
+export function isRangeCovered(
+  loadedRanges: LoadedRange[],
+  start: number,
+  end: number,
+): boolean {
+  return loadedRanges.some((r) => r.start <= start && r.end >= end);
 }
 
 function rebuildEntries(entryMap: Map<string, CalendarEntry>): CalendarEntry[] {
-  return Array.from(entryMap.values())
+  return Array.from(entryMap.values());
 }
 
 interface CalendarState {
-  view: CalendarView
-  currentDate: Date
-  entries: CalendarEntry[]
-  entryMap: Map<string, CalendarEntry>
-  loadedRanges: LoadedRange[]
-  isFetching: boolean
-  isEntryModalOpen: boolean
-  editingEntry: CalendarEntry | null
-  defaultStartDate: Date | null
-  setView: (view: CalendarView) => void
-  setCurrentDate: (date: Date) => void
-  mergeEntries: (entries: CalendarEntry[]) => void
-  addLoadedRange: (start: number, end: number) => void
-  setIsFetching: (isFetching: boolean) => void
-  clearCache: () => void
-  openEntryModal: (entry?: CalendarEntry, defaultStart?: Date) => void
-  closeEntryModal: () => void
-  addEntry: (entry: CalendarEntry) => void
-  updateEntry: (entry: CalendarEntry) => void
-  deleteEntry: (id: string) => void
+  view: CalendarView;
+  currentDate: Date;
+  entries: CalendarEntry[];
+  entryMap: Map<string, CalendarEntry>;
+  loadedRanges: LoadedRange[];
+  isFetching: boolean;
+  isEntryModalOpen: boolean;
+  editingEntry: CalendarEntry | null;
+  defaultStartDate: Date | null;
+  setView: (view: CalendarView) => void;
+  setCurrentDate: (date: Date) => void;
+  mergeEntries: (entries: CalendarEntry[]) => void;
+  addLoadedRange: (start: number, end: number) => void;
+  setIsFetching: (isFetching: boolean) => void;
+  clearCache: () => void;
+  openEntryModal: (entry?: CalendarEntry, defaultStart?: Date) => void;
+  closeEntryModal: () => void;
+  addEntry: (entry: CalendarEntry) => void;
+  updateEntry: (entry: CalendarEntry) => void;
+  deleteEntry: (id: string) => void;
 }
 
 export const useCalendarStore = create<CalendarState>((set) => ({
@@ -80,11 +84,11 @@ export const useCalendarStore = create<CalendarState>((set) => ({
   setCurrentDate: (currentDate) => set({ currentDate }),
   mergeEntries: (entries) =>
     set((state) => {
-      const newMap = new Map(state.entryMap)
+      const newMap = new Map(state.entryMap);
       for (const entry of entries) {
-        newMap.set(entry.id, entry)
+        newMap.set(entry.id, entry);
       }
-      return { entryMap: newMap, entries: rebuildEntries(newMap) }
+      return { entryMap: newMap, entries: rebuildEntries(newMap) };
     }),
   addLoadedRange: (start, end) =>
     set((state) => ({
@@ -99,23 +103,27 @@ export const useCalendarStore = create<CalendarState>((set) => ({
       defaultStartDate: defaultStart ?? null,
     }),
   closeEntryModal: () =>
-    set({ isEntryModalOpen: false, editingEntry: null, defaultStartDate: null }),
+    set({
+      isEntryModalOpen: false,
+      editingEntry: null,
+      defaultStartDate: null,
+    }),
   addEntry: (entry) =>
     set((state) => {
-      const newMap = new Map(state.entryMap)
-      newMap.set(entry.id, entry)
-      return { entryMap: newMap, entries: rebuildEntries(newMap) }
+      const newMap = new Map(state.entryMap);
+      newMap.set(entry.id, entry);
+      return { entryMap: newMap, entries: rebuildEntries(newMap) };
     }),
   updateEntry: (entry) =>
     set((state) => {
-      const newMap = new Map(state.entryMap)
-      newMap.set(entry.id, entry)
-      return { entryMap: newMap, entries: rebuildEntries(newMap) }
+      const newMap = new Map(state.entryMap);
+      newMap.set(entry.id, entry);
+      return { entryMap: newMap, entries: rebuildEntries(newMap) };
     }),
   deleteEntry: (id) =>
     set((state) => {
-      const newMap = new Map(state.entryMap)
-      newMap.delete(id)
-      return { entryMap: newMap, entries: rebuildEntries(newMap) }
+      const newMap = new Map(state.entryMap);
+      newMap.delete(id);
+      return { entryMap: newMap, entries: rebuildEntries(newMap) };
     }),
-}))
+}));

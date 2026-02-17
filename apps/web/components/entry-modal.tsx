@@ -1,53 +1,63 @@
-"use client"
+'use client';
 
-import { useState, useMemo } from "react"
-import { format } from "date-fns"
+import { useState, useMemo } from 'react';
+import { format } from 'date-fns';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { useCalendarStore, type CalendarEntry } from "@/lib/stores/calendarStore"
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import {
+  useCalendarStore,
+  type CalendarEntry,
+} from '@/lib/stores/calendarStore';
 import {
   createEntry as createEntryApi,
   updateEntry as updateEntryApi,
   deleteEntry as deleteEntryApi,
-} from "@/lib/api/calendar"
+} from '@/lib/api/calendar';
 
 function formatDateTimeLocal(date: Date): string {
-  return format(date, "yyyy-MM-dd'T'HH:mm")
+  return format(date, "yyyy-MM-dd'T'HH:mm");
 }
 
 function formatDateLocal(date: Date): string {
-  return format(date, "yyyy-MM-dd")
+  return format(date, 'yyyy-MM-dd');
 }
 
 function parseDateTimeLocal(value: string): Date {
-  return new Date(value)
+  return new Date(value);
 }
 
 function parseDateLocal(value: string): Date {
-  const [year, month, day] = value.split("-").map(Number)
-  return new Date(year, month - 1, day)
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day);
 }
 
 interface EntryFormProps {
-  editingEntry: CalendarEntry | null
-  defaultStartDate: Date | null
-  onSubmit: (entry: CalendarEntry) => void
-  onCancel: () => void
-  onDelete?: () => void
-  isSubmitting?: boolean
+  editingEntry: CalendarEntry | null;
+  defaultStartDate: Date | null;
+  onSubmit: (entry: CalendarEntry) => void;
+  onCancel: () => void;
+  onDelete?: () => void;
+  isSubmitting?: boolean;
 }
 
-function EntryForm({ editingEntry, defaultStartDate, onSubmit, onCancel, onDelete, isSubmitting }: EntryFormProps) {
+function EntryForm({
+  editingEntry,
+  defaultStartDate,
+  onSubmit,
+  onCancel,
+  onDelete,
+  isSubmitting,
+}: EntryFormProps) {
   const initialValues = useMemo(() => {
     if (editingEntry) {
       return {
@@ -59,66 +69,70 @@ function EntryForm({ editingEntry, defaultStartDate, onSubmit, onCancel, onDelet
         endDate: editingEntry.wholeDay
           ? formatDateLocal(editingEntry.endDate)
           : formatDateTimeLocal(editingEntry.endDate),
-        content: editingEntry.content ?? "",
-      }
+        content: editingEntry.content ?? '',
+      };
     }
 
-    const start = defaultStartDate ?? (() => {
-      const now = new Date()
-      now.setMinutes(0, 0, 0)
-      return now
-    })()
-    const end = new Date(start.getTime() + 60 * 60 * 1000)
+    const start =
+      defaultStartDate ??
+      (() => {
+        const now = new Date();
+        now.setMinutes(0, 0, 0);
+        return now;
+      })();
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
 
     return {
-      title: "",
+      title: '',
       wholeDay: false,
       startDate: formatDateTimeLocal(start),
       endDate: formatDateTimeLocal(end),
-      content: "",
-    }
-  }, [editingEntry, defaultStartDate])
+      content: '',
+    };
+  }, [editingEntry, defaultStartDate]);
 
-  const [title, setTitle] = useState(initialValues.title)
-  const [startDate, setStartDate] = useState(initialValues.startDate)
-  const [endDate, setEndDate] = useState(initialValues.endDate)
-  const [content, setContent] = useState(initialValues.content)
-  const [wholeDay, setWholeDay] = useState(initialValues.wholeDay)
+  const [title, setTitle] = useState(initialValues.title);
+  const [startDate, setStartDate] = useState(initialValues.startDate);
+  const [endDate, setEndDate] = useState(initialValues.endDate);
+  const [content, setContent] = useState(initialValues.content);
+  const [wholeDay, setWholeDay] = useState(initialValues.wholeDay);
 
   const handleWholeDayChange = (checked: boolean) => {
-    setWholeDay(checked)
+    setWholeDay(checked);
 
-    if (checked && startDate.includes("T")) {
-      setStartDate(formatDateLocal(parseDateTimeLocal(startDate)))
-      setEndDate(formatDateLocal(parseDateTimeLocal(endDate)))
-    } else if (!checked && !startDate.includes("T")) {
-      const start = parseDateLocal(startDate)
-      start.setHours(9, 0, 0, 0)
-      const end = parseDateLocal(endDate)
-      end.setHours(10, 0, 0, 0)
-      setStartDate(formatDateTimeLocal(start))
-      setEndDate(formatDateTimeLocal(end))
+    if (checked && startDate.includes('T')) {
+      setStartDate(formatDateLocal(parseDateTimeLocal(startDate)));
+      setEndDate(formatDateLocal(parseDateTimeLocal(endDate)));
+    } else if (!checked && !startDate.includes('T')) {
+      const start = parseDateLocal(startDate);
+      start.setHours(9, 0, 0, 0);
+      const end = parseDateLocal(endDate);
+      end.setHours(10, 0, 0, 0);
+      setStartDate(formatDateTimeLocal(start));
+      setEndDate(formatDateTimeLocal(end));
     }
-  }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!title.trim() || !startDate || !endDate) {
-      return
+      return;
     }
 
     const entry: CalendarEntry = {
       id: editingEntry?.id ?? crypto.randomUUID(),
       title: title.trim(),
-      startDate: wholeDay ? parseDateLocal(startDate) : parseDateTimeLocal(startDate),
+      startDate: wholeDay
+        ? parseDateLocal(startDate)
+        : parseDateTimeLocal(startDate),
       endDate: wholeDay ? parseDateLocal(endDate) : parseDateTimeLocal(endDate),
       wholeDay,
       content: content.trim() || undefined,
-    }
+    };
 
-    onSubmit(entry)
-  }
+    onSubmit(entry);
+  };
 
   return (
     <form onSubmit={handleSubmit}>
@@ -138,7 +152,9 @@ function EntryForm({ editingEntry, defaultStartDate, onSubmit, onCancel, onDelet
           <Checkbox
             id="wholeDay"
             checked={wholeDay}
-            onCheckedChange={(checked) => handleWholeDayChange(checked === true)}
+            onCheckedChange={(checked) =>
+              handleWholeDayChange(checked === true)
+            }
           />
           <FieldLabel htmlFor="wholeDay" className="cursor-pointer">
             All day
@@ -150,7 +166,7 @@ function EntryForm({ editingEntry, defaultStartDate, onSubmit, onCancel, onDelet
             <FieldLabel htmlFor="startDate">Start</FieldLabel>
             <Input
               id="startDate"
-              type={wholeDay ? "date" : "datetime-local"}
+              type={wholeDay ? 'date' : 'datetime-local'}
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               required
@@ -160,7 +176,7 @@ function EntryForm({ editingEntry, defaultStartDate, onSubmit, onCancel, onDelet
             <FieldLabel htmlFor="endDate">End</FieldLabel>
             <Input
               id="endDate"
-              type={wholeDay ? "date" : "datetime-local"}
+              type={wholeDay ? 'date' : 'datetime-local'}
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               required
@@ -192,15 +208,20 @@ function EntryForm({ editingEntry, defaultStartDate, onSubmit, onCancel, onDelet
             Delete
           </Button>
         )}
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {editingEntry ? "Save" : "Create"}
+          {editingEntry ? 'Save' : 'Create'}
         </Button>
       </DialogFooter>
     </form>
-  )
+  );
 }
 
 export function EntryModal() {
@@ -212,16 +233,16 @@ export function EntryModal() {
     addEntry,
     updateEntry,
     deleteEntry,
-  } = useCalendarStore()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  } = useCalendarStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (entry: CalendarEntry) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       if (editingEntry) {
-        const updated = await updateEntryApi(entry)
-        updateEntry(updated)
-        closeEntryModal()
+        const updated = await updateEntryApi(entry);
+        updateEntry(updated);
+        closeEntryModal();
       } else {
         const created = await createEntryApi({
           title: entry.title,
@@ -229,43 +250,44 @@ export function EntryModal() {
           endDate: entry.endDate,
           wholeDay: entry.wholeDay,
           content: entry.content,
-        })
-        addEntry(created)
-        closeEntryModal()
+        });
+        addEntry(created);
+        closeEntryModal();
       }
     } catch {
       // Error toast already shown by api()
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleDelete = async () => {
-    if (!editingEntry) return
-    setIsSubmitting(true)
+    if (!editingEntry) return;
+    setIsSubmitting(true);
     try {
-      await deleteEntryApi(editingEntry.id)
-      deleteEntry(editingEntry.id)
-      closeEntryModal()
+      await deleteEntryApi(editingEntry.id);
+      deleteEntry(editingEntry.id);
+      closeEntryModal();
     } catch {
       // Error toast already shown by api()
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const formKey = useMemo(() => {
-    if (!isEntryModalOpen) return "closed"
-    return editingEntry?.id ?? defaultStartDate?.getTime() ?? "new"
-  }, [isEntryModalOpen, editingEntry, defaultStartDate])
+    if (!isEntryModalOpen) return 'closed';
+    return editingEntry?.id ?? defaultStartDate?.getTime() ?? 'new';
+  }, [isEntryModalOpen, editingEntry, defaultStartDate]);
 
   return (
-    <Dialog open={isEntryModalOpen} onOpenChange={(open) => !open && closeEntryModal()}>
+    <Dialog
+      open={isEntryModalOpen}
+      onOpenChange={(open) => !open && closeEntryModal()}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {editingEntry ? "Edit Entry" : "New Entry"}
-          </DialogTitle>
+          <DialogTitle>{editingEntry ? 'Edit Entry' : 'New Entry'}</DialogTitle>
         </DialogHeader>
         {isEntryModalOpen && (
           <EntryForm
@@ -280,5 +302,5 @@ export function EntryModal() {
         )}
       </DialogContent>
     </Dialog>
-  )
+  );
 }

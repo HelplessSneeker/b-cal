@@ -2,15 +2,15 @@
 // The added config here will be used whenever a users loads a page in their browser.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
-import * as Sentry from "@sentry/nextjs";
-import { beforeSend } from "./sentry.before-send";
+import * as Sentry from '@sentry/nextjs';
+import { beforeSend } from './sentry.before-send';
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
   integrations: [Sentry.replayIntegration()],
 
-  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.2 : 1,
+  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.2 : 1,
 
   enableLogs: true,
 

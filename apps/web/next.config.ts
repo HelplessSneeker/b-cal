@@ -1,27 +1,27 @@
-import { withSentryConfig } from "@sentry/nextjs";
-import type { NextConfig } from "next";
-import { validateEnv } from "./src/config/env";
+import { withSentryConfig } from '@sentry/nextjs';
+import type { NextConfig } from 'next';
+import { validateEnv } from './src/config/env';
 
 validateEnv();
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  output: 'standalone',
   poweredByHeader: false,
   headers: async () => [
     {
-      source: "/(.*)",
+      source: '/(.*)',
       headers: [
         {
-          key: "X-Content-Type-Options",
-          value: "nosniff",
+          key: 'X-Content-Type-Options',
+          value: 'nosniff',
         },
         {
-          key: "Referrer-Policy",
-          value: "strict-origin-when-cross-origin",
+          key: 'Referrer-Policy',
+          value: 'strict-origin-when-cross-origin',
         },
         {
-          key: "Permissions-Policy",
-          value: "camera=(), microphone=(), geolocation=()",
+          key: 'Permissions-Policy',
+          value: 'camera=(), microphone=(), geolocation=()',
         },
       ],
     },
@@ -32,9 +32,9 @@ export default withSentryConfig(nextConfig, {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
-  org: "noessi-storage",
+  org: 'noessi-storage',
 
-  project: "b-cal-web",
+  project: 'b-cal-web',
 
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
@@ -49,7 +49,7 @@ export default withSentryConfig(nextConfig, {
   // This can increase your server load as well as your hosting bill.
   // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
   // side errors will fail.
-  tunnelRoute: "/monitoring",
+  tunnelRoute: '/monitoring',
 
   webpack: {
     treeshake: {

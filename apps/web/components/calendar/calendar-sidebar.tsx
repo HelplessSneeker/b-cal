@@ -1,16 +1,16 @@
-"use client"
+'use client';
 
-import { PlusIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { SidebarCalendar } from "@/components/calendar/sidebar-calendar"
-import { useCalendarStore } from "@/lib/stores/calendarStore"
+import { PlusIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { SidebarCalendar } from '@/components/calendar/sidebar-calendar';
+import { useCalendarStore } from '@/lib/stores/calendarStore';
 
 export function CalendarSidebar() {
-  const { openEntryModal } = useCalendarStore()
+  const { openEntryModal } = useCalendarStore();
 
   const handleNewEntry = () => {
-    openEntryModal()
-  }
+    openEntryModal();
+  };
 
   return (
     <aside className="flex w-64 flex-col items-center gap-4 border-r p-4">
@@ -20,5 +20,5 @@ export function CalendarSidebar() {
       </Button>
       <SidebarCalendar />
     </aside>
-  )
+  );
 }

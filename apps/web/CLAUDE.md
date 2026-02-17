@@ -167,6 +167,7 @@ The calendar supports Day/Week/Month views (all implemented):
 ### Security Headers
 
 `next.config.ts` (wrapped with `withSentryConfig`) sets the following headers on all routes:
+
 - `X-Content-Type-Options: nosniff` — prevents MIME sniffing
 - `Referrer-Policy: strict-origin-when-cross-origin` — controls referrer information
 - `X-Frame-Options: DENY` — prevents clickjacking

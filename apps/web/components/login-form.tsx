@@ -1,30 +1,30 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { toast } from "sonner"
-import { cn } from "@/lib/utils/utils"
-import { validatePassword } from "@/lib/utils/password"
-import { login, signup } from "@/lib/api/auth"
-import { Button } from "@/components/ui/button"
+import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils/utils';
+import { validatePassword } from '@/lib/utils/password';
+import { login, signup } from '@/lib/api/auth';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from '@/components/ui/card';
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { Spinner } from "./ui/spinner"
+} from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Spinner } from './ui/spinner';
 
-interface LoginFormProps extends React.ComponentProps<"div"> {
-  isSignup?: boolean
+interface LoginFormProps extends React.ComponentProps<'div'> {
+  isSignup?: boolean;
 }
 
 export function LoginForm({
@@ -32,59 +32,59 @@ export function LoginForm({
   isSignup = false,
   ...props
 }: LoginFormProps) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (isSignup) {
-      const passwordError = validatePassword(password)
+      const passwordError = validatePassword(password);
       if (passwordError) {
-        toast.error(passwordError)
-        return
+        toast.error(passwordError);
+        return;
       }
 
       if (password !== confirmPassword) {
-        toast.error("Passwords do not match")
-        return
+        toast.error('Passwords do not match');
+        return;
       }
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     const result = isSignup
       ? await signup(email, password)
-      : await login(email, password)
+      : await login(email, password);
 
-    setIsLoading(false)
+    setIsLoading(false);
 
     if (result.success) {
       if (isSignup) {
-        router.push("/check-email")
+        router.push('/check-email');
       } else {
-        const redirectTo = searchParams.get("from") || "/"
-        router.push(redirectTo)
-        router.refresh()
+        const redirectTo = searchParams.get('from') || '/';
+        router.push(redirectTo);
+        router.refresh();
       }
     }
-  }
+  };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card>
         <CardHeader>
           <CardTitle>
-            {isSignup ? "Create an account" : "Login to your account"}
+            {isSignup ? 'Create an account' : 'Login to your account'}
           </CardTitle>
           <CardDescription>
             {isSignup
-              ? "Enter your details below to create your account"
-              : "Enter your email below to login to your account"}
+              ? 'Enter your details below to create your account'
+              : 'Enter your email below to login to your account'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -113,7 +113,9 @@ export function LoginForm({
                     </a>
                   </div>
                 )}
-                {isSignup && <FieldLabel htmlFor="password">Password</FieldLabel>}
+                {isSignup && (
+                  <FieldLabel htmlFor="password">Password</FieldLabel>
+                )}
                 <Input
                   id="password"
                   type="password"
@@ -124,7 +126,9 @@ export function LoginForm({
               </Field>
               {isSignup && (
                 <Field>
-                  <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel>
+                  <FieldLabel htmlFor="confirm-password">
+                    Confirm Password
+                  </FieldLabel>
                   <Input
                     id="confirm-password"
                     type="password"
@@ -136,13 +140,17 @@ export function LoginForm({
               )}
               <Field>
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? <Spinner /> : isSignup ? "Sign Up" : "Login"}
+                  {isLoading ? <Spinner /> : isSignup ? 'Sign Up' : 'Login'}
                 </Button>
                 <FieldDescription className="text-center">
                   {isSignup ? (
-                    <>Already have an account? <a href="/login">Login</a></>
+                    <>
+                      Already have an account? <a href="/login">Login</a>
+                    </>
                   ) : (
-                    <>Don&apos;t have an account? <a href="/signup">Sign up</a></>
+                    <>
+                      Don&apos;t have an account? <a href="/signup">Sign up</a>
+                    </>
                   )}
                 </FieldDescription>
               </Field>
@@ -151,5 +159,5 @@ export function LoginForm({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -1,9 +1,9 @@
-import { vi } from "vitest"
-import { useUserStore } from "@/lib/stores/userStore"
-import { useCalendarStore, CalendarView } from "@/lib/stores/calendarStore"
+import { vi } from 'vitest';
+import { useUserStore } from '@/lib/stores/userStore';
+import { useCalendarStore, CalendarView } from '@/lib/stores/calendarStore';
 
-export { render, screen, waitFor, within, act } from "@testing-library/react"
-export { default as userEvent } from "@testing-library/user-event"
+export { render, screen, waitFor, within, act } from '@testing-library/react';
+export { default as userEvent } from '@testing-library/user-event';
 
 export function mockRouter() {
   return {
@@ -13,7 +13,7 @@ export function mockRouter() {
     forward: vi.fn(),
     replace: vi.fn(),
     prefetch: vi.fn(),
-  }
+  };
 }
 
 export function mockSearchParams(params: Record<string, string> = {}) {
@@ -33,11 +33,11 @@ export function mockSearchParams(params: Record<string, string> = {}) {
     delete: vi.fn(),
     set: vi.fn(),
     sort: vi.fn(),
-  }
+  };
 }
 
 export function resetStores() {
-  useUserStore.setState({ user: null })
+  useUserStore.setState({ user: null });
   useCalendarStore.setState({
     view: CalendarView.Month,
     currentDate: new Date(),
@@ -48,5 +48,5 @@ export function resetStores() {
     isEntryModalOpen: false,
     editingEntry: null,
     defaultStartDate: null,
-  })
+  });
 }

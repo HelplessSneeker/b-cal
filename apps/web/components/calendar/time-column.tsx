@@ -1,13 +1,18 @@
-"use client"
+'use client';
 
-import { HOUR_HEIGHT, START_HOUR, END_HOUR, TIME_COLUMN_WIDTH } from "@/lib/calendar/calendar-constants"
-import { formatHour } from "@/lib/calendar/time-utils"
+import {
+  HOUR_HEIGHT,
+  START_HOUR,
+  END_HOUR,
+  TIME_COLUMN_WIDTH,
+} from '@/lib/calendar/calendar-constants';
+import { formatHour } from '@/lib/calendar/time-utils';
 
 export function TimeColumn() {
   const hours = Array.from(
     { length: END_HOUR - START_HOUR },
-    (_, i) => START_HOUR + i
-  )
+    (_, i) => START_HOUR + i,
+  );
 
   return (
     <div
@@ -24,5 +29,5 @@ export function TimeColumn() {
         </div>
       ))}
     </div>
-  )
+  );
 }
