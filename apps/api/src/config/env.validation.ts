@@ -4,6 +4,7 @@ import {
   IsNumberString,
   IsOptional,
   IsString,
+  MinLength,
   ValidateIf,
   validateSync,
 } from 'class-validator';
@@ -40,19 +41,27 @@ class EnvironmentVariables {
   DB_HOST: string;
 
   @IsString()
-  @IsNotEmpty()
+  @MinLength(32, {
+    message: 'SECRET_KEY must be at least 32 characters',
+  })
   SECRET_KEY: string;
 
   @IsString()
-  @IsNotEmpty()
+  @MinLength(32, {
+    message: 'REFRESH_SECRET_KEY must be at least 32 characters',
+  })
   REFRESH_SECRET_KEY: string;
 
   @IsString()
-  @IsNotEmpty()
+  @MinLength(32, {
+    message: 'MAIL_SECRET_KEY must be at least 32 characters',
+  })
   MAIL_SECRET_KEY: string;
 
   @IsString()
-  @IsNotEmpty()
+  @MinLength(32, {
+    message: 'CSRF_SECRET must be at least 32 characters',
+  })
   CSRF_SECRET: string;
 
   @ValidateIf((o: { NODE_ENV?: string }) => o.NODE_ENV === 'production')
