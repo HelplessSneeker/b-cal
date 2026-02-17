@@ -1,5 +1,8 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
+import { validateEnv } from "./src/config/env";
+
+validateEnv();
 
 const nextConfig: NextConfig = {
   output: "standalone",
