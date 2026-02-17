@@ -13,6 +13,10 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from './health/health.module';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import {
+  reqSerializer,
+  resSerializer,
+} from './common/logging/pino-serializers';
 
 const REQUEST_ID_HEADER = 'X-Request-Id';
 
@@ -28,6 +32,22 @@ const REQUEST_ID_HEADER = 'X-Request-Id';
             req.headers[REQUEST_ID_HEADER.toLowerCase()] ?? randomUUID();
           res.setHeader(REQUEST_ID_HEADER, id);
           return id;
+        },
+        serializers: {
+          req: reqSerializer,
+          res: resSerializer,
+        },
+        redact: {
+          paths: [
+            'password',
+            'token',
+            'refreshToken',
+            'resetToken',
+            'verificationToken',
+            'email',
+            'secret',
+          ],
+          censor: '[Redacted]',
         },
         transport:
           process.env.NODE_ENV !== 'production'
