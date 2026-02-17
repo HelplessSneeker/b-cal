@@ -7,5 +7,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
+    env: {
+      NEXT_PUBLIC_BACKEND_URL: 'http://localhost:3000',
+    },
   },
 });
