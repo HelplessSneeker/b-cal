@@ -95,7 +95,8 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
   - `lib/stores/` - Zustand stores for client state
     - `userStore.ts` - Current authenticated user (id, email, emailVerified)
     - `calendarStore.ts` - Calendar view state, entries, and modal state. Uses an `entryMap` (Map by ID) for deduplication, with `loadedRanges` to track fetched date windows and avoid re-fetching.
-- `proxy.ts` - Route protection logic (auth routes, open routes, protected routes). Exports a `proxy()` function and matcher config.
+- `proxy.ts` - Route protection logic (auth routes, open routes, protected routes). Exports a `proxy()` function and matcher config. This is the Next.js 16 equivalent of `middleware.ts`.
+- `src/config/env.ts` - Environment variable validation (validates `NEXT_PUBLIC_BACKEND_URL` at build time)
 - `instrumentation.ts` - Sentry SDK initialization for the Next.js server runtime
 - `sentry.edge.config.ts` - Sentry configuration for the Edge runtime
 - `sentry.server.config.ts` - Sentry configuration for the Node.js server runtime
@@ -105,7 +106,7 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
 - Cookie-based auth with a NestJS backend (configured via `NEXT_PUBLIC_BACKEND_URL`)
 - `AuthProvider` component wraps protected routes, redirects unauthenticated users to `/login` and unverified users to `/check-email`, fetches CSRF token on mount
 - User state managed via Zustand store (`useUserStore`) — includes `emailVerified` field
-- `proxy.ts` middleware handles route-level auth:
+- `proxy.ts` handles route-level auth (Next.js 16 proxy, replaces `middleware.ts`):
   - **Auth routes** (`/login`, `/signup`, `/forgot-password`, `/reset-password`): redirect authenticated users to `/`
   - **Open routes** (`/verify-email`, `/check-email`): accessible regardless of auth state
   - **All other routes**: redirect unauthenticated users to `/login?from={pathname}`

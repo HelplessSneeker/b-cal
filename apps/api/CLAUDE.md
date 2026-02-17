@@ -43,9 +43,9 @@ Multi-stage Dockerfile (`Dockerfile`) using Node 22 Alpine. Builds with `pnpm de
 PostgreSQL 16 runs via `docker-compose.yml`. Environment variables in `.env` (dev) and `.env.test` (e2e tests):
 - `PORT` (default 3000), `FRONTEND_URL` (CORS origin)
 - `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `DB_HOST`
-- `SECRET_KEY` (access token), `REFRESH_SECRET_KEY` (refresh token), `MAIL_SECRET_KEY` (email tokens), `CSRF_SECRET` (CSRF double-submit cookie)
-- `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM` (production email; dev uses Ethereal)
-- `SENTRY_DSN` (optional — Sentry error tracking DSN)
+- `SECRET_KEY` (access token), `REFRESH_SECRET_KEY` (refresh token), `MAIL_SECRET_KEY` (email tokens), `CSRF_SECRET` (CSRF double-submit cookie) — all require min 32 characters
+- `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS` (required in production only; dev uses Ethereal)
+- `MAIL_FROM` (optional), `SENTRY_DSN` (optional — Sentry error tracking DSN)
 
 ## Database Seeding
 
@@ -128,7 +128,7 @@ src/
 
 **DTO max lengths:** `MaxLength` constraints on all string fields — email: 254, password: 128, title: 255, content: 5000.
 
-**Prisma schema:** `User` (id, email, password, refreshToken, verificationToken, emailVerified, resetToken) and `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId→User). Indexes: User has `@@index([email])`. CalendarEntry has `@@index([userId])`, `@@index([startDate])`, `@@index([endDate])`, and `@@index([endDate, startDate])`.
+**Prisma schema:** `User` (id, email, password, refreshToken, verificationToken, emailVerified, resetToken, createdAt, updatedAt) and `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId→User, createdAt, updatedAt). Indexes: User has `@@index([email])`. CalendarEntry has `@@index([userId])`, `@@index([startDate])`, `@@index([endDate])`, and `@@index([endDate, startDate])`.
 
 **Mail service:** Uses nodemailer. In development, auto-creates Ethereal test accounts (preview URLs logged to console). In production, requires `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS` env vars.
 

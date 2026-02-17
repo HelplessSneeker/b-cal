@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 b-cal is a calendar application built as a Turborepo monorepo with pnpm workspaces. It consists of:
 
-- **apps/web** (`@b-cal/frontend`) - Next.js 16 frontend with React 19
+- **apps/web** (`@b-cal/web`) - Next.js 16 frontend with React 19
 - **apps/api** (`@b-cal/api`) - NestJS 11 REST API with Prisma/PostgreSQL
 
 See `apps/web/CLAUDE.md` and `apps/api/CLAUDE.md` for detailed architecture documentation.
@@ -36,7 +36,7 @@ API-specific commands (from `apps/api/`):
 
 ```bash
 pnpm test                                    # Run unit tests
-pnpm test -- --testPathPatterns=<pattern>    # Run specific tests (Jest 30 syntax)
+npx jest --testPathPatterns=<pattern>        # Run specific tests (pnpm test -- misparses the flag)
 pnpm test:e2e                                # Run e2e tests (uses separate test database)
 pnpm prisma:migrate                          # Apply database migrations
 pnpm prisma:generate                         # Regenerate Prisma client
@@ -75,15 +75,15 @@ Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerf
 
 **Input Validation**: Global payload limit of 1MB (JSON + URL-encoded). DTO string fields have max length constraints (title: 255, content: 5000, email: 254, password: 128).
 
-**Database**: PostgreSQL via Prisma. Models: User (with emailVerified, verificationToken, resetToken fields), CalendarEntry. Indexes on User.email, CalendarEntry.userId, CalendarEntry.startDate, CalendarEntry.endDate, and a composite (endDate, startDate) index.
+**Database**: PostgreSQL via Prisma. Models: User (with emailVerified, verificationToken, resetToken, createdAt, updatedAt fields), CalendarEntry (with createdAt, updatedAt). Indexes on User.email, CalendarEntry.userId, CalendarEntry.startDate, CalendarEntry.endDate, and a composite (endDate, startDate) index.
 
 **Email**: Nodemailer-based mail service. Uses Ethereal test accounts in development (preview URLs logged to console). Production requires SMTP configuration.
 
 ## Environment
 
-**Web** (`apps/web/.env`): `NEXT_PUBLIC_BACKEND_URL`
+**Web** (`apps/web/.env`): `NEXT_PUBLIC_BACKEND_URL`, `NEXT_PUBLIC_SENTRY_DSN` (optional). Validated at build time via `src/config/env.ts`.
 
-**API** (`apps/api/.env`): `PORT`, `FRONTEND_URL`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `DB_HOST`, `SECRET_KEY`, `REFRESH_SECRET_KEY`, `MAIL_SECRET_KEY`, `CSRF_SECRET`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM`, `SENTRY_DSN` (optional)
+**API** (`apps/api/.env`): `PORT`, `FRONTEND_URL`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `DB_HOST`, `SECRET_KEY`, `REFRESH_SECRET_KEY`, `MAIL_SECRET_KEY`, `CSRF_SECRET` (all secrets require min 32 chars), `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS` (mail settings required in production only), `MAIL_FROM` (optional), `SENTRY_DSN` (optional)
 
 **API pool tuning** (all optional): `DB_POOL_MAX` (default: 10), `DB_POOL_IDLE_TIMEOUT_MS` (default: 10000), `DB_POOL_CONNECTION_TIMEOUT_MS` (default: 5000)
 
