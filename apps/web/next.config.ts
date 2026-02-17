@@ -20,10 +20,6 @@ const nextConfig: NextConfig = {
           value: "strict-origin-when-cross-origin",
         },
         {
-          key: "X-Frame-Options",
-          value: "DENY",
-        },
-        {
           key: "Permissions-Policy",
           value: "camera=(), microphone=(), geolocation=()",
         },
