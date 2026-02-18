@@ -24,3 +24,5 @@ jobs:
         working-directory: apps/api
 
       - run: pnpm build
+        env:
+          NEXT_PUBLIC_BACKEND_URL: http://localhost:3000
