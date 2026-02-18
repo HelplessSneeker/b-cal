@@ -44,4 +44,4 @@ FROM deps AS migrate
 COPY apps/api/ apps/api/
 WORKDIR /app/apps/api
 RUN pnpm prisma:generate
-CMD ["sh", "-c", "npx prisma migrate deploy && npx tsx prisma/seed.ts --force"]
+CMD ["sh", "-c", "npx prisma migrate deploy && if [ \"$SEED_DB\" = \"true\" ]; then npx tsx prisma/seed.ts --force; fi"]
