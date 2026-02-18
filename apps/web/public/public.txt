@@ -1,0 +1,1 @@
+Need this file so the public folder gets imported by docker
