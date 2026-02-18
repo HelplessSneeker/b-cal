@@ -11,9 +11,13 @@ import { GlobalExceptionFilter } from './global-exception.filter';
 
 const mockJson = jest.fn();
 const mockStatus = jest.fn().mockReturnValue({ json: mockJson });
-const mockGetResponse = jest.fn().mockReturnValue({ status: mockStatus });
+const mockClearCookie = jest.fn();
+const mockGetResponse = jest
+  .fn()
+  .mockReturnValue({ status: mockStatus, clearCookie: mockClearCookie });
 const mockGetRequest = jest.fn().mockReturnValue({
   url: '/test',
+  path: '/test',
   id: 'test-request-id',
   headers: {},
 });
@@ -158,6 +162,7 @@ describe('GlobalExceptionFilter', () => {
   it('should fall back to x-request-id header when request.id is missing', () => {
     mockGetRequest.mockReturnValueOnce({
       url: '/test',
+      path: '/test',
       id: undefined,
       headers: { 'x-request-id': 'header-request-id' },
     });
@@ -167,5 +172,52 @@ describe('GlobalExceptionFilter', () => {
     expect(mockJson).toHaveBeenCalledWith(
       expect.objectContaining({ requestId: 'header-request-id' }),
     );
+  });
+
+  it('should clear auth cookies when /auth/refresh fails with HttpException', () => {
+    mockGetRequest.mockReturnValueOnce({
+      url: '/auth/refresh',
+      path: '/auth/refresh',
+      id: 'test-request-id',
+      headers: {},
+    });
+    const exception = new UnauthorizedException('Unauthorized');
+    filter.catch(exception, mockHost as ArgumentsHost);
+
+    expect(mockClearCookie).toHaveBeenCalledWith(
+      'access_token',
+      expect.any(Object),
+    );
+    expect(mockClearCookie).toHaveBeenCalledWith(
+      'refresh_token',
+      expect.any(Object),
+    );
+  });
+
+  it('should clear auth cookies when /auth/refresh fails with non-HTTP exception', () => {
+    mockGetRequest.mockReturnValueOnce({
+      url: '/auth/refresh',
+      path: '/auth/refresh',
+      id: 'test-request-id',
+      headers: {},
+    });
+    const exception = new Error('ECONNREFUSED');
+    filter.catch(exception, mockHost as ArgumentsHost);
+
+    expect(mockClearCookie).toHaveBeenCalledWith(
+      'access_token',
+      expect.any(Object),
+    );
+    expect(mockClearCookie).toHaveBeenCalledWith(
+      'refresh_token',
+      expect.any(Object),
+    );
+  });
+
+  it('should not clear auth cookies for non-refresh endpoints', () => {
+    const exception = new UnauthorizedException('Unauthorized');
+    filter.catch(exception, mockHost as ArgumentsHost);
+
+    expect(mockClearCookie).not.toHaveBeenCalled();
   });
 });

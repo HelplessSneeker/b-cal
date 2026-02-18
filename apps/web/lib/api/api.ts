@@ -115,7 +115,11 @@ export async function api<T = unknown>(
       }
     }
 
-    if (response.status === 401 && endpoint !== '/auth/refresh') {
+    if (
+      response.status === 401 &&
+      endpoint !== '/auth/refresh' &&
+      endpoint !== '/auth/login'
+    ) {
       const refreshed = await attemptTokenRefresh();
       if (refreshed) {
         headers['X-Request-Id'] = crypto.randomUUID();

@@ -98,16 +98,13 @@ describe('LoginForm', () => {
     const user = userEvent.setup();
     render(<LoginForm isSignup />);
 
-    await user.type(screen.getByLabelText('Email'), 'alice@example.com');
-    await user.type(screen.getByLabelText('Password'), 'password123!');
-    await user.type(screen.getByLabelText('Confirm Password'), 'password123!');
+    await user.type(screen.getByLabelText('Email'), 'a@b.co');
+    await user.type(screen.getByLabelText('Password'), 'pass123!');
+    await user.type(screen.getByLabelText('Confirm Password'), 'pass123!');
     await user.click(screen.getByRole('button', { name: 'Sign Up' }));
 
     await waitFor(() => {
-      expect(signupMock).toHaveBeenCalledWith(
-        'alice@example.com',
-        'password123!',
-      );
+      expect(signupMock).toHaveBeenCalledWith('a@b.co', 'pass123!');
       expect(mockPush).toHaveBeenCalledWith('/check-email');
     });
   });

@@ -2,6 +2,7 @@ import { ArgumentsHost, Catch, HttpException, Logger } from '@nestjs/common';
 import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import * as Sentry from '@sentry/nestjs';
 import { Request, Response } from 'express';
+import { cookieConfig } from '../../auth/constants';
 
 @Catch()
 export class GlobalExceptionFilter extends SentryGlobalFilter {
@@ -12,6 +13,15 @@ export class GlobalExceptionFilter extends SentryGlobalFilter {
     const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
     const requestId = (request.id as string) ?? request.headers['x-request-id'];
+
+    // Clear auth cookies when token refresh fails to prevent redirect loops
+    if (request.path === '/auth/refresh') {
+      response.clearCookie(cookieConfig.accessToken.name, cookieConfig.options);
+      response.clearCookie(
+        cookieConfig.refreshToken.name,
+        cookieConfig.options,
+      );
+    }
 
     if (exception instanceof HttpException) {
       const status = exception.getStatus();

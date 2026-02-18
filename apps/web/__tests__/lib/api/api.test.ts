@@ -132,6 +132,26 @@ describe('api() token refresh', () => {
     expect(refreshCallCount).toBe(1);
   });
 
+  it('does NOT attempt refresh for /auth/login endpoint', async () => {
+    const locationSpy = { href: '' };
+    vi.stubGlobal('location', locationSpy);
+
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse(401, { message: 'Invalid credentials' }),
+    );
+
+    await expect(
+      api('/auth/login', {
+        method: 'POST',
+        body: { email: 'a', password: 'b' },
+      }),
+    ).rejects.toThrow(ApiError);
+
+    // Only 1 call — no refresh attempt, no redirect
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(locationSpy.href).toBe('');
+  });
+
   it('includes CSRF token in refresh request when available', async () => {
     // Seed the CSRF token by mocking a successful fetch
     mockFetch.mockResolvedValueOnce(
