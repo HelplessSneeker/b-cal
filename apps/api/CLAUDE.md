@@ -43,9 +43,9 @@ Multi-stage Dockerfile (`Dockerfile`) using Node 22 Alpine. Builds with `pnpm de
 PostgreSQL 16 runs via `docker-compose.yml`. Environment variables in `.env` (dev) and `.env.test` (e2e tests):
 - `PORT` (default 3000), `FRONTEND_URL` (CORS origin)
 - `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `DB_HOST`
-- `SECRET_KEY` (access token), `REFRESH_SECRET_KEY` (refresh token), `MAIL_SECRET_KEY` (email tokens)
-- `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM` (production email; dev uses Ethereal)
-- `SENTRY_DSN` (optional — Sentry error tracking DSN)
+- `SECRET_KEY` (access token), `REFRESH_SECRET_KEY` (refresh token), `MAIL_SECRET_KEY` (email tokens), `CSRF_SECRET` (CSRF double-submit cookie) — all require min 32 characters
+- `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS` (required in production only; dev uses Ethereal)
+- `MAIL_FROM` (optional), `SENTRY_DSN` (optional — Sentry error tracking DSN)
 
 ## Database Seeding
 
@@ -74,24 +74,26 @@ E2e tests use a separate database (`b_cal_test`) configured in `.env.test`. Runn
 src/
 ├── auth/           # Auth controller, service, strategies, guards, decorators, validators
 ├── calendar/       # CalendarController, CalendarService, DTOs, validators
-├── common/filters/ # GlobalExceptionFilter (Sentry-integrated)
+├── common/filters/ # GlobalExceptionFilter (Sentry-integrated, includes request ID in responses)
 ├── config/         # env.validation.ts (runtime env var validation via class-validator)
+├── csrf/           # CSRF protection config (double-submit cookie via csrf-csrf)
 ├── health/         # HealthController, HealthModule (@nestjs/terminus)
 ├── mail/           # MailModule, MailService (nodemailer)
 ├── prisma/         # PrismaModule (global), PrismaService
 ├── user/           # UserController, UserService for user operations (account deletion)
 ├── instrument.ts   # Sentry SDK initialization (imported before NestFactory.create)
-└── main.ts         # Bootstrap with CORS, cookies, validation pipe, Helmet, CSP
+└── main.ts         # Bootstrap with CORS, cookies, validation pipe, Helmet, CSP, CSRF
 ```
 
 **Global payload limit:** 1MB for JSON and URL-encoded bodies (configured in `main.ts`).
 
 **Auth flow:** Tokens stored in httpOnly cookies (not Bearer headers). Refresh tokens and reset tokens are bcrypt-hashed in DB.
+- `GET /auth/csrf-token` — generates and returns a CSRF token (sets httpOnly CSRF cookie)
 - `POST /auth/signup` — creates user, sends verification email, sets token cookies. Password: min 8 chars, requires number + symbol.
 - `POST /auth/login` — LocalAuthGuard validates email+password, sets access_token (1h) + refresh_token (7d) cookies
 - `POST /auth/refresh` — JwtRefreshAuthGuard validates refresh token, issues new token pair
 - `POST /auth/logout` — JwtAuthGuard required, clears cookies and invalidates refresh token
-- `GET /auth/me` — JwtAuthGuard required, returns `{ id, email }`
+- `GET /auth/me` — JwtAuthGuard required, returns `{ id, email, emailVerified }`
 - `POST /auth/resend-verification` — JwtAuthGuard required, resends verification email with new token
 - `GET /auth/verify-email?token=` — validates email verification token, sets `emailVerified: true`
 - `POST /auth/forgot-password` — sends password reset email (silent on non-existent email for security)
@@ -107,18 +109,18 @@ src/
 **User endpoints:** All require JwtAuthGuard + EmailVerifiedGuard.
 - `DELETE /user` — delete user account, clears auth cookies
 
-**Calendar endpoints:** All require JwtAuthGuard.
-- `POST /calendar` — create entry (title, startDate, endDate required; content, wholeDay optional)
+**Calendar endpoints:** All require JwtAuthGuard + EmailVerifiedGuard.
+- `POST /calendar` — create entry (title, startDate, endDate required; content, wholeDay optional). Returns `{ message, data: entry }`.
 - `GET /calendar` — list user's entries; optional `startDate`/`endDate` query params for date range filtering
 - `GET /calendar/:id` — get single entry (404 if not found or not owned)
-- `PATCH /calendar/:id` — update entry (partial updates supported)
+- `PATCH /calendar/:id` — update entry (partial updates supported). Returns `{ message, data: entry }`.
 - `DELETE /calendar/:id` — delete entry
 
 **Strategies:** LocalStrategy (bcrypt, 10 rounds), JwtStrategy (reads access_token cookie), JwtRefreshStrategy (reads refresh_token cookie).
 
 **Guards:** LocalAuthGuard, JwtAuthGuard, JwtRefreshAuthGuard, EmailVerifiedGuard — use on protected routes. EmailVerifiedGuard can be combined with JwtAuthGuard to restrict access to verified users only (throws ForbiddenException if email not verified).
 
-**Custom decorators:** `@User()` — extracts JwtUser (`{ id, email }`) from request in JWT-protected routes.
+**Custom decorators:** `@User()` — extracts JwtUser (`{ id, email, emailVerified }`) from request in JWT-protected routes.
 
 **Custom validators:**
 - `@IsValidPassword()` — enforces password complexity (8+ chars, number, symbol)
@@ -126,13 +128,17 @@ src/
 
 **DTO max lengths:** `MaxLength` constraints on all string fields — email: 254, password: 128, title: 255, content: 5000.
 
-**Prisma schema:** `User` (id, email, password, refreshToken, verificationToken, emailVerified, resetToken) and `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId→User). Indexes: User has `@@index([email])`. CalendarEntry has `@@index([userId])`, `@@index([startDate])`, `@@index([endDate])`, and `@@index([endDate, startDate])`.
+**Prisma schema:** `User` (id, email, password, refreshToken, verificationToken, emailVerified, resetToken, createdAt, updatedAt) and `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId→User, createdAt, updatedAt). Indexes: User has `@@index([email])`. CalendarEntry has `@@index([userId])`, `@@index([startDate])`, `@@index([endDate])`, and `@@index([endDate, startDate])`.
 
 **Mail service:** Uses nodemailer. In development, auto-creates Ethereal test accounts (preview URLs logged to console). In production, requires `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS` env vars.
 
 **Rate limiting:** Global throttling via `@nestjs/throttler` (60 requests per 60 seconds, applied as APP_GUARD). Auth endpoints (login, signup, forgot-password, reset-password, resend-verification) have stricter limits: 5 requests per 60 seconds.
 
-**Error monitoring:** Sentry integration via `@sentry/nestjs`. Initialized in `instrument.ts` (must be imported before anything else in `main.ts`). Uses `pinoIntegration()` for log forwarding. A custom `GlobalExceptionFilter` extends `SentryGlobalFilter` — HTTP exceptions are returned directly without Sentry reporting; unexpected exceptions are captured and return 500.
+**CSRF protection:** Double-submit cookie pattern via `csrf-csrf` (`src/csrf/csrf.config.ts`). Applied as Express middleware in `main.ts`. Cookie name: `__Host-csrf-token` (production) / `csrf-token` (development). The client must send the token in the `x-csrf-token` header for state-changing requests. On failure, returns 403 with `"Invalid CSRF token"`.
+
+**Request IDs:** Every request is tagged with an `X-Request-Id` header. If the client provides one, it's used; otherwise, `randomUUID()` generates one. The ID is included in pino log entries and all error responses (via `GlobalExceptionFilter`). Sentry tags unexpected exceptions with the request ID.
+
+**Error monitoring:** Sentry integration via `@sentry/nestjs`. Initialized in `instrument.ts` (must be imported before anything else in `main.ts`). Uses `pinoIntegration()` for log forwarding. A custom `GlobalExceptionFilter` extends `SentryGlobalFilter` — HTTP exceptions are returned directly without Sentry reporting (but include `requestId` in the response); unexpected exceptions are captured and return 500.
 
 **Health checks:** `GET /health` endpoint (throttle-exempt) via `@nestjs/terminus`. Checks database (Prisma ping), heap memory (150MB threshold), and disk usage (90% threshold).
 

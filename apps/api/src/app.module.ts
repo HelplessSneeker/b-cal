@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
@@ -12,6 +13,12 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from './health/health.module';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import {
+  reqSerializer,
+  resSerializer,
+} from './common/logging/pino-serializers';
+
+const REQUEST_ID_HEADER = 'X-Request-Id';
 
 @Module({
   imports: [
@@ -20,6 +27,28 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+        genReqId: (req, res) => {
+          const id =
+            req.headers[REQUEST_ID_HEADER.toLowerCase()] ?? randomUUID();
+          res.setHeader(REQUEST_ID_HEADER, id);
+          return id;
+        },
+        serializers: {
+          req: reqSerializer,
+          res: resSerializer,
+        },
+        redact: {
+          paths: [
+            'password',
+            'token',
+            'refreshToken',
+            'resetToken',
+            'verificationToken',
+            'email',
+            'secret',
+          ],
+          censor: '[Redacted]',
+        },
         transport:
           process.env.NODE_ENV !== 'production'
             ? {
@@ -37,6 +66,11 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
         {
           ttl: 60000,
           limit: 60,
+        },
+        {
+          name: 'mail',
+          ttl: 300000,
+          limit: 300,
         },
       ],
     }),

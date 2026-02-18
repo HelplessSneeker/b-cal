@@ -1,6 +1,6 @@
-import { Suspense } from "react"
-import { Loading } from "@/components/ui/loading"
-import { VerifyEmailContent } from "@/components/verify-email-content"
+import { Suspense } from 'react';
+import { Loading } from '@/components/ui/loading';
+import { VerifyEmailContent } from '@/components/verify-email-content';
 
 export default function VerifyEmailPage() {
   return (
@@ -11,5 +11,5 @@ export default function VerifyEmailPage() {
         </Suspense>
       </div>
     </div>
-  )
+  );
 }

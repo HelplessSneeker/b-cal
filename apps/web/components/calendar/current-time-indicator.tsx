@@ -1,10 +1,10 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-import { getEventTopPosition } from "@/lib/calendar/time-utils"
+import { useEffect, useState } from 'react';
+import { getEventTopPosition } from '@/lib/calendar/time-utils';
 
 interface CurrentTimeIndicatorProps {
-  date: Date
+  date: Date;
 }
 
 function isSameDay(a: Date, b: Date): boolean {
@@ -12,25 +12,25 @@ function isSameDay(a: Date, b: Date): boolean {
     a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
-  )
+  );
 }
 
 export function CurrentTimeIndicator({ date }: CurrentTimeIndicatorProps) {
-  const [now, setNow] = useState(new Date())
+  const [now, setNow] = useState(new Date());
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setNow(new Date())
-    }, 60000)
+      setNow(new Date());
+    }, 60000);
 
-    return () => clearInterval(interval)
-  }, [])
+    return () => clearInterval(interval);
+  }, []);
 
   if (!isSameDay(date, now)) {
-    return null
+    return null;
   }
 
-  const top = getEventTopPosition(now)
+  const top = getEventTopPosition(now);
 
   return (
     <div
@@ -40,5 +40,5 @@ export function CurrentTimeIndicator({ date }: CurrentTimeIndicatorProps) {
       <div className="h-3 w-3 -translate-x-1/2 rounded-full bg-red-500" />
       <div className="h-0.5 flex-1 bg-red-500" />
     </div>
-  )
+  );
 }

@@ -1,42 +1,42 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
-import { verifyEmail, refreshToken } from "@/lib/api/auth"
+import { useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { verifyEmail, refreshToken } from '@/lib/api/auth';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Spinner } from "@/components/ui/spinner"
+} from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 
 export function VerifyEmailContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const token = searchParams.get("token")
-  const [status, setStatus] = useState<"loading" | "success" | "error">(
-    token ? "loading" : "error"
-  )
-  const [errorMessage, setErrorMessage] = useState("")
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token');
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
+    token ? 'loading' : 'error',
+  );
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    if (!token) return
+    if (!token) return;
 
     verifyEmail(token).then(async (result) => {
       if (result.success) {
-        await refreshToken()
-        setStatus("success")
-        router.push("/")
+        await refreshToken();
+        setStatus('success');
+        router.push('/');
       } else {
-        setStatus("error")
-        setErrorMessage(result.error || "Verification failed")
+        setStatus('error');
+        setErrorMessage(result.error || 'Verification failed');
       }
-    })
-  }, [token, router])
+    });
+  }, [token, router]);
 
-  if (status === "loading") {
+  if (status === 'loading') {
     return (
       <Card>
         <CardHeader>
@@ -47,10 +47,10 @@ export function VerifyEmailContent() {
           <Spinner />
         </CardContent>
       </Card>
-    )
+    );
   }
 
-  if (status === "success") {
+  if (status === 'success') {
     return (
       <Card>
         <CardHeader>
@@ -63,7 +63,7 @@ export function VerifyEmailContent() {
           <Spinner />
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -72,8 +72,9 @@ export function VerifyEmailContent() {
         <CardTitle>Verification failed</CardTitle>
         <CardDescription>
           {token
-            ? errorMessage || "This verification link is invalid or has expired."
-            : "No verification token provided."}
+            ? errorMessage ||
+              'This verification link is invalid or has expired.'
+            : 'No verification token provided.'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -82,5 +83,5 @@ export function VerifyEmailContent() {
         </a>
       </CardContent>
     </Card>
-  )
+  );
 }

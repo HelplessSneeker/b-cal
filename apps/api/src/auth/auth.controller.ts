@@ -4,10 +4,12 @@ import {
   Get,
   Post,
   Query,
+  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
 import * as express from 'express';
+import { generateCsrfToken } from '../csrf/csrf.config';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guard/local-auth.guard';
 import { JwtAuthGuard } from './guard/jwt-auth.guard';
@@ -47,6 +49,15 @@ export class AuthController {
     res.clearCookie(cookieConfig.refreshToken.name, cookieConfig.options);
   }
 
+  @Get('csrf-token')
+  csrfToken(
+    @Req() req: express.Request,
+    @Res({ passthrough: true }) res: express.Response,
+  ) {
+    const token = generateCsrfToken(req, res);
+    return { data: { csrfToken: token } };
+  }
+
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   @ApiBody({ type: LoginDto })
   @UseGuards(LocalAuthGuard)
@@ -60,7 +71,10 @@ export class AuthController {
     return { message: 'Login successful' };
   }
 
-  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @Throttle({
+    default: { ttl: 60000, limit: 5 },
+    mail: { ttl: 300000, limit: 3 },
+  })
   @Post('signup')
   async signup(
     @Body() signupDto: SignupDto,
@@ -102,7 +116,10 @@ export class AuthController {
     return { data: user };
   }
 
-  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @Throttle({
+    default: { ttl: 60000, limit: 5 },
+    mail: { ttl: 300000, limit: 3 },
+  })
   @UseGuards(JwtAuthGuard)
   @Post('resend-verification')
   async resendVerification(@User('id') userId: string) {
@@ -117,7 +134,10 @@ export class AuthController {
     return { message: 'Email verified' };
   }
 
-  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @Throttle({
+    default: { ttl: 60000, limit: 5 },
+    mail: { ttl: 300000, limit: 3 },
+  })
   @ApiBody({ type: RequestPasswordResetDTO })
   @Post('forgot-password')
   async forgotPassword(

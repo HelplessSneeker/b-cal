@@ -1,16 +1,16 @@
-"use client"
+'use client';
 
-import { CalendarEntry } from "@/lib/stores/calendarStore"
-import { cn } from "@/lib/utils/utils"
+import { CalendarEntry } from '@/lib/stores/calendarStore';
+import { cn } from '@/lib/utils/utils';
 
 interface AllDaySectionProps {
-  entries: CalendarEntry[]
-  onEntryClick: (entry: CalendarEntry) => void
+  entries: CalendarEntry[];
+  onEntryClick: (entry: CalendarEntry) => void;
 }
 
 export function AllDaySection({ entries, onEntryClick }: AllDaySectionProps) {
   if (entries.length === 0) {
-    return null
+    return null;
   }
 
   return (
@@ -20,7 +20,7 @@ export function AllDaySection({ entries, onEntryClick }: AllDaySectionProps) {
           <div
             key={entry.id}
             className={cn(
-              "cursor-pointer rounded-md border-l-[3px] border-blue-500 bg-blue-500/20 px-3 py-1 transition-colors hover:bg-blue-500/30"
+              'cursor-pointer rounded-md border-l-[3px] border-blue-500 bg-blue-500/20 px-3 py-1 transition-colors hover:bg-blue-500/30',
             )}
             onClick={() => onEntryClick(entry)}
           >
@@ -29,5 +29,5 @@ export function AllDaySection({ entries, onEntryClick }: AllDaySectionProps) {
         ))}
       </div>
     </div>
-  )
+  );
 }

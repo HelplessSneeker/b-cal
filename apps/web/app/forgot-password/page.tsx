@@ -1,31 +1,31 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { forgotPassword } from "@/lib/api/auth"
-import { Button } from "@/components/ui/button"
+import { useState } from 'react';
+import { forgotPassword } from '@/lib/api/auth';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { Spinner } from "@/components/ui/spinner"
+} from '@/components/ui/card';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    await forgotPassword(email)
-    setIsLoading(false)
-    setSubmitted(true)
-  }
+    e.preventDefault();
+    setIsLoading(true);
+    await forgotPassword(email);
+    setIsLoading(false);
+    setSubmitted(true);
+  };
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
@@ -35,8 +35,8 @@ export default function ForgotPasswordPage() {
             <CardTitle>Reset your password</CardTitle>
             <CardDescription>
               {submitted
-                ? "If that email exists, we sent a reset link."
-                : "Enter your email to receive a password reset link."}
+                ? 'If that email exists, we sent a reset link.'
+                : 'Enter your email to receive a password reset link.'}
             </CardDescription>
           </CardHeader>
           {!submitted && (
@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
                   </Field>
                   <Field>
                     <Button type="submit" disabled={isLoading}>
-                      {isLoading ? <Spinner /> : "Send reset link"}
+                      {isLoading ? <Spinner /> : 'Send reset link'}
                     </Button>
                   </Field>
                 </FieldGroup>
@@ -65,7 +65,10 @@ export default function ForgotPasswordPage() {
           )}
           {submitted && (
             <CardContent>
-              <a href="/login" className="text-sm underline-offset-4 hover:underline">
+              <a
+                href="/login"
+                className="text-sm underline-offset-4 hover:underline"
+              >
                 Back to login
               </a>
             </CardContent>
@@ -73,5 +76,5 @@ export default function ForgotPasswordPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

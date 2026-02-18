@@ -1,29 +1,29 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
-import { toast } from "sonner"
-import { resetPassword } from "@/lib/api/auth"
-import { validatePassword } from "@/lib/utils/password"
-import { Button } from "@/components/ui/button"
+import { useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { resetPassword } from '@/lib/api/auth';
+import { validatePassword } from '@/lib/utils/password';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { Spinner } from "@/components/ui/spinner"
+} from '@/components/ui/card';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 
 export function ResetPasswordForm() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const token = searchParams.get("token")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   if (!token) {
     return (
@@ -35,44 +35,45 @@ export function ResetPasswordForm() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <a href="/forgot-password" className="text-sm underline-offset-4 hover:underline">
+          <a
+            href="/forgot-password"
+            className="text-sm underline-offset-4 hover:underline"
+          >
             Request a new reset link
           </a>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    const passwordError = validatePassword(password)
+    const passwordError = validatePassword(password);
     if (passwordError) {
-      toast.error(passwordError)
-      return
+      toast.error(passwordError);
+      return;
     }
 
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match")
-      return
+      toast.error('Passwords do not match');
+      return;
     }
 
-    setIsLoading(true)
-    const result = await resetPassword(token, password)
-    setIsLoading(false)
+    setIsLoading(true);
+    const result = await resetPassword(token, password);
+    setIsLoading(false);
 
     if (result.success) {
-      router.push("/login")
+      router.push('/login');
     }
-  }
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Set new password</CardTitle>
-        <CardDescription>
-          Enter your new password below.
-        </CardDescription>
+        <CardDescription>Enter your new password below.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit}>
@@ -88,7 +89,9 @@ export function ResetPasswordForm() {
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="confirm-password">Confirm password</FieldLabel>
+              <FieldLabel htmlFor="confirm-password">
+                Confirm password
+              </FieldLabel>
               <Input
                 id="confirm-password"
                 type="password"
@@ -99,12 +102,12 @@ export function ResetPasswordForm() {
             </Field>
             <Field>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? <Spinner /> : "Reset password"}
+                {isLoading ? <Spinner /> : 'Reset password'}
               </Button>
             </Field>
           </FieldGroup>
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }

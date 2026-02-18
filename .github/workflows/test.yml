@@ -49,9 +49,10 @@ jobs:
       DB_NAME: b_cal_test
       DB_PORT: 5432
       DB_HOST: localhost
-      SECRET_KEY: TEST_SECRET_KEY
-      REFRESH_SECRET_KEY: TEST_REFRESH_SECRET_KEY
-      MAIL_SECRET_KEY: TEST_MAIL_SECRET_KEY
+      SECRET_KEY: test-secret-key-that-is-at-least-32-chars
+      REFRESH_SECRET_KEY: test-refresh-secret-key-at-least-32-chars
+      MAIL_SECRET_KEY: test-mail-secret-key-at-least-32-characters
+      CSRF_SECRET: test-csrf-secret-key-at-least-32-characters
     steps:
       - uses: actions/checkout@v4
 

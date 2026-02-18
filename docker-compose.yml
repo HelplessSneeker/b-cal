@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: b-cal-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: b_cal
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d b_cal"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: production
+    container_name: b-cal-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      FRONTEND_URL: http://localhost:8080
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: b_cal
+      DB_PORT: 5432
+      DB_HOST: postgres
+      SECRET_KEY: my-super-secret-key-for-dev-only!
+      REFRESH_SECRET_KEY: my-super-refresh-secret-dev-only!
+      MAIL_SECRET_KEY: my-super-secret-mail-key-dev-only!
+      CSRF_SECRET: my-super-secret-csrf-key-dev-only!
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_BACKEND_URL: http://localhost:3000
+    container_name: b-cal-web
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      NODE_ENV: development
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

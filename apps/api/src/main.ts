@@ -1,4 +1,5 @@
 import './instrument';
+import * as Sentry from '@sentry/nestjs';
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -7,7 +8,19 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
-import { json, urlencoded } from 'express';
+import { json, urlencoded, Request, Response, NextFunction } from 'express';
+import {
+  doubleCsrfProtection,
+  invalidCsrfTokenError,
+} from './csrf/csrf.config';
+
+process.on('unhandledRejection', (reason: unknown) => {
+  Sentry.captureException(reason);
+});
+
+process.on('uncaughtException', (error: Error) => {
+  Sentry.captureException(error);
+});
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -60,12 +73,25 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   app.use(cookieParser());
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    doubleCsrfProtection(req, res, (err?: unknown) => {
+      if (err === invalidCsrfTokenError) {
+        res.status(403).json({ message: 'Invalid CSRF token' });
+        return;
+      }
+      next(err as Error);
+    });
+  });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
+      transform: true,
     }),
   );
   await app.listen(process.env.PORT ?? 3000);
 }
-void bootstrap();
+bootstrap().catch((err) => {
+  console.error('Failed to start application:', err);
+  process.exit(1);
+});

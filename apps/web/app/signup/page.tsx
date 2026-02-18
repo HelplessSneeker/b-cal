@@ -1,6 +1,6 @@
-import { Suspense } from "react"
-import { LoginForm } from "@/components/login-form"
-import { Loading } from "@/components/ui/loading"
+import { Suspense } from 'react';
+import { LoginForm } from '@/components/login-form';
+import { Loading } from '@/components/ui/loading';
 
 export default function Page() {
   return (
@@ -11,5 +11,5 @@ export default function Page() {
         </Suspense>
       </div>
     </div>
-  )
+  );
 }

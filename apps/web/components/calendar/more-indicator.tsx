@@ -1,8 +1,8 @@
-"use client"
+'use client';
 
 interface MoreIndicatorProps {
-  count: number
-  onClick: (e: React.MouseEvent) => void
+  count: number;
+  onClick: (e: React.MouseEvent) => void;
 }
 
 export function MoreIndicator({ count, onClick }: MoreIndicatorProps) {
@@ -13,5 +13,5 @@ export function MoreIndicator({ count, onClick }: MoreIndicatorProps) {
     >
       +{count} weitere
     </button>
-  )
+  );
 }

@@ -1,17 +1,43 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { INestApplication, Module, ValidationPipe } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { LoggerModule } from 'nestjs-pino';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from 'src/app.module';
+import { AuthModule } from 'src/auth/auth.module';
+import { CalendarModule } from 'src/calendar/calendar.module';
+import { PrismaModule } from 'src/prisma/prisma.module';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UserModule } from 'src/user/user.module';
+import { MailModule } from 'src/mail/mail.module';
+import { MailService } from 'src/mail/mail.service';
 import cookieParser from 'cookie-parser';
 
-class TestThrottlerGuard extends ThrottlerGuard {
-  override async canActivate(): Promise<boolean> {
-    return true;
-  }
+class TestMailService {
+  async sendVerificationEmail() {}
+  async sendPasswordResetEmail() {}
 }
+
+@Module({
+  imports: [
+    ConfigModule.forRoot(),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        level: 'silent',
+      },
+    }),
+    ThrottlerModule.forRoot({
+      throttlers: [{ ttl: 60000, limit: 100000 }],
+    }),
+    CalendarModule,
+    PrismaModule,
+    AuthModule,
+    UserModule,
+    MailModule,
+  ],
+})
+class TestAppModule {}
 
 interface ErrorResponse {
   message: string | string[];
@@ -81,10 +107,10 @@ describe('CalendarController (e2e)', () => {
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [TestAppModule],
     })
-      .overrideProvider(ThrottlerGuard)
-      .useClass(TestThrottlerGuard)
+      .overrideProvider(MailService)
+      .useClass(TestMailService)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -93,6 +119,7 @@ describe('CalendarController (e2e)', () => {
       new ValidationPipe({
         whitelist: true,
         forbidNonWhitelisted: true,
+        transform: true,
       }),
     );
     await app.init();
@@ -348,6 +375,31 @@ describe('CalendarController (e2e)', () => {
       expect(body.message).toContain(
         'startDate must be before or equal to endDate',
       );
+    });
+
+    it('should strip HTML tags from title and content on create', async () => {
+      await request(app.getHttpServer())
+        .post('/calendar')
+        .set('Cookie', userCookies)
+        .send({
+          title: '<b>HTML</b> Title',
+          startDate: '2025-06-01T10:00:00.000Z',
+          endDate: '2025-06-01T11:00:00.000Z',
+          content: '<script>alert("xss")</script>Safe content',
+        })
+        .expect(201);
+
+      const entryId = await findEntryByTitle(
+        prisma,
+        'HTML Title',
+        testUser.email,
+      );
+      const getResponse = await request(app.getHttpServer())
+        .get(`/calendar/${entryId}`)
+        .set('Cookie', userCookies);
+      const getBody = getResponse.body as DataResponse<CalendarEntry>;
+      expect(getBody.data.title).toBe('HTML Title');
+      expect(getBody.data.content).toBe('alert("xss")Safe content');
     });
 
     it('should return 400 for invalid date format', async () => {
@@ -668,6 +720,24 @@ describe('CalendarController (e2e)', () => {
         .set('Cookie', userCookies);
       const getBody = getResponse.body as DataResponse<CalendarEntry>;
       expect(getBody.data.wholeDay).toBe(true);
+    });
+
+    it('should strip HTML tags from title and content on update', async () => {
+      await request(app.getHttpServer())
+        .patch(`/calendar/${updateEntryId}`)
+        .set('Cookie', userCookies)
+        .send({
+          title: '<em>Updated</em> Title',
+          content: '<div>Updated</div> content',
+        })
+        .expect(200);
+
+      const getResponse = await request(app.getHttpServer())
+        .get(`/calendar/${updateEntryId}`)
+        .set('Cookie', userCookies);
+      const getBody = getResponse.body as DataResponse<CalendarEntry>;
+      expect(getBody.data.title).toBe('Updated Title');
+      expect(getBody.data.content).toBe('Updated content');
     });
 
     it('should return 401 without authentication', async () => {

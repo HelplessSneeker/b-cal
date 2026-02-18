@@ -1,112 +1,115 @@
 # @b-cal/web
 
-A calendar application frontend built with Next.js 16, React 19, and TypeScript.
+The frontend for b-cal — a calendar application built with Next.js 16 and React 19.
 
-## Tech Stack
-
-- Next.js 16 (App Router)
-- React 19
-- TypeScript
-- Tailwind CSS v4
-- shadcn/ui components (new-york style)
-- Zustand for state management
+![Next.js](https://img.shields.io/badge/Next.js_16-000?logo=nextdotjs&logoColor=fff)
+![React](https://img.shields.io/badge/React_19-61DAFB?logo=react&logoColor=000)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?logo=tailwindcss&logoColor=fff)
+![Zustand](https://img.shields.io/badge/Zustand-433e38?logo=react&logoColor=fff)
+![Vitest](https://img.shields.io/badge/Vitest-6E9F18?logo=vitest&logoColor=fff)
 
 ## Features
 
-- **Authentication**: Cookie-based auth with login/signup flows
-- **Email Verification**: Post-signup email verification with resend support
-- **Password Reset**: Forgot password and reset password flows via email
-- **Calendar Views**: Day, Week, and Month views
-- **Entry Management**: Create, edit, and delete calendar entries
-- **All-Day Events**: Support for timed entries and all-day events
-- **Current Time Indicator**: Red line showing current time on today's view
+- **Calendar Views** — Day, Week, and Month with time grids and all-day event support
+- **Entry Management** — Create, edit, and delete calendar entries via modal dialog
+- **Authentication** — Cookie-based auth with login, signup, email verification, and password reset
+- **Current Time Indicator** — Red line showing current time on today's view
+- **Silent Token Refresh** — Automatic 401 retry with deduplication
+- **CSRF Protection** — Auto-fetches and sends CSRF tokens on state-changing requests
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) 22+
+- [pnpm](https://pnpm.io/) 10+
+- Running API backend (see [API README](../api/README.md))
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js
-- pnpm
-
-### Installation
-
 ```bash
+# Configure environment
+cp .env.example .env  # Set NEXT_PUBLIC_BACKEND_URL=http://localhost:3000
+
+# Install dependencies (from monorepo root)
 pnpm install
-```
 
-### Environment Variables
-
-Configure the backend URL:
-
-```
-NEXT_PUBLIC_BACKEND_URL=<your-backend-url>
-```
-
-### Development
-
-```bash
+# Start development server
 pnpm dev
 ```
 
 Open [http://localhost:8080](http://localhost:8080) in your browser.
 
-### Build
+## Scripts
 
-```bash
-pnpm build
-```
+| Command | Description |
+|---|---|
+| `pnpm dev` | Start development server on port 8080 |
+| `pnpm build` | Production build (standalone output) |
+| `pnpm lint` | Run ESLint |
+| `pnpm test` | Run integration tests (Vitest) |
+| `pnpm format` | Format code with Prettier |
+| `pnpm format:check` | Check formatting without fixing |
 
-### Lint
+## Environment Variables
 
-```bash
-pnpm lint
-```
+| Variable | Required | Description |
+|---|---|---|
+| `NEXT_PUBLIC_BACKEND_URL` | Yes | API base URL (e.g. `http://localhost:3000`) |
+| `NEXT_PUBLIC_SENTRY_DSN` | No | Sentry DSN for error monitoring |
 
 ## Project Structure
 
 ```
-app/                    # Next.js App Router pages and layouts
-  login/                # Login page
-  signup/               # Signup page
-  check-email/          # Post-signup email verification prompt
-  verify-email/         # Email verification callback (?token=...)
-  forgot-password/      # Password reset request form
-  reset-password/       # Password reset form (?token=...)
-  page.tsx              # Main calendar page (protected)
-components/             # React components
-  ui/                   # shadcn/ui primitives
-  calendar/             # Calendar-specific components
-    views/              # Day, Week, Month view components
-    calendar-header.tsx # Top navigation with view selector
-    calendar-sidebar.tsx # Left sidebar with mini calendar
-    time-grid.tsx       # Scrollable time grid
-    day-column.tsx      # Single day column with time slots
-    entry-block.tsx     # Positioned calendar entry block
-  AuthProvider.tsx      # Auth wrapper (redirects unverified users)
-  login-form.tsx        # Shared login/signup form
-  entry-modal.tsx       # Create/edit/delete entry modal
-  verify-email-content.tsx  # Email verification handler
-  reset-password-form.tsx   # Password reset form component
-lib/                    # Utilities and services
-  api/                  # API layer with typed requests
-  calendar/             # Date/time utilities and constants
-  stores/               # Zustand stores (user, calendar)
-  utils/                # Helper functions (cn, password validation)
-proxy.ts                # Next.js middleware for route protection
+app/                          # Next.js App Router pages
+├── login/                    # Login page
+├── signup/                   # Signup page
+├── check-email/              # Post-signup verification prompt
+├── verify-email/             # Email verification callback
+├── forgot-password/          # Password reset request
+├── reset-password/           # Password reset form
+└── page.tsx                  # Main calendar (protected)
+
+components/
+├── ui/                       # shadcn/ui primitives
+├── calendar/
+│   ├── views/                # Day, Week, Month view components
+│   ├── calendar-header.tsx   # Top nav with view selector & user menu
+│   ├── calendar-sidebar.tsx  # Sidebar with mini calendar
+│   ├── time-grid.tsx         # Scrollable 24h time grid
+│   ├── day-column.tsx        # Single day with time slots
+│   └── entry-block.tsx       # Positioned calendar entry
+├── AuthProvider.tsx           # Auth guard (redirects unauthenticated/unverified)
+├── entry-modal.tsx            # Create/edit/delete entry dialog
+├── login-form.tsx             # Shared login/signup form
+├── verify-email-content.tsx   # Email verification handler
+└── reset-password-form.tsx    # Password reset form
+
+lib/
+├── api/                      # Typed API layer (auth, calendar, CSRF)
+├── calendar/                 # Date/time utils and layout constants
+├── hooks/                    # Custom hooks (useCalendarData)
+├── stores/                   # Zustand stores (user, calendar)
+└── utils/                    # Helpers (cn, password validation)
+
+proxy.ts                      # Route protection + CSP nonce (Next.js 16 proxy)
 ```
 
 ## Auth Flows
 
-### Signup
-1. User submits email/password at `/signup`
-2. API creates user and sends verification email
-3. User is redirected to `/check-email`
-4. User clicks link in email, lands on `/verify-email?token=...`
-5. Token is validated, user is redirected to main app
+**Signup** — Submit form → API sends verification email → redirect to `/check-email` → click email link → `/verify-email?token=...` validates → redirect to `/`
 
-### Password Reset
-1. User clicks "Forgot password?" on login page
-2. User enters email at `/forgot-password`
-3. API sends reset email (silent on non-existent emails)
-4. User clicks link, lands on `/reset-password?token=...`
-5. User enters new password, gets redirected to `/login`
+**Login** — Submit form → API sets cookies → redirect to `/` (or `/check-email` if unverified)
+
+**Password Reset** — "Forgot password?" → enter email → API sends reset email → `/reset-password?token=...` → new password → redirect to `/login`
+
+## Docker
+
+Multi-stage Dockerfile using Node 22 Alpine with Next.js standalone output. Requires `NEXT_PUBLIC_BACKEND_URL` as a build arg. Exposes port 8080.
+
+```bash
+# Build from monorepo root
+docker build -f apps/web/Dockerfile -t b-cal-web --build-arg NEXT_PUBLIC_BACKEND_URL=http://api:3000 .
+
+# Run
+docker run -p 8080:8080 b-cal-web
+```

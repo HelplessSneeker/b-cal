@@ -35,4 +35,7 @@ ENV HOSTNAME=0.0.0.0
 ENV PORT=8080
 EXPOSE 8080
 
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:8080/health', (r) => { if (r.statusCode !== 200) throw new Error(r.statusCode) })"
+
 CMD ["node", "apps/web/server.js"]

@@ -82,9 +82,7 @@ export class CalendarService {
         userId,
         id,
       },
-      data: {
-        ...updateCalendarDto,
-      },
+      data: updateCalendarDto,
     });
     this.logger.log(`Calendar entry updated: ${id}`);
     return entry;

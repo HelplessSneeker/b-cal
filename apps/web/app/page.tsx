@@ -1,19 +1,19 @@
-"use client"
+'use client';
 
-import { AuthProvider } from "@/components/AuthProvider"
-import { CalendarHeader } from "@/components/calendar/calendar-header"
-import { CalendarSidebar } from "@/components/calendar/calendar-sidebar"
-import { DayView } from "@/components/calendar/views/day-view"
-import { WeekView } from "@/components/calendar/views/week-view"
-import { MonthView } from "@/components/calendar/views/month-view"
-import { CalendarView, useCalendarStore } from "@/lib/stores/calendarStore"
-import { EntryModal } from "@/components/entry-modal"
-import { useCalendarData } from "@/lib/hooks/useCalendarData"
+import { AuthProvider } from '@/components/AuthProvider';
+import { CalendarHeader } from '@/components/calendar/calendar-header';
+import { CalendarSidebar } from '@/components/calendar/calendar-sidebar';
+import { DayView } from '@/components/calendar/views/day-view';
+import { WeekView } from '@/components/calendar/views/week-view';
+import { MonthView } from '@/components/calendar/views/month-view';
+import { CalendarView, useCalendarStore } from '@/lib/stores/calendarStore';
+import { EntryModal } from '@/components/entry-modal';
+import { useCalendarData } from '@/lib/hooks/useCalendarData';
 
 function CalendarPage() {
-  const view = useCalendarStore((s) => s.view)
+  const view = useCalendarStore((s) => s.view);
 
-  useCalendarData()
+  useCalendarData();
 
   return (
     <div className="flex h-screen flex-col">
@@ -28,7 +28,7 @@ function CalendarPage() {
       </div>
       <EntryModal />
     </div>
-  )
+  );
 }
 
 export default function Home() {
@@ -36,5 +36,5 @@ export default function Home() {
     <AuthProvider>
       <CalendarPage />
     </AuthProvider>
-  )
+  );
 }

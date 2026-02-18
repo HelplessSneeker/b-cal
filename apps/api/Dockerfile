@@ -37,4 +37,11 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD wget -qO- http://localhost:3000/health || exit 1
 
-CMD ["node", "dist/src/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
+
+# ---- Migrations & Seed ----
+FROM deps AS migrate
+COPY apps/api/ apps/api/
+WORKDIR /app/apps/api
+RUN pnpm prisma:generate
+CMD ["sh", "-c", "npx prisma migrate deploy && if [ \"$SEED_DB\" = \"true\" ]; then npx tsx prisma/seed.ts --force; fi"]

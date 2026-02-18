@@ -1,82 +1,82 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { getMe, logout, resendVerification } from "@/lib/api/auth"
-import { useUserStore } from "@/lib/stores/userStore"
-import { Button } from "@/components/ui/button"
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { getMe, logout, resendVerification } from '@/lib/api/auth';
+import { useUserStore } from '@/lib/stores/userStore';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Loading } from "@/components/ui/loading"
+} from '@/components/ui/card';
+import { Loading } from '@/components/ui/loading';
 
-const RESEND_COOLDOWN_MS = 60_000
+const RESEND_COOLDOWN_MS = 60_000;
 
 export default function CheckEmailPage() {
-  const router = useRouter()
-  const { user, setUser, clearUser } = useUserStore()
-  const [isLoading, setIsLoading] = useState(!user)
-  const [resendLoading, setResendLoading] = useState(false)
-  const [cooldownEnd, setCooldownEnd] = useState(0)
-  const [now, setNow] = useState(() => Date.now())
+  const router = useRouter();
+  const { user, setUser, clearUser } = useUserStore();
+  const [isLoading, setIsLoading] = useState(!user);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [cooldownEnd, setCooldownEnd] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
 
-  const cooldownRemaining = Math.max(0, Math.ceil((cooldownEnd - now) / 1000))
+  const cooldownRemaining = Math.max(0, Math.ceil((cooldownEnd - now) / 1000));
 
   useEffect(() => {
     if (user) {
       if (user.emailVerified) {
-        router.push("/")
+        router.push('/');
       }
-      return
+      return;
     }
 
     getMe().then((userData) => {
       if (userData) {
         if (userData.emailVerified) {
-          router.push("/")
-          return
+          router.push('/');
+          return;
         }
-        setUser(userData)
+        setUser(userData);
       } else {
-        router.push("/login")
+        router.push('/login');
       }
-      setIsLoading(false)
-    })
-  }, [user, setUser, router])
+      setIsLoading(false);
+    });
+  }, [user, setUser, router]);
 
   useEffect(() => {
-    if (cooldownEnd <= Date.now()) return
+    if (cooldownEnd <= Date.now()) return;
 
     const interval = setInterval(() => {
-      const current = Date.now()
-      setNow(current)
+      const current = Date.now();
+      setNow(current);
       if (current >= cooldownEnd) {
-        clearInterval(interval)
+        clearInterval(interval);
       }
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [cooldownEnd])
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [cooldownEnd]);
 
   const handleResend = async () => {
-    setResendLoading(true)
-    await resendVerification()
-    setResendLoading(false)
-    setCooldownEnd(Date.now() + RESEND_COOLDOWN_MS)
-    setNow(Date.now())
-  }
+    setResendLoading(true);
+    await resendVerification();
+    setResendLoading(false);
+    setCooldownEnd(Date.now() + RESEND_COOLDOWN_MS);
+    setNow(Date.now());
+  };
 
   const handleLogout = async () => {
-    await logout()
-    clearUser()
-    router.push("/login")
-  }
+    await logout();
+    clearUser();
+    router.push('/login');
+  };
 
   if (isLoading || (user && user.emailVerified)) {
-    return <Loading className="h-screen" />
+    return <Loading className="h-screen" />;
   }
 
   return (
@@ -86,10 +86,8 @@ export default function CheckEmailPage() {
           <CardHeader>
             <CardTitle>Check your inbox</CardTitle>
             <CardDescription>
-              We sent a verification link to{" "}
-              <span className="font-medium text-foreground">
-                {user?.email}
-              </span>
+              We sent a verification link to{' '}
+              <span className="font-medium text-foreground">{user?.email}</span>
               . Please click the link to verify your account.
             </CardDescription>
           </CardHeader>
@@ -100,10 +98,10 @@ export default function CheckEmailPage() {
               onClick={handleResend}
             >
               {resendLoading
-                ? "Sending..."
+                ? 'Sending...'
                 : cooldownRemaining > 0
                   ? `Resend in ${cooldownRemaining}s`
-                  : "Resend verification email"}
+                  : 'Resend verification email'}
             </Button>
             <button
               onClick={handleLogout}
@@ -115,5 +113,5 @@ export default function CheckEmailPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

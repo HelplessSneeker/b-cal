@@ -56,6 +56,7 @@ describe('CalendarController', () => {
 
       expect(result).toEqual({
         message: 'Calendar entry created',
+        data: mockCalendarEntry,
       });
       expect(mockCalendarService.create).toHaveBeenCalledWith(
         'user-1',
@@ -112,6 +113,7 @@ describe('CalendarController', () => {
 
       expect(result).toEqual({
         message: 'Calendar entry has been updated',
+        data: updatedEntry,
       });
       expect(mockCalendarService.update).toHaveBeenCalledWith(
         'user-1',

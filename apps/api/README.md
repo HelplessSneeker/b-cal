@@ -1,29 +1,82 @@
 # @b-cal/api
 
-A REST API for a calendar application built with NestJS, TypeScript, Prisma, and PostgreSQL.
+The REST API for b-cal — a calendar application built with NestJS 11, Prisma, and PostgreSQL.
 
+![NestJS](https://img.shields.io/badge/NestJS_11-E0234E?logo=nestjs&logoColor=fff)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
+![Prisma](https://img.shields.io/badge/Prisma_7-2D3748?logo=prisma&logoColor=fff)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL_16-4169E1?logo=postgresql&logoColor=fff)
+![Jest](https://img.shields.io/badge/Jest_30-C21325?logo=jest&logoColor=fff)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=fff)
 
-## Tech Stack
+## Features
 
-- NestJS 11
-- TypeScript
-- Prisma 7 (PostgreSQL)
-- Passport (Local + JWT authentication)
-- Nodemailer (email verification and password reset)
-- Docker (for development database)
+- Cookie-based JWT authentication (access + refresh tokens in httpOnly cookies)
+- Email verification on signup (JWT token, 1 day expiry)
+- Password reset via email (JWT token, 1 hour expiry)
+- CSRF protection (double-submit cookie pattern)
+- Calendar entry CRUD with date range filtering
+- Rate limiting (global + stricter auth endpoints)
+- Structured logging with request IDs (nestjs-pino)
+- Health checks (database, memory, disk)
+- Swagger API documentation (development only)
+- Sentry error monitoring
 
 ## Prerequisites
 
-- Node.js
-- pnpm
-- Docker and Docker Compose
+- [Node.js](https://nodejs.org/) 22+
+- [pnpm](https://pnpm.io/) 10+
+- [Docker](https://www.docker.com/)
+
+## Getting Started
+
+```bash
+# Start PostgreSQL
+docker compose up -d
+
+# Install dependencies (from monorepo root)
+pnpm install
+
+# Configure environment
+cp .env.example .env  # Edit with your values
+
+# Generate Prisma client and run migrations
+pnpm prisma:generate
+pnpm prisma:migrate
+
+# (Optional) Seed with test data
+pnpm prisma:seed
+
+# Start development server
+pnpm dev
+```
+
+The API will be available at [http://localhost:3000](http://localhost:3000).
+Swagger docs at [http://localhost:3000/api](http://localhost:3000/api).
+
+## Scripts
+
+| Command | Description |
+|---|---|
+| `pnpm dev` | Run in watch mode |
+| `pnpm build` | Compile the project |
+| `pnpm start:prod` | Run compiled output |
+| `pnpm lint` | ESLint with auto-fix |
+| `pnpm format` | Prettier formatting |
+| `pnpm test` | Run unit tests (Jest) |
+| `pnpm test:e2e` | Run e2e tests (separate test database) |
+| `pnpm test:cov` | Tests with coverage report |
+| `pnpm prisma:generate` | Regenerate Prisma client |
+| `pnpm prisma:migrate` | Apply database migrations |
+| `pnpm prisma:seed` | Seed database with test data |
+| `pnpm prisma:studio` | Browse database with Prisma Studio |
 
 ## Environment Variables
 
-Create a `.env` file in the project root with the following variables:
+Create a `.env` file:
 
-```
-# App setup
+```env
+# App
 PORT=3000
 FRONTEND_URL="http://localhost:8080/"
 
@@ -32,156 +85,124 @@ DB_USER=root
 DB_PASSWORD=root
 DB_NAME=b_cal
 DB_PORT=5432
+DB_HOST=localhost
 
-# JWT Strategy
-SECRET_KEY="your-secret-key"
-REFRESH_SECRET_KEY="your-refresh-secret-key"
+# Secrets (min 32 characters each)
+SECRET_KEY="your-access-token-secret-key-here"
+REFRESH_SECRET_KEY="your-refresh-token-secret-key"
+MAIL_SECRET_KEY="your-mail-token-secret-key-here"
+CSRF_SECRET="your-csrf-secret-key-here-32chars"
 
-# Mail
-MAIL_SECRET="your-mail-secret"
+# Mail (optional in development — uses Ethereal test accounts)
 MAIL_HOST=smtp.example.com
 MAIL_PORT=587
 MAIL_USER=user@example.com
 MAIL_PASS=password
-MAIL_FROM="b-cal <noreply@b-cal.dev>"
+MAIL_FROM="b-cal <noreply@b-cal.dev>"  # optional
+
+# Optional
+SENTRY_DSN=
+DB_POOL_MAX=10
+DB_POOL_IDLE_TIMEOUT_MS=10000
+DB_POOL_CONNECTION_TIMEOUT_MS=5000
 ```
 
-In development, mail configuration (MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS) is optional — the app automatically creates Ethereal test accounts and logs preview URLs to the console.
-
-For e2e tests, create a `.env.test` file with a separate database name:
-
-```
-DB_NAME=b_cal_test
-```
-
-(Copy the rest of the variables from `.env`)
-
-## Database Seeding
-
-Run `pnpm run prisma:seed` to populate the database with test data. The seed script will prompt for confirmation before resetting the database (use `--force` to skip).
-
-Test users created by the seed script (password for all: `password123!`):
-- `alice@example.com` (email verified)
-- `bob@example.com` (email verified)
-
-## Getting Started
-
-### 1. Start the Development Database
-
-The project uses PostgreSQL running in Docker for development:
-
-```bash
-docker compose up -d
-```
-
-This starts a PostgreSQL 16 container with the credentials defined in your `.env` file.
-
-### 2. Install Dependencies
-
-```bash
-pnpm install
-```
-
-### 3. Generate Prisma Client and Run Migrations
-
-```bash
-pnpm run prisma:generate
-pnpm run prisma:migrate
-```
-
-### 4. Start the Development Server
-
-```bash
-pnpm run dev
-```
-
-The API will be available at `http://localhost:3000`.
-
-## Available Scripts
-
-| Command | Description |
-|---------|-------------|
-| `pnpm run build` | Compile the project |
-| `pnpm run dev` | Run in watch mode for development |
-| `pnpm run start:prod` | Run in production mode |
-| `pnpm run lint` | Run ESLint with auto-fix |
-| `pnpm run format` | Run Prettier formatting |
-| `pnpm run test` | Run unit tests |
-| `pnpm run test:e2e` | Run end-to-end tests (uses separate test database) |
-| `pnpm run test:cov` | Run tests with coverage |
-| `pnpm run prisma:generate` | Generate Prisma client |
-| `pnpm run prisma:migrate` | Migrate the database |
-| `pnpm run prisma:seed` | Seed database with test data |
-| `pnpm run prisma:studio` | View the database with Prisma Studio |
-
-## API Documentation
-
-Swagger documentation is available at `/api` when the server is running.
-
-## Features
-
-- User registration and login
-- JWT-based authentication with access and refresh tokens (httpOnly cookies)
-- Email verification on signup (JWT token, 1 day expiry)
-- Password reset via email (JWT token, 1 hour expiry)
-- Calendar entries with CRUD operations
-- Date range filtering for calendar queries
-- PostgreSQL database with Prisma ORM
+For e2e tests, create `.env.test` with `DB_NAME=b_cal_test` (copy the rest from `.env`).
 
 ## API Endpoints
 
 ### Authentication
 
 | Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/auth/signup` | - | Register a new user, sends verification email |
-| `POST` | `/auth/login` | - | Login with email and password |
-| `POST` | `/auth/refresh` | Refresh token | Refresh access and refresh tokens |
+|---|---|---|---|
+| `GET` | `/auth/csrf-token` | — | Get CSRF token (sets cookie) |
+| `POST` | `/auth/signup` | — | Register new user, sends verification email |
+| `POST` | `/auth/login` | — | Login with email and password |
+| `POST` | `/auth/refresh` | Refresh | Refresh access and refresh tokens |
 | `POST` | `/auth/logout` | JWT | Logout and invalidate refresh token |
-| `GET` | `/auth/me` | JWT | Get current user (id, email, emailVerified) |
-| `POST` | `/auth/resend-verification` | JWT | Resend email verification link |
-| `GET` | `/auth/verify-email?token=` | - | Verify email address |
-| `POST` | `/auth/forgot-password` | - | Request password reset email |
-| `POST` | `/auth/reset-password` | - | Reset password with token |
+| `GET` | `/auth/me` | JWT | Get current user info |
+| `POST` | `/auth/resend-verification` | JWT | Resend verification email |
+| `GET` | `/auth/verify-email?token=` | — | Verify email address |
+| `POST` | `/auth/forgot-password` | — | Request password reset email |
+| `POST` | `/auth/reset-password` | — | Reset password with token |
 
 ### Calendar
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/calendar` | JWT | Create a calendar entry |
-| `GET` | `/calendar` | JWT | List entries (optional startDate/endDate filters) |
-| `GET` | `/calendar/:id` | JWT | Get a single entry |
-| `PATCH` | `/calendar/:id` | JWT | Update an entry |
-| `DELETE` | `/calendar/:id` | JWT | Delete an entry |
+All endpoints require JWT + verified email.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/calendar` | Create entry (title, startDate, endDate required) |
+| `GET` | `/calendar` | List entries (optional `startDate`/`endDate` filters) |
+| `GET` | `/calendar/:id` | Get single entry |
+| `PATCH` | `/calendar/:id` | Update entry (partial) |
+| `DELETE` | `/calendar/:id` | Delete entry |
+
+### User
+
+All endpoints require JWT + verified email.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `DELETE` | `/user` | Delete user account |
+
+### Health
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/health` | Database, memory, and disk health status |
 
 ## Database Schema
 
 ### User
-- `id` (UUID, primary key)
-- `email` (unique)
-- `password` (bcrypt hashed)
-- `refreshToken` (bcrypt hashed, nullable)
-- `emailVerified` (boolean, default false)
-- `verificationToken` (nullable)
-- `resetToken` (nullable)
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID | Primary key |
+| `email` | String | Unique, indexed |
+| `password` | String | bcrypt hashed |
+| `refreshToken` | String? | bcrypt hashed |
+| `emailVerified` | Boolean | Default `false` |
+| `verificationToken` | String? | JWT token |
+| `resetToken` | String? | bcrypt hashed |
+| `createdAt` | DateTime | Auto-set |
+| `updatedAt` | DateTime | Auto-updated |
 
 ### CalendarEntry
-- `id` (UUID, primary key)
-- `title`
-- `startDate`, `endDate`
-- `content` (nullable)
-- `wholeDay` (nullable)
-- `userId` (foreign key to User)
 
-## Run Docker container (from mono repo root)
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID | Primary key |
+| `title` | String | Max 255 chars |
+| `startDate` | DateTime | Indexed |
+| `endDate` | DateTime | Indexed |
+| `content` | String? | Max 5000 chars |
+| `wholeDay` | Boolean? | All-day event flag |
+| `userId` | UUID | FK → User, indexed |
+| `createdAt` | DateTime | Auto-set |
+| `updatedAt` | DateTime | Auto-updated |
+
+## Database Seeding
+
+Run `pnpm prisma:seed` to populate with test data. Use `--force` to skip the confirmation prompt.
+
+| Email | Password | Verified |
+|---|---|---|
+| `alice@example.com` | `password123!` | Yes |
+| `bob@example.com` | `password123!` | Yes |
+
+The seed also creates 11 sample calendar entries distributed between both users.
+
+## Docker
+
+Multi-stage Dockerfile using Node 22 Alpine. Includes a healthcheck on `/health`. Exposes port 3000.
 
 ```bash
-# Build the Image
+# Build from monorepo root
 docker build -f apps/api/Dockerfile -t b-cal-api .
 
-# Run Container
-docker run --name b-cal-api -p 3000:3000 --network=host --env-file apps/api/.env b-cal-api
-
+# Run
+docker run -p 3000:3000 --env-file apps/api/.env b-cal-api
 ```
 
 ## License
