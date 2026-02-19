@@ -57,6 +57,7 @@ export class AuthService {
       this.jwtService.signAsync(payload, {
         secret: jwtConstants.refreshSecret,
         expiresIn: '7d',
+        algorithm: 'HS256' as const,
       }),
     ]);
     return { access_token, refresh_token };
@@ -87,6 +88,7 @@ export class AuthService {
       {
         secret: jwtConstants.mailSecret,
         expiresIn: '1d',
+        algorithm: 'HS256' as const,
       },
     );
 
@@ -167,6 +169,7 @@ export class AuthService {
       {
         secret: jwtConstants.mailSecret,
         expiresIn: '1d',
+        algorithm: 'HS256' as const,
       },
     );
 
@@ -180,6 +183,7 @@ export class AuthService {
     try {
       payload = this.jwtService.verify(token, {
         secret: jwtConstants.mailSecret,
+        algorithms: ['HS256'] as const,
       });
     } catch {
       this.logger.error('Email verification failed: invalid or expired token');
@@ -202,6 +206,7 @@ export class AuthService {
       {
         secret: jwtConstants.mailSecret,
         expiresIn: '1h',
+        algorithm: 'HS256' as const,
       },
     );
 
@@ -217,6 +222,7 @@ export class AuthService {
     try {
       payload = this.jwtService.verify(changePasswordDTO.token, {
         secret: jwtConstants.mailSecret,
+        algorithms: ['HS256'] as const,
       });
     } catch {
       this.logger.error('Password change failed: invalid or expired token');

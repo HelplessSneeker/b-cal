@@ -16,6 +16,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
         (req?.cookies?.[cookieConfig.refreshToken.name] as string) ?? null,
       ignoreExpiration: false,
       secretOrKey: jwtConstants.refreshSecret,
+      algorithms: ['HS256'] as const,
       passReqToCallback: true,
     });
   }

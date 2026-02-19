@@ -13,6 +13,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         (req?.cookies?.[cookieConfig.accessToken.name] as string) ?? null,
       ignoreExpiration: false,
       secretOrKey: jwtConstants.secret,
+      algorithms: ['HS256'] as const,
     });
   }
 
