@@ -248,6 +248,7 @@ export class AuthService {
       );
 
       await this.userService.changePassword(payload.email, hashedPassword, tx);
+      await this.userService.updateRefreshToken(user.id, null, tx);
     });
 
     this.logger.log(`Password changed: ${payload.email}`);
