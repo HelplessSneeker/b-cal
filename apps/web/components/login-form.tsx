@@ -67,7 +67,9 @@ export function LoginForm({
       if (isSignup) {
         router.push('/check-email');
       } else {
-        const redirectTo = searchParams.get('from') || '/';
+        const raw = searchParams.get('from') ?? '/';
+        const redirectTo =
+          raw.startsWith('/') && !raw.startsWith('//') ? raw : '/';
         router.push(redirectTo);
         router.refresh();
       }
