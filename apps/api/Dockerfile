@@ -45,4 +45,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
     CMD wget -qO- http://localhost:3000/health || exit 1
 
-CMD ["sh", "-c", "pnpm exec prisma migrate deploy && node dist/src/main"]
+CMD ["sh", "-c", "pnpm exec prisma migrate deploy && exec node dist/src/main"]
