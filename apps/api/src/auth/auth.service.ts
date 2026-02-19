@@ -137,19 +137,22 @@ export class AuthService {
       throw new ForbiddenException('Access denied');
     }
 
-    const tokens = await this.prisma.$transaction(async (tx) => {
-      const tokens = await this.generateTokens(user);
-      const hashedRefreshToken = await bcrypt.hash(
-        tokens.refresh_token,
-        saltRounds,
-      );
-      await this.userService.updateRefreshToken(
-        user.id,
-        hashedRefreshToken,
-        tx,
-      );
-      return tokens;
+    const tokens = await this.generateTokens(user);
+    const hashedRefreshToken = await bcrypt.hash(
+      tokens.refresh_token,
+      saltRounds,
+    );
+
+    // Conditional update: only succeeds if the refresh token hasn't been
+    // rotated by a concurrent request since we read it.
+    const { count } = await this.prisma.user.updateMany({
+      where: { id: user.id, refreshToken: user.refreshToken },
+      data: { refreshToken: hashedRefreshToken },
     });
+
+    if (count === 0) {
+      throw new ForbiddenException('Access denied');
+    }
 
     return tokens;
   }
