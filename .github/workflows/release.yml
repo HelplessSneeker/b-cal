@@ -19,8 +19,7 @@ jobs:
         with:
           generate_release_notes: true
 
-      - name: Deploy API
-        run: curl -s -f "${{ secrets.COOLIFY_WEBHOOK_API }}"
-
-      - name: Deploy Web
-        run: curl -s -f "${{ secrets.COOLIFY_WEBHOOK_WEB }}"
+      - name: Deploy to Coolify
+        run: |
+          curl -s -f "${{ secrets.COOLIFY_URL }}/api/v1/deploy?uuid=${{ secrets.COOLIFY_API_UUID }},${{ secrets.COOLIFY_WEB_UUID }}" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"
