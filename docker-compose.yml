@@ -23,11 +23,11 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
       target: production
-      network: host
     container_name: b-cal-api
     restart: unless-stopped
     ports:
       - "3000:3000"
+    command: ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
     environment:
       NODE_ENV: development
       PORT: 3000
@@ -49,7 +49,6 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-      network: host
       args:
         NEXT_PUBLIC_BACKEND_URL: http://localhost:3000
     container_name: b-cal-web
