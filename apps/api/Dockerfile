@@ -22,7 +22,14 @@ WORKDIR /app
 RUN pnpm --filter=@b-cal/api deploy --legacy --prod /deploy && \
     cp -r apps/api/dist /deploy/dist
 
-# ---- Production ----
+# ---- Migrations & Seed ----
+FROM deps AS migrate
+COPY apps/api/ apps/api/
+WORKDIR /app/apps/api
+RUN pnpm prisma:generate
+CMD ["sh", "-c", "npx prisma migrate deploy && if [ \"$SEED_DB\" = \"true\" ]; then npx tsx prisma/seed.ts --force; fi"]
+
+# ---- Production (must be last — Coolify builds the final stage) ----
 FROM base AS production
 WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
@@ -38,10 +45,3 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
     CMD wget -qO- http://localhost:3000/health || exit 1
 
 CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && node dist/src/main"]
-
-# ---- Migrations & Seed ----
-FROM deps AS migrate
-COPY apps/api/ apps/api/
-WORKDIR /app/apps/api
-RUN pnpm prisma:generate
-CMD ["sh", "-c", "npx prisma migrate deploy && if [ \"$SEED_DB\" = \"true\" ]; then npx tsx prisma/seed.ts --force; fi"]
