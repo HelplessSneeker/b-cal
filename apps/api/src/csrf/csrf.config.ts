@@ -1,16 +1,24 @@
 import { doubleCsrf, type DoubleCsrfUtilities } from 'csrf-csrf';
+import { cookieDomain } from '../auth/constants';
 
 const isProduction = process.env.NODE_ENV === 'production';
+
+function getCsrfCookieName(): string {
+  if (!isProduction) return 'csrf-token';
+  // __Host- prefix requires no Domain attribute; use __Secure- when domain is set
+  return cookieDomain ? '__Secure-csrf-token' : '__Host-csrf-token';
+}
 
 const csrf = doubleCsrf({
   getSecret: () => process.env.CSRF_SECRET!,
   getSessionIdentifier: () => '',
-  cookieName: isProduction ? '__Host-csrf-token' : 'csrf-token',
+  cookieName: getCsrfCookieName(),
   cookieOptions: {
-    sameSite: 'strict',
+    sameSite: 'lax',
     path: '/',
     secure: isProduction,
     httpOnly: true,
+    ...(cookieDomain && { domain: cookieDomain }),
   },
   getCsrfTokenFromRequest: (req) => req.headers['x-csrf-token'],
 });

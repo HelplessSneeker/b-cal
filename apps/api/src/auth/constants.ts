@@ -20,6 +20,20 @@ interface CookieConfig {
   options: CookieOptions;
 }
 
+const isProduction = process.env.NODE_ENV === 'production';
+
+function getCookieDomain(): string | undefined {
+  const frontendUrl = process.env.FRONTEND_URL;
+  if (!frontendUrl) return undefined;
+  try {
+    return new URL(frontendUrl).hostname;
+  } catch {
+    return undefined;
+  }
+}
+
+export const cookieDomain = getCookieDomain();
+
 export const cookieConfig: CookieConfig = {
   accessToken: {
     name: 'access_token',
@@ -31,7 +45,8 @@ export const cookieConfig: CookieConfig = {
   },
   options: {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: isProduction,
+    sameSite: 'lax',
+    ...(cookieDomain && { domain: cookieDomain }),
   },
 };
