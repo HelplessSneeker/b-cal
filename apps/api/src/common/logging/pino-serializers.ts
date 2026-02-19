@@ -44,10 +44,13 @@ export function reqSerializer(req: IncomingMessage & { id?: string }) {
 }
 
 export function resSerializer(res: ServerResponse) {
+  const headers =
+    typeof res.getHeaders === 'function'
+      ? (res.getHeaders() as unknown as Record<string, unknown>)
+      : {};
+
   return {
     statusCode: res.statusCode,
-    headers: redactHeaders(
-      res.getHeaders() as unknown as Record<string, unknown>,
-    ),
+    headers: redactHeaders(headers),
   };
 }
