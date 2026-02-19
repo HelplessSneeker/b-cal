@@ -23,6 +23,7 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
       target: production
+      network: host
     container_name: b-cal-api
     restart: unless-stopped
     ports:
@@ -48,6 +49,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      network: host
       args:
         NEXT_PUBLIC_BACKEND_URL: http://localhost:3000
     container_name: b-cal-web
