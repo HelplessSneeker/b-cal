@@ -34,7 +34,7 @@ pnpm build --filter=web    # Build web only
 
 ## Docker
 
-Multi-stage Dockerfile using Node 22 Alpine with Next.js standalone output. Requires `NEXT_PUBLIC_BACKEND_URL` as a build arg. Exposes port 8080.
+Multi-stage Dockerfile using Node 22 Alpine with Next.js standalone output. Requires `NEXT_PUBLIC_BACKEND_URL` as a build arg. Exposes port 8080. Includes a healthcheck on `/health`.
 
 ## Architecture
 
@@ -96,7 +96,7 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
     - `userStore.ts` - Current authenticated user (id, email, emailVerified)
     - `calendarStore.ts` - Calendar view state, entries, and modal state. Uses an `entryMap` (Map by ID) for deduplication, with `loadedRanges` to track fetched date windows and avoid re-fetching.
 - `proxy.ts` - Next.js 16 proxy (replaces `middleware.ts`). Handles route protection (auth routes, open routes, protected routes) and generates a per-request CSP nonce. Sets a strict `Content-Security-Policy` header (script-src with nonce + strict-dynamic, `frame-ancestors 'none'`, `object-src 'none'`; adds `upgrade-insecure-requests` in production). Exports a `proxy()` function and matcher config.
-- `src/config/env.ts` - Environment variable validation (validates `NEXT_PUBLIC_BACKEND_URL` at build time)
+- `src/config/env.ts` - Environment variable validation (validates `NEXT_PUBLIC_BACKEND_URL` at build time via `next.config.ts` and at server startup via `instrumentation.ts`)
 - `instrumentation.ts` - Sentry SDK initialization for the Next.js server runtime
 - `sentry.edge.config.ts` - Sentry configuration for the Edge runtime
 - `sentry.server.config.ts` - Sentry configuration for the Node.js server runtime
@@ -161,7 +161,7 @@ The calendar supports Day/Week/Month views (all implemented):
 - Automatic toast notifications for success/error responses
 - All requests include credentials for cookie-based auth
 - Every request includes an `X-Request-Id` header (`crypto.randomUUID()`) for traceability
-- **Silent token refresh**: On 401 responses (except `/auth/refresh`), automatically attempts a token refresh and retries the original request. Uses promise deduplication to prevent concurrent refresh calls. Redirects to `/login` if refresh also fails.
+- **Silent token refresh**: On 401 responses (except `/auth/refresh` and `/auth/login`), automatically attempts a token refresh and retries the original request. Uses promise deduplication to prevent concurrent refresh calls. Redirects to `/login` if refresh also fails.
 - **CSRF handling**: Fetches a CSRF token via `GET /auth/csrf-token` on app mount. Sends the token in the `x-csrf-token` header on state-changing requests (POST, PATCH, DELETE). On CSRF 403 errors, automatically re-fetches the token and retries.
 
 ### Security Headers
