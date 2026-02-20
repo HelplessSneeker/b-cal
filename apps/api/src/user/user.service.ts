@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma, User } from 'generated/prisma/client';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -66,7 +67,11 @@ export class UserService {
       where: { email },
     });
 
-    if (!user || user.verificationToken !== verificationToken) {
+    const isMatch = user?.verificationToken
+      ? await bcrypt.compare(verificationToken, user.verificationToken)
+      : false;
+
+    if (!user || !isMatch) {
       this.logger.error(`Email validation failed: invalid token for ${email}`);
       throw new BadRequestException('Invalid or expired token');
     }

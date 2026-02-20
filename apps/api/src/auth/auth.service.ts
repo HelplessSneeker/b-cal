@@ -92,6 +92,10 @@ export class AuthService {
       },
     );
 
+    const hashedVerificationToken = await bcrypt.hash(
+      verificationToken,
+      saltRounds,
+    );
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const { user, tokens } = await this.prisma.$transaction(async (tx) => {
@@ -99,7 +103,7 @@ export class AuthService {
         {
           email,
           password: hashedPassword,
-          verificationToken,
+          verificationToken: hashedVerificationToken,
         },
         tx,
       );
@@ -176,7 +180,15 @@ export class AuthService {
       },
     );
 
-    await this.userService.updateVerificationToken(user.id, verificationToken);
+    const hashedVerificationToken = await bcrypt.hash(
+      verificationToken,
+      saltRounds,
+    );
+
+    await this.userService.updateVerificationToken(
+      user.id,
+      hashedVerificationToken,
+    );
     await this.mailService.sendVerificationEmail(user.email, verificationToken);
     this.logger.log(`Verification email resent: ${user.id}`);
   }

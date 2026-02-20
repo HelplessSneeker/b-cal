@@ -142,6 +142,7 @@ describe('AuthService', () => {
         .mockResolvedValueOnce('access-token')
         .mockResolvedValueOnce('refresh-token');
       (bcrypt.hash as jest.Mock)
+        .mockResolvedValueOnce('hashed-verification')
         .mockResolvedValueOnce('hashedpw')
         .mockResolvedValueOnce('hashed-refresh');
       mockUserService.create.mockResolvedValue({
@@ -165,7 +166,7 @@ describe('AuthService', () => {
         {
           email: 'new@example.com',
           password: 'hashedpw',
-          verificationToken: 'verification-token',
+          verificationToken: 'hashed-verification',
         },
         mockPrismaService,
       );
@@ -309,6 +310,9 @@ describe('AuthService', () => {
     it('should generate new token and send verification email', async () => {
       mockUserService.findById.mockResolvedValue(mockUser);
       mockJwtService.signAsync.mockResolvedValue('new-verification-token');
+      (bcrypt.hash as jest.Mock).mockResolvedValue(
+        'hashed-new-verification-token',
+      );
       mockUserService.updateVerificationToken.mockResolvedValue(undefined);
       mockMailService.sendVerificationEmail.mockResolvedValue(undefined);
 
@@ -319,9 +323,10 @@ describe('AuthService', () => {
         { email: mockUser.email },
         expect.objectContaining({ expiresIn: '1d' }),
       );
+      expect(bcrypt.hash).toHaveBeenCalledWith('new-verification-token', 10);
       expect(mockUserService.updateVerificationToken).toHaveBeenCalledWith(
         'user-1',
-        'new-verification-token',
+        'hashed-new-verification-token',
       );
       expect(mockMailService.sendVerificationEmail).toHaveBeenCalledWith(
         mockUser.email,
