@@ -8,12 +8,12 @@ import { TimeGrid } from '@/components/calendar/time-grid';
 import { DayColumn } from '@/components/calendar/day-column';
 import { AllDaySection } from '@/components/calendar/all-day-section';
 
-function isSameDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
+function entryOverlapsDay(entry: CalendarEntry, day: Date): boolean {
+  const dayStart = new Date(day);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(day);
+  dayEnd.setHours(23, 59, 59, 999);
+  return entry.startDate <= dayEnd && entry.endDate >= dayStart;
 }
 
 function formatDayHeader(date: Date): string {
@@ -29,7 +29,7 @@ export function DayView() {
   const { currentDate, entries, openEntryModal } = useCalendarStore();
 
   const dayEntries = entries.filter((entry) =>
-    isSameDay(entry.startDate, currentDate),
+    entryOverlapsDay(entry, currentDate),
   );
 
   const allDayEntries = dayEntries.filter((entry) => entry.wholeDay);

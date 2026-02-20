@@ -43,13 +43,7 @@ function entryOverlapsDay(entry: CalendarEntry, day: Date): boolean {
   dayStart.setHours(0, 0, 0, 0);
   const dayEnd = new Date(day);
   dayEnd.setHours(23, 59, 59, 999);
-
-  const entryStart = new Date(entry.startDate);
-  entryStart.setHours(0, 0, 0, 0);
-  const entryEnd = new Date(entry.endDate);
-  entryEnd.setHours(23, 59, 59, 999);
-
-  return entryStart <= dayEnd && entryEnd >= dayStart;
+  return entry.startDate <= dayEnd && entry.endDate >= dayStart;
 }
 
 export function WeekView() {
@@ -76,7 +70,7 @@ export function WeekView() {
 
   const getTimedEntriesForDay = (day: Date): CalendarEntry[] => {
     return entries.filter(
-      (entry) => isSameDay(entry.startDate, day) && !entry.wholeDay,
+      (entry) => !entry.wholeDay && entryOverlapsDay(entry, day),
     );
   };
 
