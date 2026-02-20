@@ -16,11 +16,7 @@ const prisma = new PrismaClient({
  * @param hours - Hour of the day (0-23)
  * @param minutes - Minutes (0-59)
  */
-function getRelativeDate(
-  daysOffset: number,
-  hours = 0,
-  minutes = 0,
-): Date {
+function getRelativeDate(daysOffset: number, hours = 0, minutes = 0): Date {
   const date = new Date();
   date.setDate(date.getDate() + daysOffset);
   date.setHours(hours, minutes, 0, 0);
@@ -57,6 +53,11 @@ async function confirmSeed(): Promise<boolean> {
 }
 
 async function main() {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('Seeding is not allowed in production.');
+    process.exit(1);
+  }
+
   const confirmed = await confirmSeed();
   if (!confirmed) {
     console.log('Seed cancelled.');
@@ -212,7 +213,9 @@ async function main() {
     }),
   ]);
 
-  console.log(`Created ${entries.length + dynamicEntries.length} calendar entries`);
+  console.log(
+    `Created ${entries.length + dynamicEntries.length} calendar entries`,
+  );
   console.log('Seed completed.');
 }
 
