@@ -62,7 +62,8 @@ function formatDateDisplay(date: Date, view: CalendarView): string {
 export function CalendarHeader() {
   const router = useRouter();
   const { user, clearUser } = useUserStore();
-  const { view, currentDate, setView, setCurrentDate } = useCalendarStore();
+  const { view, currentDate, setView, setCurrentDate, clearCache } =
+    useCalendarStore();
   const initials = user?.email ? getAvatarInitials(user.email) : '?';
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -96,6 +97,7 @@ export function CalendarHeader() {
   const handleLogout = async () => {
     await logout();
     clearUser();
+    clearCache();
     router.push('/login');
   };
 
@@ -104,6 +106,7 @@ export function CalendarHeader() {
     const result = await deleteUser();
     if (result.success) {
       clearUser();
+      clearCache();
       router.push('/login');
     }
     setIsDeleting(false);

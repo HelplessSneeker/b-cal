@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getMe, logout, resendVerification } from '@/lib/api/auth';
 import { useUserStore } from '@/lib/stores/userStore';
+import { useCalendarStore } from '@/lib/stores/calendarStore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -19,6 +20,7 @@ const RESEND_COOLDOWN_MS = 60_000;
 export default function CheckEmailPage() {
   const router = useRouter();
   const { user, setUser, clearUser } = useUserStore();
+  const { clearCache } = useCalendarStore();
   const [isLoading, setIsLoading] = useState(!user);
   const [resendLoading, setResendLoading] = useState(false);
   const [cooldownEnd, setCooldownEnd] = useState(0);
@@ -72,6 +74,7 @@ export default function CheckEmailPage() {
   const handleLogout = async () => {
     await logout();
     clearUser();
+    clearCache();
     router.push('/login');
   };
 
