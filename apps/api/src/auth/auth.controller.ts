@@ -127,6 +127,7 @@ export class AuthController {
     return { message: 'Verification email sent' };
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Get('verify-email')
   async verifyEmail(@Query() query: VerifyEmailDto) {
     await this.authService.validateEmail(query.token);
