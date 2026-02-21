@@ -41,7 +41,7 @@ model CalendarEntry {
   endDate   DateTime
 
   content  String?
-  wholeDay Boolean?
+  wholeDay Boolean? @default(false)
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
