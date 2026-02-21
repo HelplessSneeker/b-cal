@@ -72,7 +72,9 @@ export class UserService {
       : false;
 
     if (!user || !isMatch) {
-      this.logger.error(`Email validation failed: invalid token for ${email}`);
+      this.logger.error(
+        `Email validation failed: invalid token for user ${user?.id ?? 'unknown'}`,
+      );
       throw new BadRequestException('Invalid or expired token');
     }
 
@@ -83,6 +85,8 @@ export class UserService {
         emailVerified: true,
       },
     });
+
+    return user.id;
   }
 
   async setPasswordResetToken(email: string, token: string) {

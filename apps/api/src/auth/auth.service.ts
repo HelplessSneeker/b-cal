@@ -205,8 +205,8 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired token');
     }
 
-    await this.userService.validateEmail(payload.email, token);
-    this.logger.log(`Email verified: ${payload.email}`);
+    const userId = await this.userService.validateEmail(payload.email, token);
+    this.logger.log(`Email verified: ${userId}`);
   }
 
   async requestPasswordReset(email: string) {
@@ -229,7 +229,7 @@ export class AuthService {
 
     await this.userService.setPasswordResetToken(email, hashedResetToken);
     await this.mailService.sendPasswordResetEmail(email, resetToken);
-    this.logger.log(`Password reset requested: ${email}`);
+    this.logger.log(`Password reset requested: ${user.id}`);
   }
 
   async changePassword(changePasswordDTO: ChangePasswordDTO) {
@@ -251,7 +251,7 @@ export class AuthService {
 
     if (!user || !isMatch) {
       this.logger.error(
-        `Password change failed: token mismatch for ${payload.email}`,
+        `Password change failed: token mismatch for user ${user?.id ?? 'unknown'}`,
       );
       throw new BadRequestException('Invalid or expired token');
     }
@@ -266,7 +266,7 @@ export class AuthService {
       await this.userService.updateRefreshToken(user.id, null, tx);
     });
 
-    this.logger.log(`Password changed: ${payload.email}`);
+    this.logger.log(`Password changed: ${user.id}`);
   }
 
   async logout(userId: string) {
