@@ -122,6 +122,12 @@ export async function api<T = unknown>(
     ) {
       const refreshed = await attemptTokenRefresh();
       if (refreshed) {
+        if (isStateChanging) {
+          await fetchCsrfToken();
+          if (csrfToken) {
+            headers['x-csrf-token'] = csrfToken;
+          }
+        }
         headers['X-Request-Id'] = crypto.randomUUID();
         config.headers = headers;
         response = await fetch(`${BACKEND_URL}${endpoint}`, config);
