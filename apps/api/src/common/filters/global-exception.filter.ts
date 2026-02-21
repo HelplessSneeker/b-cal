@@ -16,10 +16,13 @@ export class GlobalExceptionFilter extends SentryGlobalFilter {
 
     // Clear auth cookies when token refresh fails to prevent redirect loops
     if (request.path === '/auth/refresh') {
-      response.clearCookie(cookieConfig.accessToken.name, cookieConfig.options);
+      response.clearCookie(
+        cookieConfig.accessToken.name,
+        cookieConfig.accessToken.options,
+      );
       response.clearCookie(
         cookieConfig.refreshToken.name,
-        cookieConfig.options,
+        cookieConfig.refreshToken.options,
       );
     }
 

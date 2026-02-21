@@ -35,18 +35,24 @@ export class AuthController {
     refreshToken: string,
   ) {
     res.cookie(cookieConfig.accessToken.name, accessToken, {
-      ...cookieConfig.options,
+      ...cookieConfig.accessToken.options,
       maxAge: cookieConfig.accessToken.maxAge,
     });
     res.cookie(cookieConfig.refreshToken.name, refreshToken, {
-      ...cookieConfig.options,
+      ...cookieConfig.refreshToken.options,
       maxAge: cookieConfig.refreshToken.maxAge,
     });
   }
 
   private clearTokenCookies(res: express.Response) {
-    res.clearCookie(cookieConfig.accessToken.name, cookieConfig.options);
-    res.clearCookie(cookieConfig.refreshToken.name, cookieConfig.options);
+    res.clearCookie(
+      cookieConfig.accessToken.name,
+      cookieConfig.accessToken.options,
+    );
+    res.clearCookie(
+      cookieConfig.refreshToken.name,
+      cookieConfig.refreshToken.options,
+    );
   }
 
   @Get('csrf-token')
