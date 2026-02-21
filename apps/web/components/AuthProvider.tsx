@@ -28,6 +28,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (userData) {
         if (!userData.emailVerified) {
+          setHasChecked(true);
           router.push('/check-email');
           return;
         }
