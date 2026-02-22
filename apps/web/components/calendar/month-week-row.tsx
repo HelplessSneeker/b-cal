@@ -59,8 +59,6 @@ export function MonthWeekRow({
         )
       : 0;
 
-  const maxTimedVisible = Math.max(MAX_TOTAL_ENTRIES - totalSpanningRows, 0);
-
   return (
     <div
       className="relative flex min-h-0 flex-1 flex-col border-b"
@@ -137,6 +135,15 @@ export function MonthWeekRow({
       <div className="grid min-h-0 flex-1 grid-cols-7 overflow-hidden">
         {days.map((day) => {
           const dayTimed = timedEntries.filter((e) => entryOverlapsDay(e, day));
+          const daySpanningRowCount = new Set(
+            visibleSpanningEntries
+              .filter((se) => entryOverlapsDay(se.entry, day))
+              .map((se) => se.row),
+          ).size;
+          const dayMaxTimedVisible = Math.max(
+            MAX_TOTAL_ENTRIES - daySpanningRowCount,
+            0,
+          );
           const hiddenSpanningForDay = spanningEntries.filter(
             (se) =>
               se.row >= MAX_SPANNING_ROWS && entryOverlapsDay(se.entry, day),
@@ -151,7 +158,7 @@ export function MonthWeekRow({
               onCellClick={onCellClick}
               onEntryClick={onEntryClick}
               onMoreClick={onMoreClick}
-              maxVisibleEntries={maxTimedVisible}
+              maxVisibleEntries={dayMaxTimedVisible}
               extraHiddenCount={hiddenSpanningForDay}
             />
           );
