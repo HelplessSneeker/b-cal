@@ -10,7 +10,10 @@ import { DayColumn } from '@/components/calendar/day-column';
 import { WeekAllDayRow } from '@/components/calendar/week-all-day-row';
 import { getStartOfWeek } from '@/lib/calendar/date-utils';
 import { isSameDay, entryOverlapsDay } from '@/lib/calendar/spanning-utils';
-import { TIME_COLUMN_WIDTH } from '@/lib/calendar/calendar-constants';
+import {
+  TIME_COLUMN_WIDTH,
+  WEEK_VIEW_MAX_COLUMNS,
+} from '@/lib/calendar/calendar-constants';
 
 function getWeekDays(startOfWeek: Date): Date[] {
   return Array.from({ length: 7 }, (_, i) => {
@@ -106,6 +109,7 @@ export function WeekView() {
                   entries={getTimedEntriesForDay(day)}
                   onSlotClick={handleSlotClick}
                   onEntryClick={handleEntryClick}
+                  maxVisibleColumns={WEEK_VIEW_MAX_COLUMNS}
                 />
               </div>
             ))}

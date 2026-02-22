@@ -5,6 +5,7 @@ import {
   type CalendarEntry,
 } from '@/lib/stores/calendarStore';
 import { entryOverlapsDay } from '@/lib/calendar/spanning-utils';
+import { DAY_VIEW_MAX_COLUMNS } from '@/lib/calendar/calendar-constants';
 import { TimeGrid } from '@/components/calendar/time-grid';
 import { DayColumn } from '@/components/calendar/day-column';
 import { AllDaySection } from '@/components/calendar/all-day-section';
@@ -55,6 +56,7 @@ export function DayView() {
             entries={timedEntries}
             onSlotClick={handleSlotClick}
             onEntryClick={handleEntryClick}
+            maxVisibleColumns={DAY_VIEW_MAX_COLUMNS}
           />
         </TimeGrid>
       </div>

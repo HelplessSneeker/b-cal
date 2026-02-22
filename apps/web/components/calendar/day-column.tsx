@@ -1,8 +1,12 @@
 'use client';
 
+import { useMemo } from 'react';
 import { CalendarEntry } from '@/lib/stores/calendarStore';
+import { DAY_VIEW_MAX_COLUMNS } from '@/lib/calendar/calendar-constants';
+import { computeOverlapLayout } from '@/lib/calendar/overlap-utils';
 import { TimeSlot } from '@/components/calendar/time-slot';
 import { EntryBlock } from '@/components/calendar/entry-block';
+import { OverflowPill } from '@/components/calendar/overflow-pill';
 import { CurrentTimeIndicator } from '@/components/calendar/current-time-indicator';
 
 interface DayColumnProps {
@@ -10,6 +14,7 @@ interface DayColumnProps {
   entries: CalendarEntry[];
   onSlotClick: (time: Date) => void;
   onEntryClick: (entry: CalendarEntry) => void;
+  maxVisibleColumns?: number;
 }
 
 export function DayColumn({
@@ -17,6 +22,7 @@ export function DayColumn({
   entries,
   onSlotClick,
   onEntryClick,
+  maxVisibleColumns = DAY_VIEW_MAX_COLUMNS,
 }: DayColumnProps) {
   const slots = Array.from({ length: 48 }, (_, i) => {
     const slotTime = new Date(date);
@@ -24,13 +30,27 @@ export function DayColumn({
     return slotTime;
   });
 
+  const layout = useMemo(
+    () => computeOverlapLayout(entries, maxVisibleColumns),
+    [entries, maxVisibleColumns],
+  );
+
   return (
     <div className="relative flex-1">
       {slots.map((time, i) => (
         <TimeSlot key={i} time={time} onClick={onSlotClick} />
       ))}
-      {entries.map((entry) => (
-        <EntryBlock key={entry.id} entry={entry} onClick={onEntryClick} />
+      {layout.visibleEvents.map((event) => (
+        <EntryBlock
+          key={event.entry.id}
+          entry={event.entry}
+          onClick={onEntryClick}
+          left={event.left}
+          width={event.width}
+        />
+      ))}
+      {layout.overflowGroups.map((group, i) => (
+        <OverflowPill key={i} group={group} onEntryClick={onEntryClick} />
       ))}
       <CurrentTimeIndicator date={date} />
     </div>
