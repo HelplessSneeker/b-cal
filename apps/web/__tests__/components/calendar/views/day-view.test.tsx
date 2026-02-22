@@ -124,4 +124,26 @@ describe('DayView', () => {
     screen.getByText('Team Standup').click();
     expect(openSpy).toHaveBeenCalledWith(timedEntry);
   });
+
+  it('shows chevron indicators for multi-day all-day entries', () => {
+    const multiDayEntry: CalendarEntry = {
+      id: 'multi-1',
+      title: 'Conference',
+      startDate: new Date(2025, 5, 14, 0, 0), // starts day before
+      endDate: new Date(2025, 5, 16, 23, 59), // ends day after
+      wholeDay: true,
+    };
+
+    useCalendarStore.setState({
+      currentDate,
+      entries: [multiDayEntry],
+    });
+    render(<DayView />);
+
+    expect(screen.getByText('Conference')).toBeInTheDocument();
+    // Chevron icons should be rendered (SVG elements with lucide classes)
+    const entryEl = screen.getByText('Conference').closest('div');
+    const svgs = entryEl?.querySelectorAll('svg');
+    expect(svgs?.length).toBe(2); // ChevronLeft + ChevronRight
+  });
 });

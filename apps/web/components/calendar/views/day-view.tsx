@@ -4,17 +4,10 @@ import {
   useCalendarStore,
   type CalendarEntry,
 } from '@/lib/stores/calendarStore';
+import { entryOverlapsDay } from '@/lib/calendar/spanning-utils';
 import { TimeGrid } from '@/components/calendar/time-grid';
 import { DayColumn } from '@/components/calendar/day-column';
 import { AllDaySection } from '@/components/calendar/all-day-section';
-
-function entryOverlapsDay(entry: CalendarEntry, day: Date): boolean {
-  const dayStart = new Date(day);
-  dayStart.setHours(0, 0, 0, 0);
-  const dayEnd = new Date(day);
-  dayEnd.setHours(23, 59, 59, 999);
-  return entry.startDate <= dayEnd && entry.endDate >= dayStart;
-}
 
 function formatDayHeader(date: Date): string {
   return date.toLocaleDateString('de-DE', {
@@ -50,7 +43,11 @@ export function DayView() {
           {formatDayHeader(currentDate)}
         </h2>
       </div>
-      <AllDaySection entries={allDayEntries} onEntryClick={handleEntryClick} />
+      <AllDaySection
+        entries={allDayEntries}
+        currentDay={currentDate}
+        onEntryClick={handleEntryClick}
+      />
       <div className="flex-1 overflow-hidden">
         <TimeGrid>
           <DayColumn

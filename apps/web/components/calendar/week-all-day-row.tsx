@@ -1,27 +1,32 @@
 'use client';
 
+import { useMemo } from 'react';
 import { CalendarEntry } from '@/lib/stores/calendarStore';
 import { TIME_COLUMN_WIDTH } from '@/lib/calendar/calendar-constants';
+import { computeSpanningEntries } from '@/lib/calendar/spanning-utils';
 import { cn } from '@/lib/utils/utils';
 
 interface WeekAllDayRowProps {
   weekDays: Date[];
-  entriesByDay: Map<string, CalendarEntry[]>;
+  allDayEntries: CalendarEntry[];
   onEntryClick: (entry: CalendarEntry) => void;
 }
 
 export function WeekAllDayRow({
   weekDays,
-  entriesByDay,
+  allDayEntries,
   onEntryClick,
 }: WeekAllDayRowProps) {
-  const hasAnyEntries = weekDays.some(
-    (day) => (entriesByDay.get(day.toDateString()) || []).length > 0,
+  const spanningEntries = useMemo(
+    () => computeSpanningEntries(allDayEntries, weekDays),
+    [allDayEntries, weekDays],
   );
 
-  if (!hasAnyEntries) {
+  if (spanningEntries.length === 0) {
     return null;
   }
+
+  const totalRows = Math.max(...spanningEntries.map((se) => se.row)) + 1;
 
   return (
     <div className="flex border-b pr-2.5">
@@ -31,28 +36,40 @@ export function WeekAllDayRow({
       >
         all-day
       </div>
-      <div className="flex flex-1">
-        {weekDays.map((day) => {
-          const dayEntries = entriesByDay.get(day.toDateString()) || [];
-          return (
+      <div className="relative flex-1">
+        {/* Column borders */}
+        <div
+          className="pointer-events-none absolute inset-0 grid grid-cols-7"
+          aria-hidden="true"
+        >
+          {Array.from({ length: 7 }, (_, i) => (
+            <div key={i} className="border-l" />
+          ))}
+        </div>
+        {/* Spanning bars */}
+        <div
+          className="grid grid-cols-7 gap-y-1 p-1"
+          style={{ gridTemplateRows: `repeat(${totalRows}, 24px)` }}
+        >
+          {spanningEntries.map((se) => (
             <div
-              key={day.toISOString()}
-              className="flex flex-1 flex-col gap-1 border-l p-1"
+              key={se.entry.id}
+              className={cn(
+                'flex cursor-pointer items-center truncate bg-blue-500/20 px-2 text-xs font-medium transition-colors hover:bg-blue-500/30',
+                !se.continuesBefore &&
+                  'rounded-l-md border-l-[3px] border-blue-500',
+                !se.continuesAfter && 'rounded-r-md',
+              )}
+              style={{
+                gridColumn: `${se.startCol + 1} / span ${se.span}`,
+                gridRow: se.row + 1,
+              }}
+              onClick={() => onEntryClick(se.entry)}
             >
-              {dayEntries.map((entry) => (
-                <div
-                  key={entry.id}
-                  className={cn(
-                    'cursor-pointer truncate rounded-md border-l-[3px] border-blue-500 bg-blue-500/20 px-2 py-0.5 text-xs font-medium transition-colors hover:bg-blue-500/30',
-                  )}
-                  onClick={() => onEntryClick(entry)}
-                >
-                  {entry.title}
-                </div>
-              ))}
+              {se.entry.title}
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
     </div>
   );

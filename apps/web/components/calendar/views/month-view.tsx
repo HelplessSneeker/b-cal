@@ -1,21 +1,15 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
   useCalendarStore,
   CalendarView,
   type CalendarEntry,
 } from '@/lib/stores/calendarStore';
 import { getMonthGridDates } from '@/lib/calendar/date-utils';
-import { DateCell } from '@/components/calendar/date-cell';
+import { entryOverlapsDay } from '@/lib/calendar/spanning-utils';
+import { MonthWeekRow } from '@/components/calendar/month-week-row';
 import { cn } from '@/lib/utils/utils';
-
-function isSameDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
 
 const WEEKDAY_NAMES = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
@@ -26,15 +20,17 @@ export function MonthView() {
   const gridDates = getMonthGridDates(currentDate);
   const currentMonth = currentDate.getMonth();
 
-  const getEntriesForDay = (day: Date): CalendarEntry[] => {
-    const dayStart = new Date(day);
-    dayStart.setHours(0, 0, 0, 0);
+  const weekRows = useMemo(() => {
+    const rows: Date[][] = [];
+    for (let i = 0; i < 6; i++) {
+      rows.push(gridDates.slice(i * 7, (i + 1) * 7));
+    }
+    return rows;
+  }, [gridDates]);
 
-    const dayEnd = new Date(day);
-    dayEnd.setHours(23, 59, 59, 999);
-
-    return entries.filter(
-      (entry) => entry.startDate <= dayEnd && entry.endDate >= dayStart,
+  const getEntriesForWeek = (weekDays: Date[]): CalendarEntry[] => {
+    return entries.filter((entry) =>
+      weekDays.some((day) => entryOverlapsDay(entry, day)),
     );
   };
 
@@ -70,15 +66,14 @@ export function MonthView() {
         ))}
       </div>
 
-      {/* Month grid - 6 rows x 7 columns */}
-      <div className="grid flex-1 grid-cols-7 grid-rows-6">
-        {gridDates.map((date) => (
-          <DateCell
-            key={date.toISOString()}
-            date={date}
-            entries={getEntriesForDay(date)}
-            isCurrentMonth={date.getMonth() === currentMonth}
-            isToday={isSameDay(date, new Date())}
+      {/* Month grid - 6 week rows */}
+      <div className="flex flex-1 flex-col">
+        {weekRows.map((weekDays) => (
+          <MonthWeekRow
+            key={weekDays[0].toISOString()}
+            days={weekDays}
+            entries={getEntriesForWeek(weekDays)}
+            currentMonth={currentMonth}
             onCellClick={handleCellClick}
             onEntryClick={handleEntryClick}
             onMoreClick={handleMoreClick}
