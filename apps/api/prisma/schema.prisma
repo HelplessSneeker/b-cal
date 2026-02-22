@@ -29,8 +29,6 @@ model User {
 
   updatedAt DateTime? @updatedAt
   createdAt DateTime  @default(now())
-
-  @@index([email])
 }
 
 model CalendarEntry {
