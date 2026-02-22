@@ -26,7 +26,8 @@ RUN pnpm --filter=@b-cal/api deploy --legacy --prod /deploy && \
 # ---- Production (must be last — Coolify builds the final stage) ----
 FROM base AS production
 WORKDIR /app
-RUN addgroup -g 1001 -S nodejs && \
+RUN apk upgrade --no-cache && \
+    addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001 -G nodejs && \
     rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx \
            /root/.cache/node/corepack
