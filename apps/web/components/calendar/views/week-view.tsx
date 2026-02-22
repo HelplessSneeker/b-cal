@@ -9,15 +9,11 @@ import { TimeGrid } from '@/components/calendar/time-grid';
 import { DayColumn } from '@/components/calendar/day-column';
 import { WeekAllDayRow } from '@/components/calendar/week-all-day-row';
 import { getStartOfWeek } from '@/lib/calendar/date-utils';
-import { TIME_COLUMN_WIDTH } from '@/lib/calendar/calendar-constants';
-
-function isSameDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
+import { isSameDay, entryOverlapsDay } from '@/lib/calendar/spanning-utils';
+import {
+  TIME_COLUMN_WIDTH,
+  WEEK_VIEW_MAX_COLUMNS,
+} from '@/lib/calendar/calendar-constants';
 
 function getWeekDays(startOfWeek: Date): Date[] {
   return Array.from({ length: 7 }, (_, i) => {
@@ -38,45 +34,22 @@ function isToday(date: Date): boolean {
   return isSameDay(date, today);
 }
 
-function entryOverlapsDay(entry: CalendarEntry, day: Date): boolean {
-  const dayStart = new Date(day);
-  dayStart.setHours(0, 0, 0, 0);
-  const dayEnd = new Date(day);
-  dayEnd.setHours(23, 59, 59, 999);
-
-  const entryStart = new Date(entry.startDate);
-  entryStart.setHours(0, 0, 0, 0);
-  const entryEnd = new Date(entry.endDate);
-  entryEnd.setHours(23, 59, 59, 999);
-
-  return entryStart <= dayEnd && entryEnd >= dayStart;
-}
-
 export function WeekView() {
   const { currentDate, entries, openEntryModal } = useCalendarStore();
 
   const startOfWeek = getStartOfWeek(currentDate);
   const weekDays = getWeekDays(startOfWeek);
 
-  const allDayEntriesByDay = useMemo(() => {
-    const map = new Map<string, CalendarEntry[]>();
-    const allDayEntries = entries.filter((entry) => entry.wholeDay);
-
-    weekDays.forEach((day) => {
-      const dayEntries = allDayEntries.filter((entry) =>
-        entryOverlapsDay(entry, day),
-      );
-      if (dayEntries.length > 0) {
-        map.set(day.toDateString(), dayEntries);
-      }
-    });
-
-    return map;
+  const allDayEntries = useMemo(() => {
+    return entries.filter(
+      (entry) =>
+        entry.wholeDay && weekDays.some((day) => entryOverlapsDay(entry, day)),
+    );
   }, [entries, weekDays]);
 
   const getTimedEntriesForDay = (day: Date): CalendarEntry[] => {
     return entries.filter(
-      (entry) => isSameDay(entry.startDate, day) && !entry.wholeDay,
+      (entry) => !entry.wholeDay && entryOverlapsDay(entry, day),
     );
   };
 
@@ -122,7 +95,7 @@ export function WeekView() {
       {/* All-day entries row */}
       <WeekAllDayRow
         weekDays={weekDays}
-        entriesByDay={allDayEntriesByDay}
+        allDayEntries={allDayEntries}
         onEntryClick={handleEntryClick}
       />
       {/* Time grid with day columns */}
@@ -136,6 +109,7 @@ export function WeekView() {
                   entries={getTimedEntriesForDay(day)}
                   onSlotClick={handleSlotClick}
                   onEntryClick={handleEntryClick}
+                  maxVisibleColumns={WEEK_VIEW_MAX_COLUMNS}
                 />
               </div>
             ))}

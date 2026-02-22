@@ -29,8 +29,6 @@ model User {
 
   updatedAt DateTime? @updatedAt
   createdAt DateTime  @default(now())
-
-  @@index([email])
 }
 
 model CalendarEntry {
@@ -41,7 +39,7 @@ model CalendarEntry {
   endDate   DateTime
 
   content  String?
-  wholeDay Boolean?
+  wholeDay Boolean? @default(false)
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String

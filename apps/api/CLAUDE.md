@@ -36,7 +36,7 @@ Or from monorepo root:
 
 ## Docker
 
-Multi-stage Dockerfile (`Dockerfile`) using Node 22 Alpine. Builds with `pnpm deploy --legacy --prod` for a minimal production image. Includes a healthcheck on `/health`. Exposes port 3000.
+Multi-stage Dockerfile (`Dockerfile`) using Node 22 Alpine. Builds with `pnpm deploy --legacy --prod` for a minimal production image. CMD runs `prisma migrate deploy` then `node dist/src/main`. Includes a healthcheck on `/health`. Exposes port 3000.
 
 ## Infrastructure
 
@@ -75,25 +75,28 @@ src/
 ├── auth/           # Auth controller, service, strategies, guards, decorators, validators
 ├── calendar/       # CalendarController, CalendarService, DTOs, validators
 ├── common/filters/ # GlobalExceptionFilter (Sentry-integrated, includes request ID in responses)
+├── common/logging/ # Custom pino serializers (redact sensitive headers and query params)
+├── common/utils/   # stripHtmlTags utility
 ├── config/         # env.validation.ts (runtime env var validation via class-validator)
 ├── csrf/           # CSRF protection config (double-submit cookie via csrf-csrf)
 ├── health/         # HealthController, HealthModule (@nestjs/terminus)
 ├── mail/           # MailModule, MailService (nodemailer)
 ├── prisma/         # PrismaModule (global), PrismaService
 ├── user/           # UserController, UserService for user operations (account deletion)
+├── sentry-before-send.ts # PII scrubbing for Sentry events (emails, tokens, cookies, auth headers)
 ├── instrument.ts   # Sentry SDK initialization (imported before NestFactory.create)
 └── main.ts         # Bootstrap with CORS, cookies, validation pipe, Helmet, CSP, CSRF
 ```
 
 **Global payload limit:** 1MB for JSON and URL-encoded bodies (configured in `main.ts`).
 
-**Auth flow:** Tokens stored in httpOnly cookies (not Bearer headers). Refresh tokens and reset tokens are bcrypt-hashed in DB.
+**Auth flow:** Tokens stored in httpOnly cookies (not Bearer headers). Cookie domain is extracted from `FRONTEND_URL`. Refresh token cookie is path-restricted to `/auth/refresh`. Refresh tokens and reset tokens are bcrypt-hashed in DB.
 - `GET /auth/csrf-token` — generates and returns a CSRF token (sets httpOnly CSRF cookie)
 - `POST /auth/signup` — creates user, sends verification email, sets token cookies. Password: min 8 chars, requires number + symbol.
 - `POST /auth/login` — LocalAuthGuard validates email+password, sets access_token (1h) + refresh_token (7d) cookies
 - `POST /auth/refresh` — JwtRefreshAuthGuard validates refresh token, issues new token pair
 - `POST /auth/logout` — JwtAuthGuard required, clears cookies and invalidates refresh token
-- `GET /auth/me` — JwtAuthGuard required, returns `{ id, email, emailVerified }`
+- `GET /auth/me` — JwtAuthGuard required, returns `{ data: { id, email, emailVerified } }`
 - `POST /auth/resend-verification` — JwtAuthGuard required, resends verification email with new token
 - `GET /auth/verify-email?token=` — validates email verification token, sets `emailVerified: true`
 - `POST /auth/forgot-password` — sends password reset email (silent on non-existent email for security)
@@ -126,19 +129,19 @@ src/
 - `@IsValidPassword()` — enforces password complexity (8+ chars, number, symbol)
 - `@IsStartBeforeEnd()` — validates startDate ≤ endDate on calendar DTOs
 
-**DTO max lengths:** `MaxLength` constraints on all string fields — email: 254, password: 128, title: 255, content: 5000.
+**DTO max lengths:** `MaxLength` constraints on all string fields — email: 254, password: 128, title: 100, content: 5000. Calendar entry title and content fields are sanitized via `stripHtmlTags` transform.
 
 **Prisma schema:** `User` (id, email, password, refreshToken, verificationToken, emailVerified, resetToken, createdAt, updatedAt) and `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId→User, createdAt, updatedAt). Indexes: User has `@@index([email])`. CalendarEntry has `@@index([userId])`, `@@index([startDate])`, `@@index([endDate])`, and `@@index([endDate, startDate])`.
 
 **Mail service:** Uses nodemailer. In development, auto-creates Ethereal test accounts (preview URLs logged to console). In production, requires `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS` env vars.
 
-**Rate limiting:** Global throttling via `@nestjs/throttler` (60 requests per 60 seconds, applied as APP_GUARD). Auth endpoints (login, signup, forgot-password, reset-password, resend-verification) have stricter limits: 5 requests per 60 seconds.
+**Rate limiting:** Global throttling via `@nestjs/throttler` (applied as APP_GUARD) with two throttlers: default (60 requests per 60 seconds) and mail (300 requests per 5 minutes). Auth endpoints (login, signup, forgot-password, reset-password, resend-verification) have stricter default limits: 5 requests per 60 seconds. Mail-sending endpoints (signup, forgot-password, resend-verification) additionally apply the mail throttler at 3 requests per 5 minutes.
 
-**CSRF protection:** Double-submit cookie pattern via `csrf-csrf` (`src/csrf/csrf.config.ts`). Applied as Express middleware in `main.ts`. Cookie name: `__Host-csrf-token` (production) / `csrf-token` (development). The client must send the token in the `x-csrf-token` header for state-changing requests. On failure, returns 403 with `"Invalid CSRF token"`.
+**CSRF protection:** Double-submit cookie pattern via `csrf-csrf` (`src/csrf/csrf.config.ts`). Applied as Express middleware in `main.ts`. Cookie name: `__Secure-csrf-token` (production with cookie domain), `__Host-csrf-token` (production without domain), or `csrf-token` (development). The client must send the token in the `x-csrf-token` header for state-changing requests. On failure, returns 403 with `"Invalid CSRF token"`.
 
 **Request IDs:** Every request is tagged with an `X-Request-Id` header. If the client provides one, it's used; otherwise, `randomUUID()` generates one. The ID is included in pino log entries and all error responses (via `GlobalExceptionFilter`). Sentry tags unexpected exceptions with the request ID.
 
-**Error monitoring:** Sentry integration via `@sentry/nestjs`. Initialized in `instrument.ts` (must be imported before anything else in `main.ts`). Uses `pinoIntegration()` for log forwarding. A custom `GlobalExceptionFilter` extends `SentryGlobalFilter` — HTTP exceptions are returned directly without Sentry reporting (but include `requestId` in the response); unexpected exceptions are captured and return 500.
+**Error monitoring:** Sentry integration via `@sentry/nestjs`. Initialized in `instrument.ts` (must be imported before anything else in `main.ts`). Uses `pinoIntegration()` for log forwarding. A `beforeSend` hook (`sentry-before-send.ts`) scrubs PII from error events (emails, passwords, tokens, cookies, auth headers). A custom `GlobalExceptionFilter` extends `SentryGlobalFilter` — HTTP exceptions are returned directly without Sentry reporting (but include `requestId` in the response); unexpected exceptions are captured and return 500. The filter also clears auth cookies on `/auth/refresh` errors to prevent redirect loops.
 
 **Health checks:** `GET /health` endpoint (throttle-exempt) via `@nestjs/terminus`. Checks database (Prisma ping), heap memory (150MB threshold), and disk usage (90% threshold).
 
@@ -146,7 +149,7 @@ src/
 
 **Environment validation:** Runtime validation of all required env vars on startup (`src/config/env.validation.ts`). Uses class-validator decorators. Mail settings (`MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`) are only required in production.
 
-**Logging:** Structured logging via `nestjs-pino`. In development, uses `pino-pretty` with colorized output (req/res hidden). In production, outputs JSON logs at `info` level.
+**Logging:** Structured logging via `nestjs-pino`. In development, uses `pino-pretty` with colorized output (req/res hidden). In production, outputs JSON logs at `info` level. Sensitive fields (password, token, refreshToken, resetToken, verificationToken, email, secret) are redacted in all log output. Custom request/response serializers (`common/logging/pino-serializers.ts`) strip sensitive headers and query parameters.
 
 **API docs:** Swagger at `/api` (development only — disabled in production).
 

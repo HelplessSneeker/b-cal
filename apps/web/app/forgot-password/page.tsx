@@ -50,6 +50,7 @@ export default function ForgotPasswordPage() {
                       type="email"
                       placeholder="m@example.com"
                       required
+                      maxLength={254}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                     />

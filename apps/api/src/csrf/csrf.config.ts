@@ -11,7 +11,7 @@ function getCsrfCookieName(): string {
 
 const csrf = doubleCsrf({
   getSecret: () => process.env.CSRF_SECRET!,
-  getSessionIdentifier: () => '',
+  getSessionIdentifier: (req) => (req.cookies?.access_token as string) ?? '',
   cookieName: getCsrfCookieName(),
   cookieOptions: {
     sameSite: 'lax',

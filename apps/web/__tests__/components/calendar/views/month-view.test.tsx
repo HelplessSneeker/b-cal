@@ -50,14 +50,14 @@ describe('MonthView', () => {
     expect(screen.getByText('So')).toBeInTheDocument();
   });
 
-  it('renders 42 date cells (6 rows x 7 columns)', () => {
+  it('renders 6 week rows', () => {
     useCalendarStore.setState({ currentDate, entries: [] });
     render(<MonthView />);
 
-    // 42 cells, each showing a day number
-    const grid = document.querySelector('.grid-rows-6');
-    expect(grid).toBeInTheDocument();
-    expect(grid!.children).toHaveLength(42);
+    const weekRows = document.querySelectorAll(
+      '[data-testid="month-week-row"]',
+    );
+    expect(weekRows).toHaveLength(6);
   });
 
   it('shows entry previews in date cells', () => {
@@ -104,17 +104,34 @@ describe('MonthView', () => {
     });
     render(<MonthView />);
 
-    // Click the cell for June 15
-    const grid = document.querySelector('.grid-rows-6')!;
-    // Find the cell with 15 in it
-    const cells = Array.from(grid.children);
-    const cell15 = cells.find(
-      (cell) => cell.querySelector('span')?.textContent === '15',
-    );
-    cell15!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    // Find the day number "15" and click its parent
+    const daySpans = screen.getAllByText('15');
+    // Click the container div for day 15
+    const dayContainer = daySpans[0].closest('div[class*="cursor-pointer"]');
+    dayContainer!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
     expect(openSpy).toHaveBeenCalledWith(undefined, expect.any(Date));
     const passedDate = openSpy.mock.calls[0][1] as Date;
     expect(passedDate.getHours()).toBe(9);
+  });
+
+  it('renders whole-day entries as spanning bars', () => {
+    const entry: CalendarEntry = {
+      id: 'span-1',
+      title: 'Multi-Day Event',
+      startDate: new Date(2025, 5, 16, 0, 0), // Monday
+      endDate: new Date(2025, 5, 18, 23, 59), // Wednesday
+      wholeDay: true,
+    };
+    useCalendarStore.setState({ currentDate, entries: [entry] });
+    render(<MonthView />);
+
+    // The entry title should appear once as a spanning bar
+    const elements = screen.getAllByText('Multi-Day Event');
+    expect(elements).toHaveLength(1);
+
+    // The bar should use grid-column to span 3 columns
+    const bar = elements[0];
+    expect(bar.style.gridColumn).toBe('1 / span 3');
   });
 });

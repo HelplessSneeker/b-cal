@@ -2,6 +2,7 @@ import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
+  IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
@@ -18,10 +19,11 @@ export class CreateCalendarDto {
   endDate: string;
 
   @Transform(({ value }) =>
-    typeof value === 'string' ? stripHtmlTags(value) : (value as string),
+    typeof value === 'string' ? stripHtmlTags(value).trim() : (value as string),
   )
   @IsString()
-  @MaxLength(255)
+  @IsNotEmpty({ message: 'title should not be empty' })
+  @MaxLength(100)
   title: string;
 
   @Transform(({ value }) =>

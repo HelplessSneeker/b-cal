@@ -23,18 +23,13 @@ WORKDIR /app
 RUN pnpm --filter=@b-cal/api deploy --legacy --prod /deploy && \
     cp -r apps/api/dist /deploy/dist
 
-# ---- Migrations & Seed ----
-FROM deps AS migrate
-COPY apps/api/ apps/api/
-WORKDIR /app/apps/api
-RUN pnpm prisma:generate
-CMD ["sh", "-c", "npx prisma migrate deploy && if [ \"$SEED_DB\" = \"true\" ]; then npx tsx prisma/seed.ts --force; fi"]
-
 # ---- Production (must be last — Coolify builds the final stage) ----
 FROM base AS production
 WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001 -G nodejs
+    adduser -S nestjs -u 1001 -G nodejs && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx \
+           /root/.cache/node/corepack
 COPY --from=build --chown=nestjs:nodejs /deploy ./
 USER nestjs
 
@@ -45,4 +40,14 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
     CMD wget -qO- http://localhost:3000/health || exit 1
 
-CMD ["sh", "-c", "pnpm exec prisma migrate deploy && node dist/src/main"]
+CMD ["sh", "-c", "\
+  retries=0; \
+  until node node_modules/.bin/prisma migrate deploy; do \
+    retries=$((retries + 1)); \
+    if [ $retries -ge 10 ]; then \
+      echo 'Migration failed after 10 attempts, exiting'; exit 1; \
+    fi; \
+    echo \"Migration attempt $retries failed, retrying in 3s...\"; \
+    sleep 3; \
+  done && \
+  exec node dist/src/main"]

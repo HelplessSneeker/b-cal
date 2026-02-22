@@ -4,17 +4,11 @@ import {
   useCalendarStore,
   type CalendarEntry,
 } from '@/lib/stores/calendarStore';
+import { entryOverlapsDay } from '@/lib/calendar/spanning-utils';
+import { DAY_VIEW_MAX_COLUMNS } from '@/lib/calendar/calendar-constants';
 import { TimeGrid } from '@/components/calendar/time-grid';
 import { DayColumn } from '@/components/calendar/day-column';
 import { AllDaySection } from '@/components/calendar/all-day-section';
-
-function isSameDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
 
 function formatDayHeader(date: Date): string {
   return date.toLocaleDateString('de-DE', {
@@ -29,7 +23,7 @@ export function DayView() {
   const { currentDate, entries, openEntryModal } = useCalendarStore();
 
   const dayEntries = entries.filter((entry) =>
-    isSameDay(entry.startDate, currentDate),
+    entryOverlapsDay(entry, currentDate),
   );
 
   const allDayEntries = dayEntries.filter((entry) => entry.wholeDay);
@@ -50,7 +44,11 @@ export function DayView() {
           {formatDayHeader(currentDate)}
         </h2>
       </div>
-      <AllDaySection entries={allDayEntries} onEntryClick={handleEntryClick} />
+      <AllDaySection
+        entries={allDayEntries}
+        currentDay={currentDate}
+        onEntryClick={handleEntryClick}
+      />
       <div className="flex-1 overflow-hidden">
         <TimeGrid>
           <DayColumn
@@ -58,6 +56,7 @@ export function DayView() {
             entries={timedEntries}
             onSlotClick={handleSlotClick}
             onEntryClick={handleEntryClick}
+            maxVisibleColumns={DAY_VIEW_MAX_COLUMNS}
           />
         </TimeGrid>
       </div>

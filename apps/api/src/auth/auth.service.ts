@@ -57,6 +57,7 @@ export class AuthService {
       this.jwtService.signAsync(payload, {
         secret: jwtConstants.refreshSecret,
         expiresIn: '7d',
+        algorithm: 'HS256' as const,
       }),
     ]);
     return { access_token, refresh_token };
@@ -87,9 +88,14 @@ export class AuthService {
       {
         secret: jwtConstants.mailSecret,
         expiresIn: '1d',
+        algorithm: 'HS256' as const,
       },
     );
 
+    const hashedVerificationToken = await bcrypt.hash(
+      verificationToken,
+      saltRounds,
+    );
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const { user, tokens } = await this.prisma.$transaction(async (tx) => {
@@ -97,7 +103,7 @@ export class AuthService {
         {
           email,
           password: hashedPassword,
-          verificationToken,
+          verificationToken: hashedVerificationToken,
         },
         tx,
       );
@@ -135,19 +141,22 @@ export class AuthService {
       throw new ForbiddenException('Access denied');
     }
 
-    const tokens = await this.prisma.$transaction(async (tx) => {
-      const tokens = await this.generateTokens(user);
-      const hashedRefreshToken = await bcrypt.hash(
-        tokens.refresh_token,
-        saltRounds,
-      );
-      await this.userService.updateRefreshToken(
-        user.id,
-        hashedRefreshToken,
-        tx,
-      );
-      return tokens;
+    const tokens = await this.generateTokens(user);
+    const hashedRefreshToken = await bcrypt.hash(
+      tokens.refresh_token,
+      saltRounds,
+    );
+
+    // Conditional update: only succeeds if the refresh token hasn't been
+    // rotated by a concurrent request since we read it.
+    const { count } = await this.prisma.user.updateMany({
+      where: { id: user.id, refreshToken: user.refreshToken },
+      data: { refreshToken: hashedRefreshToken },
     });
+
+    if (count === 0) {
+      throw new ForbiddenException('Access denied');
+    }
 
     return tokens;
   }
@@ -167,10 +176,19 @@ export class AuthService {
       {
         secret: jwtConstants.mailSecret,
         expiresIn: '1d',
+        algorithm: 'HS256' as const,
       },
     );
 
-    await this.userService.updateVerificationToken(user.id, verificationToken);
+    const hashedVerificationToken = await bcrypt.hash(
+      verificationToken,
+      saltRounds,
+    );
+
+    await this.userService.updateVerificationToken(
+      user.id,
+      hashedVerificationToken,
+    );
     await this.mailService.sendVerificationEmail(user.email, verificationToken);
     this.logger.log(`Verification email resent: ${user.id}`);
   }
@@ -180,14 +198,15 @@ export class AuthService {
     try {
       payload = this.jwtService.verify(token, {
         secret: jwtConstants.mailSecret,
+        algorithms: ['HS256'] as const,
       });
     } catch {
       this.logger.error('Email verification failed: invalid or expired token');
       throw new BadRequestException('Invalid or expired token');
     }
 
-    await this.userService.validateEmail(payload.email, token);
-    this.logger.log(`Email verified: ${payload.email}`);
+    const userId = await this.userService.validateEmail(payload.email, token);
+    this.logger.log(`Email verified: ${userId}`);
   }
 
   async requestPasswordReset(email: string) {
@@ -202,6 +221,7 @@ export class AuthService {
       {
         secret: jwtConstants.mailSecret,
         expiresIn: '1h',
+        algorithm: 'HS256' as const,
       },
     );
 
@@ -209,7 +229,7 @@ export class AuthService {
 
     await this.userService.setPasswordResetToken(email, hashedResetToken);
     await this.mailService.sendPasswordResetEmail(email, resetToken);
-    this.logger.log(`Password reset requested: ${email}`);
+    this.logger.log(`Password reset requested: ${user.id}`);
   }
 
   async changePassword(changePasswordDTO: ChangePasswordDTO) {
@@ -217,6 +237,7 @@ export class AuthService {
     try {
       payload = this.jwtService.verify(changePasswordDTO.token, {
         secret: jwtConstants.mailSecret,
+        algorithms: ['HS256'] as const,
       });
     } catch {
       this.logger.error('Password change failed: invalid or expired token');
@@ -230,7 +251,7 @@ export class AuthService {
 
     if (!user || !isMatch) {
       this.logger.error(
-        `Password change failed: token mismatch for ${payload.email}`,
+        `Password change failed: token mismatch for user ${user?.id ?? 'unknown'}`,
       );
       throw new BadRequestException('Invalid or expired token');
     }
@@ -242,9 +263,10 @@ export class AuthService {
       );
 
       await this.userService.changePassword(payload.email, hashedPassword, tx);
+      await this.userService.updateRefreshToken(user.id, null, tx);
     });
 
-    this.logger.log(`Password changed: ${payload.email}`);
+    this.logger.log(`Password changed: ${user.id}`);
   }
 
   async logout(userId: string) {

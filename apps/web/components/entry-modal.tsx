@@ -13,7 +13,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field';
 import {
   useCalendarStore,
   type CalendarEntry,
@@ -96,6 +101,7 @@ function EntryForm({
   const [endDate, setEndDate] = useState(initialValues.endDate);
   const [content, setContent] = useState(initialValues.content);
   const [wholeDay, setWholeDay] = useState(initialValues.wholeDay);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleWholeDayChange = (checked: boolean) => {
     setWholeDay(checked);
@@ -116,7 +122,29 @@ function EntryForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!title.trim() || !startDate || !endDate) {
+    const newErrors: Record<string, string> = {};
+    if (!title.trim()) {
+      newErrors.title = 'Title is required';
+    }
+    if (!startDate) {
+      newErrors.startDate = 'Start date is required';
+    }
+    if (!endDate) {
+      newErrors.endDate = 'End date is required';
+    }
+    if (startDate && endDate) {
+      const start = wholeDay
+        ? parseDateLocal(startDate)
+        : parseDateTimeLocal(startDate);
+      const end = wholeDay
+        ? parseDateLocal(endDate)
+        : parseDateTimeLocal(endDate);
+      if (start > end) {
+        newErrors.endDate = 'End date must be on or after start date';
+      }
+    }
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
       return;
     }
 
@@ -137,15 +165,20 @@ function EntryForm({
   return (
     <form onSubmit={handleSubmit}>
       <FieldGroup className="gap-4">
-        <Field>
+        <Field data-invalid={!!errors.title || undefined}>
           <FieldLabel htmlFor="title">Title</FieldLabel>
           <Input
             id="title"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setErrors((prev) => ({ ...prev, title: '' }));
+            }}
             placeholder="Entry title"
+            maxLength={100}
             required
           />
+          <FieldError>{errors.title}</FieldError>
         </Field>
 
         <Field orientation="horizontal" className="items-center">
@@ -162,25 +195,41 @@ function EntryForm({
         </Field>
 
         <div className="grid grid-cols-2 gap-4">
-          <Field>
+          <Field data-invalid={!!errors.startDate || undefined}>
             <FieldLabel htmlFor="startDate">Start</FieldLabel>
             <Input
               id="startDate"
               type={wholeDay ? 'date' : 'datetime-local'}
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={(e) => {
+                setStartDate(e.target.value);
+                setErrors((prev) => ({
+                  ...prev,
+                  startDate: '',
+                  endDate: '',
+                }));
+              }}
               required
             />
+            <FieldError>{errors.startDate}</FieldError>
           </Field>
-          <Field>
+          <Field data-invalid={!!errors.endDate || undefined}>
             <FieldLabel htmlFor="endDate">End</FieldLabel>
             <Input
               id="endDate"
               type={wholeDay ? 'date' : 'datetime-local'}
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              onChange={(e) => {
+                setEndDate(e.target.value);
+                setErrors((prev) => ({
+                  ...prev,
+                  startDate: '',
+                  endDate: '',
+                }));
+              }}
               required
             />
+            <FieldError>{errors.endDate}</FieldError>
           </Field>
         </div>
 
@@ -191,6 +240,7 @@ function EntryForm({
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Optional description"
+            maxLength={5000}
             rows={3}
           />
         </Field>

@@ -1,3 +1,4 @@
+import { Logger, ServiceUnavailableException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { HealthController } from './health.controller';
 import {
@@ -61,12 +62,33 @@ describe('HealthController', () => {
     expect(controller).toBeDefined();
   });
 
-  it('should return health check result', async () => {
+  it('should return health check result with only status', async () => {
     const result = await controller.check();
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(healthCheckService.check).toHaveBeenCalledWith(
       expect.arrayContaining([expect.any(Function)]),
     );
-    expect(result.status).toBe('ok');
+    expect(result).toEqual({ status: 'ok' });
+  });
+
+  it('should log details and rethrow when health check fails', async () => {
+    const failedResponse = {
+      status: 'error',
+      error: { database: { status: 'down' } },
+      details: { database: { status: 'down' } },
+    };
+    const error = Object.assign(new Error('Health check failed'), {
+      response: failedResponse,
+    });
+    (healthCheckService.check as jest.Mock).mockRejectedValue(error);
+
+    const warnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation();
+
+    await expect(controller.check()).rejects.toThrow(
+      ServiceUnavailableException,
+    );
+    expect(warnSpy).toHaveBeenCalledWith(failedResponse, 'Health check failed');
+
+    warnSpy.mockRestore();
   });
 });

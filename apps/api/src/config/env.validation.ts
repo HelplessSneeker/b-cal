@@ -4,6 +4,7 @@ import {
   IsNumberString,
   IsOptional,
   IsString,
+  IsUrl,
   MinLength,
   ValidateIf,
   validateSync,
@@ -17,8 +18,12 @@ class EnvironmentVariables {
   @IsNumberString()
   PORT: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsUrl(
+    { require_tld: false },
+    {
+      message: 'FRONTEND_URL must be a valid URL (e.g. http://localhost:8080)',
+    },
+  )
   FRONTEND_URL: string;
 
   @IsString()

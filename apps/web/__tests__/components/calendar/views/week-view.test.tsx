@@ -78,4 +78,29 @@ describe('WeekView', () => {
     });
     expect(todayEl).toBeInTheDocument();
   });
+
+  it('renders multi-day all-day entry as a spanning bar', () => {
+    const multiDayEntry: CalendarEntry = {
+      id: 'multi-1',
+      title: 'Team Retreat',
+      // Monday to Wednesday of the same week
+      startDate: new Date(2025, 5, 16, 0, 0),
+      endDate: new Date(2025, 5, 18, 23, 59),
+      wholeDay: true,
+    };
+
+    useCalendarStore.setState({
+      currentDate,
+      entries: [multiDayEntry],
+    });
+    render(<WeekView />);
+
+    // The entry title should appear exactly once (as a spanning bar)
+    const elements = screen.getAllByText('Team Retreat');
+    expect(elements).toHaveLength(1);
+
+    // The bar should use grid-column to span 3 columns
+    const bar = elements[0];
+    expect(bar.style.gridColumn).toBe('1 / span 3');
+  });
 });

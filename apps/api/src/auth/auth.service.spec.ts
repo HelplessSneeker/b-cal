@@ -52,6 +52,9 @@ const mockMailService = {
 const mockPrismaService = {
   // eslint-disable-next-line
   $transaction: jest.fn((fn) => fn(mockPrismaService)),
+  user: {
+    updateMany: jest.fn(),
+  },
 };
 
 describe('AuthService', () => {
@@ -139,6 +142,7 @@ describe('AuthService', () => {
         .mockResolvedValueOnce('access-token')
         .mockResolvedValueOnce('refresh-token');
       (bcrypt.hash as jest.Mock)
+        .mockResolvedValueOnce('hashed-verification')
         .mockResolvedValueOnce('hashedpw')
         .mockResolvedValueOnce('hashed-refresh');
       mockUserService.create.mockResolvedValue({
@@ -162,7 +166,7 @@ describe('AuthService', () => {
         {
           email: 'new@example.com',
           password: 'hashedpw',
-          verificationToken: 'verification-token',
+          verificationToken: 'hashed-verification',
         },
         mockPrismaService,
       );
@@ -189,13 +193,19 @@ describe('AuthService', () => {
       mockJwtService.signAsync
         .mockResolvedValueOnce('new-access')
         .mockResolvedValueOnce('new-refresh');
-      mockUserService.updateRefreshToken.mockResolvedValue(undefined);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      mockPrismaService.user.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.refreshTokens('user-1', 'valid-refresh');
 
       expect(result).toEqual({
         access_token: 'new-access',
         refresh_token: 'new-refresh',
+      });
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect(mockPrismaService.user.updateMany).toHaveBeenCalledWith({
+        where: { id: 'user-1', refreshToken: 'hashedRefreshToken' },
+        data: { refreshToken: 'new-hashed-refresh' },
       });
     });
 
@@ -224,6 +234,21 @@ describe('AuthService', () => {
 
       await expect(
         service.refreshTokens('user-1', 'wrong-token'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw ForbiddenException on concurrent refresh (race condition)', async () => {
+      mockUserService.findById.mockResolvedValue(mockUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed-refresh');
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('new-access')
+        .mockResolvedValueOnce('new-refresh');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      mockPrismaService.user.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(
+        service.refreshTokens('user-1', 'valid-refresh'),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -285,6 +310,9 @@ describe('AuthService', () => {
     it('should generate new token and send verification email', async () => {
       mockUserService.findById.mockResolvedValue(mockUser);
       mockJwtService.signAsync.mockResolvedValue('new-verification-token');
+      (bcrypt.hash as jest.Mock).mockResolvedValue(
+        'hashed-new-verification-token',
+      );
       mockUserService.updateVerificationToken.mockResolvedValue(undefined);
       mockMailService.sendVerificationEmail.mockResolvedValue(undefined);
 
@@ -295,9 +323,10 @@ describe('AuthService', () => {
         { email: mockUser.email },
         expect.objectContaining({ expiresIn: '1d' }),
       );
+      expect(bcrypt.hash).toHaveBeenCalledWith('new-verification-token', 10);
       expect(mockUserService.updateVerificationToken).toHaveBeenCalledWith(
         'user-1',
-        'new-verification-token',
+        'hashed-new-verification-token',
       );
       expect(mockMailService.sendVerificationEmail).toHaveBeenCalledWith(
         mockUser.email,

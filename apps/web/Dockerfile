@@ -22,7 +22,9 @@ RUN pnpm build
 FROM base AS production
 WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001 -G nodejs
+    adduser -S nextjs -u 1001 -G nodejs && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx \
+           /root/.cache/node/corepack
 
 COPY --from=build /app/apps/web/public ./public
 COPY --from=build --chown=nextjs:nodejs /app/apps/web/.next/standalone ./

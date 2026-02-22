@@ -18,8 +18,14 @@ export class UserController {
   ) {
     await this.userService.deleteUser(userId);
 
-    res.clearCookie(cookieConfig.accessToken.name, cookieConfig.options);
-    res.clearCookie(cookieConfig.refreshToken.name, cookieConfig.options);
+    res.clearCookie(
+      cookieConfig.accessToken.name,
+      cookieConfig.accessToken.options,
+    );
+    res.clearCookie(
+      cookieConfig.refreshToken.name,
+      cookieConfig.refreshToken.options,
+    );
 
     return { message: 'Successfully deleted user' };
   }

@@ -7,3 +7,6 @@ export const HOURS = [
 export const START_HOUR = 0;
 export const END_HOUR = 24;
 export const TIME_COLUMN_WIDTH = 56;
+export const DAY_VIEW_MAX_COLUMNS = 5;
+export const WEEK_VIEW_MAX_COLUMNS = 3;
+export const OVERLAP_GAP_PX = 2;

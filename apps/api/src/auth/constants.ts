@@ -8,16 +8,15 @@ export const jwtConstants = {
 
 export const saltRounds = 10;
 
-interface CookieConfig {
-  accessToken: {
-    name: string;
-    maxAge: number;
-  };
-  refreshToken: {
-    name: string;
-    maxAge: number;
-  };
+interface TokenConfig {
+  name: string;
+  maxAge: number;
   options: CookieOptions;
+}
+
+interface CookieConfig {
+  accessToken: TokenConfig;
+  refreshToken: TokenConfig;
 }
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -34,19 +33,22 @@ function getCookieDomain(): string | undefined {
 
 export const cookieDomain = getCookieDomain();
 
+const baseOptions: CookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: 'lax',
+  ...(cookieDomain && { domain: cookieDomain }),
+};
+
 export const cookieConfig: CookieConfig = {
   accessToken: {
     name: 'access_token',
     maxAge: 60 * 60 * 1000, // 1 hour in ms
+    options: baseOptions,
   },
   refreshToken: {
     name: 'refresh_token',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
-  },
-  options: {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: 'lax',
-    ...(cookieDomain && { domain: cookieDomain }),
+    options: { ...baseOptions, path: '/auth/refresh' },
   },
 };
