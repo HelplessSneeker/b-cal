@@ -80,7 +80,7 @@ Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerf
 
 **Logging**: Structured logging via `nestjs-pino`. Pretty-printed in development, JSON in production. Each request is tagged with an `X-Request-Id` header (auto-generated via `randomUUID()` if not provided by the client). Request IDs are included in log entries and error responses for traceability.
 
-**Input Validation**: Global payload limit of 1MB (JSON + URL-encoded). DTO string fields have max length constraints (title: 255, content: 5000, email: 254, password: 128). Calendar entry title and content fields are sanitized via `stripHtmlTags` transform.
+**Input Validation**: Global payload limit of 1MB (JSON + URL-encoded). DTO string fields have max length constraints (title: 100, content: 5000, email: 254, password: 128). Calendar entry title and content fields are sanitized via `stripHtmlTags` transform.
 
 **Database**: PostgreSQL via Prisma. Models: User (with emailVerified, verificationToken, resetToken, createdAt, updatedAt fields), CalendarEntry (with createdAt, updatedAt). Indexes on User.email, CalendarEntry.userId, CalendarEntry.startDate, CalendarEntry.endDate, and a composite (endDate, startDate) index.
 
@@ -95,6 +95,20 @@ Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerf
 **API pool tuning** (all optional): `DB_POOL_MAX` (default: 10), `DB_POOL_IDLE_TIMEOUT_MS` (default: 10000), `DB_POOL_CONNECTION_TIMEOUT_MS` (default: 5000)
 
 **API Test** (`apps/api/.env.test`): Same as above with `DB_NAME=b_cal_test`
+
+## CI/CD
+
+GitHub Actions workflows (`.github/workflows/`):
+
+- **build.yml** — Builds all packages on PRs to main
+- **lint.yml** — Runs linting on PRs to main
+- **test.yml** — Runs unit tests and e2e tests (spins up PostgreSQL 16) on PRs to main
+- **security.yml** — `pnpm audit` + Trivy filesystem scan on PRs and weekly schedule
+- **release.yml** — Triggered by `v*` tags. Builds Docker images, runs Trivy vulnerability scans, creates GitHub Release, and deploys via Coolify webhook
+
+## Sensitive Data Handling
+
+Both apps scrub PII before sending to Sentry (`sentry-before-send.ts`) — emails, passwords, tokens, cookies, and authorization headers are stripped from error events. The API also redacts sensitive fields in structured logs via pino redaction paths (password, token, refreshToken, resetToken, verificationToken, email, secret) and custom request/response serializers that strip sensitive headers and query parameters.
 
 ## Test Users (after seeding)
 

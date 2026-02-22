@@ -52,9 +52,10 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
   - `app/error.tsx` - Error boundary with retry button
   - `app/global-error.tsx` - Root error boundary (catches layout-level errors)
   - `app/not-found.tsx` - Custom 404 page
+  - `app/health/route.ts` - Health check endpoint (returns `{ status: 'ok' }`)
   - `app/page.tsx` - Main calendar page (protected by AuthProvider)
 - `components/` - React components
-  - `components/ui/` - shadcn/ui primitives (avatar, button, calendar, card, checkbox, dialog, dropdown-menu, field, input, label, loading, scroll-area, separator, sonner, spinner, textarea)
+  - `components/ui/` - shadcn/ui primitives (avatar, button, calendar, card, checkbox, dialog, dropdown-menu, field, input, label, loading, popover, scroll-area, separator, sonner, spinner, textarea)
   - `components/AuthProvider.tsx` - Wraps protected routes; redirects unauthenticated users to `/login` and unverified users to `/check-email`
   - `components/login-form.tsx` - Shared form for login/signup pages with "Forgot your password?" link
   - `components/verify-email-content.tsx` - Client component handling email verification API call and redirect
@@ -74,7 +75,9 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
     - `all-day-section.tsx` - All-day entries section for day view
     - `week-all-day-row.tsx` - All-day entries row spanning week columns
     - `date-cell.tsx` - Date cell for month view grid
+    - `month-week-row.tsx` - Single week row within month view grid
     - `more-indicator.tsx` - "+N more" indicator for overflow entries
+    - `overflow-pill.tsx` - Overflow pill for truncated entries
     - `views/` - View-specific components
       - `day-view.tsx` - Day view container
       - `week-view.tsx` - Week view with 7-day grid
@@ -90,6 +93,8 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
     - `date-utils.ts` - Date manipulation (getStartOfWeek, getEndOfWeek, getStartOfMonth, getEndOfMonth, getMonthGridDates)
     - `calendar-constants.ts` - Layout constants (HOUR_HEIGHT=60, SLOT_HEIGHT=30, TIME_COLUMN_WIDTH, START_HOUR, END_HOUR)
     - `time-utils.ts` - Time position calculations (getEventTopPosition, getEventHeight, formatHour, getTimeFromPosition)
+    - `overlap-utils.ts` - Overlap detection and layout for concurrent entries
+    - `spanning-utils.ts` - Multi-day spanning entry calculations
   - `lib/hooks/` - Custom React hooks
     - `useCalendarData.ts` - Fetches calendar entries for a 3-month window around the current date, with smart caching to avoid redundant requests
   - `lib/stores/` - Zustand stores for client state
@@ -98,6 +103,8 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
 - `proxy.ts` - Next.js 16 proxy (replaces `middleware.ts`). Handles route protection (auth routes, open routes, protected routes) and generates a per-request CSP nonce. Sets a strict `Content-Security-Policy` header (script-src with nonce + strict-dynamic, `frame-ancestors 'none'`, `object-src 'none'`; adds `upgrade-insecure-requests` in production). Exports a `proxy()` function and matcher config.
 - `src/config/env.ts` - Environment variable validation (validates `NEXT_PUBLIC_BACKEND_URL` at build time via `next.config.ts` and at server startup via `instrumentation.ts`)
 - `instrumentation.ts` - Sentry SDK initialization for the Next.js server runtime
+- `instrumentation-client.ts` - Client-side Sentry initialization (replay, tracing, PII scrubbing via `beforeSend`)
+- `sentry.before-send.ts` - PII scrubbing for Sentry events (emails, tokens, cookies, auth headers)
 - `sentry.edge.config.ts` - Sentry configuration for the Edge runtime
 - `sentry.server.config.ts` - Sentry configuration for the Node.js server runtime
 
@@ -108,7 +115,7 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
 - User state managed via Zustand store (`useUserStore`) — includes `emailVerified` field
 - `proxy.ts` handles route-level auth (Next.js 16 proxy, replaces `middleware.ts`):
   - **Auth routes** (`/login`, `/signup`, `/forgot-password`, `/reset-password`): redirect authenticated users to `/`
-  - **Open routes** (`/verify-email`, `/check-email`): accessible regardless of auth state
+  - **Open routes** (`/verify-email`, `/check-email`, `/health`): accessible regardless of auth state
   - **All other routes**: redirect unauthenticated users to `/login?from={pathname}`
 
 ### Auth Flows
