@@ -43,7 +43,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
 
 CMD ["sh", "-c", "\
   retries=0; \
-  until node node_modules/.bin/prisma migrate deploy; do \
+  until node_modules/.bin/prisma migrate deploy; do \
     retries=$((retries + 1)); \
     if [ $retries -ge 10 ]; then \
       echo 'Migration failed after 10 attempts, exiting'; exit 1; \
