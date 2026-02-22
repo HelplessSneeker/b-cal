@@ -15,7 +15,12 @@ import { MailService } from 'src/mail/mail.service';
 import cookieParser from 'cookie-parser';
 
 class TestMailService {
-  async sendVerificationEmail() {}
+  lastVerificationTokenByEmail = new Map<string, string>();
+
+  sendVerificationEmail(email: string, token: string) {
+    this.lastVerificationTokenByEmail.set(email, token);
+  }
+
   async sendPasswordResetEmail() {}
 }
 
@@ -90,6 +95,7 @@ async function findEntryByTitle(
 describe('CalendarController (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
+  let testMailService: TestMailService;
 
   const testUser = {
     email: `calendar-e2e-${Date.now()}@example.com`,
@@ -106,11 +112,13 @@ describe('CalendarController (e2e)', () => {
   let userId: string;
 
   beforeAll(async () => {
+    testMailService = new TestMailService();
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [TestAppModule],
     })
       .overrideProvider(MailService)
-      .useClass(TestMailService)
+      .useValue(testMailService)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -130,12 +138,11 @@ describe('CalendarController (e2e)', () => {
     await request(app.getHttpServer()).post('/auth/signup').send(testUser);
 
     // Verify the test user's email
-    const testUserRecord = await prisma.user.findUnique({
-      where: { email: testUser.email },
-    });
+    const testVerificationToken =
+      testMailService.lastVerificationTokenByEmail.get(testUser.email);
     await request(app.getHttpServer())
       .get('/auth/verify-email')
-      .query({ token: testUserRecord!.verificationToken });
+      .query({ token: testVerificationToken });
 
     const loginResponse = await request(app.getHttpServer())
       .post('/auth/login')
@@ -152,12 +159,11 @@ describe('CalendarController (e2e)', () => {
     await request(app.getHttpServer()).post('/auth/signup').send(otherUser);
 
     // Verify the other user's email
-    const otherUserRecord = await prisma.user.findUnique({
-      where: { email: otherUser.email },
-    });
+    const otherVerificationToken =
+      testMailService.lastVerificationTokenByEmail.get(otherUser.email);
     await request(app.getHttpServer())
       .get('/auth/verify-email')
-      .query({ token: otherUserRecord!.verificationToken });
+      .query({ token: otherVerificationToken });
 
     const otherLoginResponse = await request(app.getHttpServer())
       .post('/auth/login')

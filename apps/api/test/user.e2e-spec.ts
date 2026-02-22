@@ -15,7 +15,12 @@ import { MailService } from 'src/mail/mail.service';
 import cookieParser from 'cookie-parser';
 
 class TestMailService {
-  async sendVerificationEmail() {}
+  lastVerificationTokenByEmail = new Map<string, string>();
+
+  sendVerificationEmail(email: string, token: string) {
+    this.lastVerificationTokenByEmail.set(email, token);
+  }
+
   async sendPasswordResetEmail() {}
 }
 
@@ -56,13 +61,16 @@ function extractCookies(response: request.Response): string[] {
 describe('UserController (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
+  let testMailService: TestMailService;
 
   beforeAll(async () => {
+    testMailService = new TestMailService();
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [TestAppModule],
     })
       .overrideProvider(MailService)
-      .useClass(TestMailService)
+      .useValue(testMailService)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -122,12 +130,15 @@ describe('UserController (e2e)', () => {
       // Signup and verify email
       await request(app.getHttpServer()).post('/auth/signup').send(testUser);
 
+      const verificationToken =
+        testMailService.lastVerificationTokenByEmail.get(testUser.email);
+      await request(app.getHttpServer())
+        .get('/auth/verify-email')
+        .query({ token: verificationToken });
+
       const user = await prisma.user.findUnique({
         where: { email: testUser.email },
       });
-      await request(app.getHttpServer())
-        .get('/auth/verify-email')
-        .query({ token: user!.verificationToken });
 
       const loginResponse = await request(app.getHttpServer())
         .post('/auth/login')
@@ -192,12 +203,11 @@ describe('UserController (e2e)', () => {
       // Signup and verify email
       await request(app.getHttpServer()).post('/auth/signup').send(testUser);
 
-      const user = await prisma.user.findUnique({
-        where: { email: testUser.email },
-      });
+      const verificationToken =
+        testMailService.lastVerificationTokenByEmail.get(testUser.email);
       await request(app.getHttpServer())
         .get('/auth/verify-email')
-        .query({ token: user!.verificationToken });
+        .query({ token: verificationToken });
 
       const loginResponse = await request(app.getHttpServer())
         .post('/auth/login')
@@ -236,19 +246,21 @@ describe('UserController (e2e)', () => {
         .send(userToDelete);
       await request(app.getHttpServer()).post('/auth/signup').send(otherUser);
 
-      const deleteUserRecord = await prisma.user.findUnique({
-        where: { email: userToDelete.email },
-      });
-      const otherUserRecord = await prisma.user.findUnique({
-        where: { email: otherUser.email },
-      });
+      const deleteVerificationToken =
+        testMailService.lastVerificationTokenByEmail.get(userToDelete.email);
+      const otherVerificationToken =
+        testMailService.lastVerificationTokenByEmail.get(otherUser.email);
 
       await request(app.getHttpServer())
         .get('/auth/verify-email')
-        .query({ token: deleteUserRecord!.verificationToken });
+        .query({ token: deleteVerificationToken });
       await request(app.getHttpServer())
         .get('/auth/verify-email')
-        .query({ token: otherUserRecord!.verificationToken });
+        .query({ token: otherVerificationToken });
+
+      const otherUserRecord = await prisma.user.findUnique({
+        where: { email: otherUser.email },
+      });
 
       // Login both
       const deleteLoginResponse = await request(app.getHttpServer())
