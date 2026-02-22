@@ -145,7 +145,7 @@ describe('MailService', () => {
       await service.sendVerificationEmail('user@example.com', 'my-token');
 
       const callArgs = (mockSendMail.mock.calls[0] as [{ html: string }])[0];
-      expect(callArgs.html).toContain('Email Verification');
+      expect(callArgs.html).toContain('Verify your email');
       expect(callArgs.html).toContain(
         'href="http://localhost:8080/verify-email?token=my-token"',
       );
@@ -182,7 +182,7 @@ describe('MailService', () => {
       );
 
       const callArgs = (mockSendMail.mock.calls[0] as [{ html: string }])[0];
-      expect(callArgs.html).toContain('Password Reset');
+      expect(callArgs.html).toContain('Reset your password');
       expect(callArgs.html).toContain(
         'href="http://localhost:8080/reset-password?token=my-reset-token"',
       );
