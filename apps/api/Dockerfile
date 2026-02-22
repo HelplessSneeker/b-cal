@@ -27,7 +27,9 @@ RUN pnpm --filter=@b-cal/api deploy --legacy --prod /deploy && \
 FROM base AS production
 WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001 -G nodejs
+    adduser -S nestjs -u 1001 -G nodejs && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx \
+           /root/.cache/node/corepack
 COPY --from=build --chown=nestjs:nodejs /deploy ./
 USER nestjs
 
@@ -40,7 +42,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
 
 CMD ["sh", "-c", "\
   retries=0; \
-  until pnpm exec prisma migrate deploy; do \
+  until node node_modules/.bin/prisma migrate deploy; do \
     retries=$((retries + 1)); \
     if [ $retries -ge 10 ]; then \
       echo 'Migration failed after 10 attempts, exiting'; exit 1; \
