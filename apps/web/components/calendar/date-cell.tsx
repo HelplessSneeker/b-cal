@@ -3,12 +3,10 @@
 import { type CalendarEntry } from '@/lib/stores/calendarStore';
 import { EntryPreview } from '@/components/calendar/entry-preview';
 import { MoreIndicator } from '@/components/calendar/more-indicator';
-import { cn } from '@/lib/utils/utils';
 
 interface DateCellProps {
   date: Date;
   entries: CalendarEntry[];
-  isCurrentMonth: boolean;
   onCellClick: (date: Date) => void;
   onEntryClick: (entry: CalendarEntry) => void;
   onMoreClick: (date: Date) => void;
@@ -19,7 +17,6 @@ interface DateCellProps {
 export function DateCell({
   date,
   entries,
-  isCurrentMonth,
   onCellClick,
   onEntryClick,
   onMoreClick,
@@ -32,10 +29,7 @@ export function DateCell({
 
   return (
     <div
-      className={cn(
-        'flex flex-col gap-0.5 overflow-hidden px-0.5',
-        !isCurrentMonth && 'bg-muted/50',
-      )}
+      className="flex flex-col gap-0.5 overflow-hidden px-0.5"
       onClick={() => onCellClick(date)}
     >
       {visibleEntries.map((entry) => (

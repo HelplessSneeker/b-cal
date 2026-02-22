@@ -52,13 +52,13 @@ export function MonthView() {
   return (
     <div className="flex h-full flex-col">
       {/* Weekday headers */}
-      <div className="grid grid-cols-7 border-b">
+      <div className="grid grid-cols-7 border-y">
         {WEEKDAY_NAMES.map((day, index) => (
           <div
             key={day}
             className={cn(
-              'py-2 text-center text-xs font-medium uppercase text-muted-foreground',
-              index > 0 && 'border-l',
+              'border-l py-2 text-center text-xs font-medium uppercase text-muted-foreground',
+              index === 6 && 'border-r',
             )}
           >
             {day}
@@ -67,7 +67,7 @@ export function MonthView() {
       </div>
 
       {/* Month grid - 6 week rows */}
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col border-b [&>:last-child]:pb-2">
         {weekRows.map((weekDays) => (
           <MonthWeekRow
             key={weekDays[0].toISOString()}

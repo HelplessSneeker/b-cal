@@ -61,7 +61,7 @@ export function MonthWeekRow({
 
   return (
     <div
-      className="relative flex min-h-0 flex-1 flex-col border-b"
+      className="relative flex min-h-0 flex-1 flex-col overflow-hidden border-b"
       data-testid="month-week-row"
     >
       {/* Column borders */}
@@ -70,7 +70,14 @@ export function MonthWeekRow({
         aria-hidden="true"
       >
         {Array.from({ length: 7 }, (_, i) => (
-          <div key={i} className={cn(i > 0 && 'border-l')} />
+          <div
+            key={i}
+            className={cn(
+              'border-l',
+              i === 6 && 'border-r',
+              days[i].getMonth() !== currentMonth && 'bg-muted/50',
+            )}
+          />
         ))}
       </div>
 
@@ -84,7 +91,7 @@ export function MonthWeekRow({
               key={day.toISOString()}
               className={cn(
                 'cursor-pointer p-1',
-                !isCurrentMonth && 'bg-muted/50 text-muted-foreground',
+                !isCurrentMonth && 'text-muted-foreground',
               )}
               onClick={() => onCellClick(day)}
             >
@@ -105,7 +112,7 @@ export function MonthWeekRow({
       {/* Spanning bars */}
       {visibleSpanningEntries.length > 0 && (
         <div
-          className="grid grid-cols-7 gap-y-0.5 px-0.5"
+          className="grid grid-cols-7 gap-y-0.5"
           style={{ gridTemplateRows: `repeat(${totalSpanningRows}, 20px)` }}
         >
           {visibleSpanningEntries.map((se) => (
@@ -113,8 +120,9 @@ export function MonthWeekRow({
               key={se.entry.id}
               className={cn(
                 'flex cursor-pointer items-center truncate bg-blue-500/20 px-1 text-xs font-medium transition-colors hover:bg-blue-500/30',
-                !se.continuesBefore && 'rounded-l border-l-2 border-blue-500',
-                !se.continuesAfter && 'rounded-r',
+                !se.continuesBefore &&
+                  'ml-0.5 rounded-l border-l-2 border-blue-500',
+                !se.continuesAfter && 'mr-0.5 rounded-r',
               )}
               style={{
                 gridColumn: `${se.startCol + 1} / span ${se.span}`,
@@ -154,7 +162,6 @@ export function MonthWeekRow({
               key={day.toISOString()}
               date={day}
               entries={dayTimed}
-              isCurrentMonth={day.getMonth() === currentMonth}
               onCellClick={onCellClick}
               onEntryClick={onEntryClick}
               onMoreClick={onMoreClick}
