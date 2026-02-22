@@ -109,7 +109,7 @@ describe('LoginForm', () => {
     });
   });
 
-  it('signup with weak password shows validation error toast', async () => {
+  it('signup with weak password shows inline validation error', async () => {
     const user = userEvent.setup();
     render(<LoginForm isSignup />);
 
@@ -118,13 +118,13 @@ describe('LoginForm', () => {
     await user.type(screen.getByLabelText('Confirm Password'), 'short');
     await user.click(screen.getByRole('button', { name: 'Sign Up' }));
 
-    expect(toastError).toHaveBeenCalledWith(
-      'Password must be at least 8 characters',
-    );
+    expect(
+      screen.getByText('Password must be at least 8 characters'),
+    ).toBeInTheDocument();
     expect(signupMock).not.toHaveBeenCalled();
   });
 
-  it('signup with mismatched passwords shows error toast', async () => {
+  it('signup with mismatched passwords shows inline error', async () => {
     const user = userEvent.setup();
     render(<LoginForm isSignup />);
 
@@ -133,7 +133,7 @@ describe('LoginForm', () => {
     await user.type(screen.getByLabelText('Confirm Password'), 'different123!');
     await user.click(screen.getByRole('button', { name: 'Sign Up' }));
 
-    expect(toastError).toHaveBeenCalledWith('Passwords do not match');
+    expect(screen.getByText('Passwords do not match')).toBeInTheDocument();
     expect(signupMock).not.toHaveBeenCalled();
   });
 

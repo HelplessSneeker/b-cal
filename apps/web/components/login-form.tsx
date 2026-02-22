@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { toast } from 'sonner';
 import { cn } from '@/lib/utils/utils';
 import { validatePassword } from '@/lib/utils/password';
 import { login, signup } from '@/lib/api/auth';
@@ -17,6 +16,7 @@ import {
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
@@ -38,19 +38,24 @@ export function LoginForm({
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (isSignup) {
+      const newErrors: Record<string, string> = {};
       const passwordError = validatePassword(password);
       if (passwordError) {
-        toast.error(passwordError);
-        return;
+        newErrors.password = passwordError;
       }
 
       if (password !== confirmPassword) {
-        toast.error('Passwords do not match');
+        newErrors.confirmPassword = 'Passwords do not match';
+      }
+
+      setErrors(newErrors);
+      if (Object.keys(newErrors).length > 0) {
         return;
       }
     }
@@ -99,6 +104,7 @@ export function LoginForm({
                   type="email"
                   placeholder="m@example.com"
                   required
+                  maxLength={254}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -122,12 +128,17 @@ export function LoginForm({
                   id="password"
                   type="password"
                   required
+                  maxLength={128}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setErrors((prev) => ({ ...prev, password: '' }));
+                  }}
                 />
+                <FieldError>{errors.password}</FieldError>
               </Field>
               {isSignup && (
-                <Field>
+                <Field data-invalid={!!errors.confirmPassword || undefined}>
                   <FieldLabel htmlFor="confirm-password">
                     Confirm Password
                   </FieldLabel>
@@ -135,9 +146,14 @@ export function LoginForm({
                     id="confirm-password"
                     type="password"
                     required
+                    maxLength={128}
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      setErrors((prev) => ({ ...prev, confirmPassword: '' }));
+                    }}
                   />
+                  <FieldError>{errors.confirmPassword}</FieldError>
                 </Field>
               )}
               <Field>

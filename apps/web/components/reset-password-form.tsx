@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 import { resetPassword } from '@/lib/api/auth';
 import { validatePassword } from '@/lib/utils/password';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -24,6 +28,7 @@ export function ResetPasswordForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   if (!token) {
     return (
@@ -49,14 +54,16 @@ export function ResetPasswordForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const newErrors: Record<string, string> = {};
     const passwordError = validatePassword(password);
     if (passwordError) {
-      toast.error(passwordError);
-      return;
+      newErrors.password = passwordError;
     }
-
     if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
       return;
     }
 
@@ -78,17 +85,22 @@ export function ResetPasswordForm() {
       <CardContent>
         <form onSubmit={handleSubmit}>
           <FieldGroup>
-            <Field>
+            <Field data-invalid={!!errors.password || undefined}>
               <FieldLabel htmlFor="password">New password</FieldLabel>
               <Input
                 id="password"
                 type="password"
                 required
+                maxLength={128}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setErrors((prev) => ({ ...prev, password: '' }));
+                }}
               />
+              <FieldError>{errors.password}</FieldError>
             </Field>
-            <Field>
+            <Field data-invalid={!!errors.confirmPassword || undefined}>
               <FieldLabel htmlFor="confirm-password">
                 Confirm password
               </FieldLabel>
@@ -96,9 +108,14 @@ export function ResetPasswordForm() {
                 id="confirm-password"
                 type="password"
                 required
+                maxLength={128}
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setErrors((prev) => ({ ...prev, confirmPassword: '' }));
+                }}
               />
+              <FieldError>{errors.confirmPassword}</FieldError>
             </Field>
             <Field>
               <Button type="submit" disabled={isLoading}>
