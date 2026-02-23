@@ -27,9 +27,9 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
-    command: ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
+    command: ["sh", "-c", "pnpm exec prisma migrate deploy && node dist/src/main"]
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3000
       FRONTEND_URL: http://localhost:8080
       DB_USER: root
@@ -41,6 +41,10 @@ services:
       REFRESH_SECRET_KEY: my-super-refresh-secret-dev-only!
       MAIL_SECRET_KEY: my-super-secret-mail-key-dev-only!
       CSRF_SECRET: my-super-secret-csrf-key-dev-only!
+      MAIL_HOST: localhost
+      MAIL_PORT: 1025
+      MAIL_USER: user
+      MAIL_PASS: pass
     depends_on:
       postgres:
         condition: service_healthy
@@ -56,7 +60,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
     depends_on:
       api:
         condition: service_healthy
