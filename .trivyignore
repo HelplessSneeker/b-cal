@@ -1,0 +1,17 @@
+# npm bundled dependencies — vulnerabilities in npm's internal packages,
+# not in application code. No fix available until Node.js ships a patched npm.
+
+# brace-expansion: DoS via unbounded brace range expansion (npm internal)
+CVE-2026-25547
+
+# glob: Command Injection via Malicious Filenames (npm internal)
+CVE-2025-64756
+
+# minimatch: DoS via specially crafted glob patterns (npm internal)
+CVE-2026-26996
+
+# tar: Multiple vulnerabilities (npm internal)
+CVE-2026-23745
+CVE-2026-23950
+CVE-2026-24842
+CVE-2026-26960

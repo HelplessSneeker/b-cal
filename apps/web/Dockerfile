@@ -1,4 +1,4 @@
-FROM node:22-alpine AS base
+FROM node:24-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
@@ -19,12 +19,13 @@ WORKDIR /app/apps/web
 RUN pnpm build
 
 # ---- Production ----
-FROM base AS production
+FROM node:24-alpine AS production
 WORKDIR /app
 RUN apk upgrade --no-cache && \
     addgroup -g 1001 -S nodejs && \
     adduser -S nextjs -u 1001 -G nodejs && \
     rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx \
+           /usr/local/lib/node_modules/corepack /usr/local/bin/corepack \
            /root/.cache/node/corepack
 
 COPY --from=build /app/apps/web/public ./public

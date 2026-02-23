@@ -1,4 +1,4 @@
-FROM node:22-alpine AS base
+FROM node:24-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 COPY package.json /tmp/package.json
@@ -24,12 +24,12 @@ RUN pnpm --filter=@b-cal/api deploy --legacy --prod /deploy && \
     cp -r apps/api/dist /deploy/dist
 
 # ---- Production (must be last — Coolify builds the final stage) ----
-FROM base AS production
+FROM node:24-alpine AS production
 WORKDIR /app
 RUN apk upgrade --no-cache && \
     addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001 -G nodejs && \
-    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx \
+    rm -rf /usr/local/lib/node_modules/corepack /usr/local/bin/corepack \
            /root/.cache/node/corepack
 COPY --from=build --chown=nestjs:nodejs /deploy ./
 USER nestjs
@@ -43,7 +43,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
 
 CMD ["sh", "-c", "\
   retries=0; \
-  until node_modules/.bin/prisma migrate deploy; do \
+  until npx prisma migrate deploy; do \
     retries=$((retries + 1)); \
     if [ $retries -ge 10 ]; then \
       echo 'Migration failed after 10 attempts, exiting'; exit 1; \
