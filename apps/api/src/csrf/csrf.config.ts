@@ -1,4 +1,5 @@
 import { doubleCsrf, type DoubleCsrfUtilities } from 'csrf-csrf';
+import type { CookieOptions } from 'express';
 import { cookieDomain } from '../auth/constants';
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -9,17 +10,21 @@ function getCsrfCookieName(): string {
   return cookieDomain ? '__Secure-csrf-token' : '__Host-csrf-token';
 }
 
+export const csrfCookieName = getCsrfCookieName();
+
+export const csrfCookieOptions: CookieOptions = {
+  sameSite: 'lax',
+  path: '/',
+  secure: isProduction,
+  httpOnly: true,
+  ...(cookieDomain && { domain: cookieDomain }),
+};
+
 const csrf = doubleCsrf({
   getSecret: () => process.env.CSRF_SECRET!,
   getSessionIdentifier: (req) => (req.cookies?.access_token as string) ?? '',
-  cookieName: getCsrfCookieName(),
-  cookieOptions: {
-    sameSite: 'lax',
-    path: '/',
-    secure: isProduction,
-    httpOnly: true,
-    ...(cookieDomain && { domain: cookieDomain }),
-  },
+  cookieName: csrfCookieName,
+  cookieOptions: csrfCookieOptions,
   getCsrfTokenFromRequest: (req) => req.headers['x-csrf-token'],
 });
 

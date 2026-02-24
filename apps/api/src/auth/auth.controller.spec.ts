@@ -120,7 +120,7 @@ describe('AuthController', () => {
 
       expect(result).toEqual({ message: 'Logout successful' });
       expect(mockAuthService.logout).toHaveBeenCalledWith('user-1');
-      expect(res.clearCookie).toHaveBeenCalledTimes(2);
+      expect(res.clearCookie).toHaveBeenCalledTimes(3);
     });
   });
 

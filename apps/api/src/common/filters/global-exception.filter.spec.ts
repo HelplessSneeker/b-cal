@@ -192,6 +192,10 @@ describe('GlobalExceptionFilter', () => {
       'refresh_token',
       expect.any(Object),
     );
+    expect(mockClearCookie).toHaveBeenCalledWith(
+      expect.stringContaining('csrf-token'),
+      expect.any(Object),
+    );
   });
 
   it('should clear auth cookies when /auth/refresh fails with non-HTTP exception', () => {
@@ -210,6 +214,10 @@ describe('GlobalExceptionFilter', () => {
     );
     expect(mockClearCookie).toHaveBeenCalledWith(
       'refresh_token',
+      expect.any(Object),
+    );
+    expect(mockClearCookie).toHaveBeenCalledWith(
+      expect.stringContaining('csrf-token'),
       expect.any(Object),
     );
   });

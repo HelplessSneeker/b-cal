@@ -21,24 +21,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     let cancelled = false;
 
-    fetchCsrfToken();
+    fetchCsrfToken()
+      .then(() => getMe())
+      .then((userData) => {
+        if (cancelled) return;
 
-    getMe().then((userData) => {
-      if (cancelled) return;
-
-      if (userData) {
-        if (!userData.emailVerified) {
-          setHasChecked(true);
-          router.push('/check-email');
-          return;
+        if (userData) {
+          if (!userData.emailVerified) {
+            setHasChecked(true);
+            router.push('/check-email');
+            return;
+          }
+          setUser(userData);
+        } else {
+          // Token was invalid/expired - proxy didn't catch it
+          router.push('/login');
         }
-        setUser(userData);
-      } else {
-        // Token was invalid/expired - proxy didn't catch it
-        router.push('/login');
-      }
-      setHasChecked(true);
-    });
+        setHasChecked(true);
+      });
 
     return () => {
       cancelled = true;

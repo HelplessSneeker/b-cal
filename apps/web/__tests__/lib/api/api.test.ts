@@ -33,7 +33,11 @@ describe('api() token refresh', () => {
       .mockResolvedValueOnce(jsonResponse(401, { message: 'Unauthorized' }))
       // 2nd call: refresh → 200
       .mockResolvedValueOnce(jsonResponse(200, { message: 'Tokens refreshed' }))
-      // 3rd call: retry original → 200
+      // 3rd call: CSRF token fetch after refresh
+      .mockResolvedValueOnce(
+        jsonResponse(200, { data: { csrfToken: 'new-csrf' } }),
+      )
+      // 4th call: retry original → 200
       .mockResolvedValueOnce(
         jsonResponse(200, { data: { id: '1' }, message: '' }),
       );
@@ -41,14 +45,17 @@ describe('api() token refresh', () => {
     const result = await api('/calendar', { showSuccessToast: false });
 
     expect(result).toEqual({ id: '1' });
-    expect(mockFetch).toHaveBeenCalledTimes(3);
+    expect(mockFetch).toHaveBeenCalledTimes(4);
 
     // Verify the refresh call was made to the right endpoint
     expect(mockFetch.mock.calls[1][0]).toBe(`${BACKEND_URL}/auth/refresh`);
     expect(mockFetch.mock.calls[1][1].method).toBe('POST');
 
+    // Verify CSRF token was re-fetched after refresh
+    expect(mockFetch.mock.calls[2][0]).toBe(`${BACKEND_URL}/auth/csrf-token`);
+
     // Verify the retry was made to the original endpoint
-    expect(mockFetch.mock.calls[2][0]).toBe(`${BACKEND_URL}/calendar`);
+    expect(mockFetch.mock.calls[3][0]).toBe(`${BACKEND_URL}/calendar`);
   });
 
   it('redirects to /login when refresh fails', async () => {
@@ -75,12 +82,16 @@ describe('api() token refresh', () => {
       .mockResolvedValueOnce(jsonResponse(401, { message: 'Unauthorized' }))
       // refresh succeeds
       .mockResolvedValueOnce(jsonResponse(200, { message: 'Tokens refreshed' }))
+      // CSRF token fetch after refresh
+      .mockResolvedValueOnce(
+        jsonResponse(200, { data: { csrfToken: 'new-csrf' } }),
+      )
       // retry still 401
       .mockResolvedValueOnce(jsonResponse(401, { message: 'Unauthorized' }));
 
     await expect(api('/calendar')).rejects.toThrow(ApiError);
     expect(locationSpy.href).toBe('/login');
-    expect(mockFetch).toHaveBeenCalledTimes(3);
+    expect(mockFetch).toHaveBeenCalledTimes(4);
   });
 
   it('does NOT attempt refresh for /auth/refresh endpoint', async () => {
@@ -162,6 +173,10 @@ describe('api() token refresh', () => {
     mockFetch
       .mockResolvedValueOnce(jsonResponse(401, { message: 'Unauthorized' }))
       .mockResolvedValueOnce(jsonResponse(200, { message: 'Tokens refreshed' }))
+      // CSRF token fetch after refresh
+      .mockResolvedValueOnce(
+        jsonResponse(200, { data: { csrfToken: 'refreshed-csrf-token' } }),
+      )
       .mockResolvedValueOnce(
         jsonResponse(200, { data: { id: '1' }, message: '' }),
       );

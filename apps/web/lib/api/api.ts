@@ -25,6 +25,14 @@ export class ApiError extends Error {
 let csrfToken: string | null = null;
 let refreshPromise: Promise<boolean> | null = null;
 
+export function getCsrfToken(): string | null {
+  return csrfToken;
+}
+
+export function clearCsrfToken(): void {
+  csrfToken = null;
+}
+
 async function attemptTokenRefresh(): Promise<boolean> {
   if (refreshPromise) {
     return refreshPromise;
@@ -122,11 +130,11 @@ export async function api<T = unknown>(
     ) {
       const refreshed = await attemptTokenRefresh();
       if (refreshed) {
-        if (isStateChanging) {
-          await fetchCsrfToken();
-          if (csrfToken) {
-            headers['x-csrf-token'] = csrfToken;
-          }
+        // CSRF token is bound to the access_token, so always refresh it
+        // after a token refresh to avoid stale CSRF on subsequent requests
+        await fetchCsrfToken();
+        if (isStateChanging && csrfToken) {
+          headers['x-csrf-token'] = csrfToken;
         }
         headers['X-Request-Id'] = crypto.randomUUID();
         config.headers = headers;

@@ -9,7 +9,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import * as express from 'express';
-import { generateCsrfToken } from '../csrf/csrf.config';
+import {
+  generateCsrfToken,
+  csrfCookieName,
+  csrfCookieOptions,
+} from '../csrf/csrf.config';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guard/local-auth.guard';
 import { JwtAuthGuard } from './guard/jwt-auth.guard';
@@ -53,6 +57,7 @@ export class AuthController {
       cookieConfig.refreshToken.name,
       cookieConfig.refreshToken.options,
     );
+    res.clearCookie(csrfCookieName, csrfCookieOptions);
   }
 
   @Get('csrf-token')

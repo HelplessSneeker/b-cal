@@ -3,6 +3,7 @@ import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import * as Sentry from '@sentry/nestjs';
 import { Request, Response } from 'express';
 import { cookieConfig } from '../../auth/constants';
+import { csrfCookieName, csrfCookieOptions } from '../../csrf/csrf.config';
 
 @Catch()
 export class GlobalExceptionFilter extends SentryGlobalFilter {
@@ -14,7 +15,7 @@ export class GlobalExceptionFilter extends SentryGlobalFilter {
     const response = ctx.getResponse<Response>();
     const requestId = (request.id as string) ?? request.headers['x-request-id'];
 
-    // Clear auth cookies when token refresh fails to prevent redirect loops
+    // Clear all auth cookies when token refresh fails to prevent redirect loops
     if (request.path === '/auth/refresh') {
       response.clearCookie(
         cookieConfig.accessToken.name,
@@ -24,6 +25,7 @@ export class GlobalExceptionFilter extends SentryGlobalFilter {
         cookieConfig.refreshToken.name,
         cookieConfig.refreshToken.options,
       );
+      response.clearCookie(csrfCookieName, csrfCookieOptions);
     }
 
     if (exception instanceof HttpException) {

@@ -1,4 +1,4 @@
-import { api, ApiError } from './api';
+import { api, ApiError, getCsrfToken, clearCsrfToken } from './api';
 
 export interface User {
   id: string;
@@ -48,13 +48,24 @@ export async function signup(
 }
 
 export async function logout(): Promise<void> {
+  // Use direct fetch to avoid the api() retry pipeline.
+  // The api() wrapper retries on 401 by refreshing the session, which would
+  // re-authenticate the user during logout — causing a redirect loop.
+  const token = getCsrfToken();
   try {
-    await api('/auth/logout', {
+    await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL!}/auth/logout`, {
       method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Request-Id': crypto.randomUUID(),
+        ...(token && { 'x-csrf-token': token }),
+      },
     });
   } catch {
-    // Ignore errors on logout
+    // Best effort — server may be unreachable after redeployment
   }
+  clearCsrfToken();
 }
 
 export async function forgotPassword(email: string): Promise<AuthResponse> {
