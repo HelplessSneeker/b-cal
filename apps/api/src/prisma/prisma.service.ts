@@ -39,7 +39,17 @@ export class PrismaService
   }
 
   async onModuleInit() {
-    await this.$connect();
+    try {
+      await this.$connect();
+      await this.$queryRawUnsafe('SELECT 1');
+    } catch (error) {
+      const host = process.env['DB_HOST'];
+      const port = process.env.DB_PORT;
+      console.error(
+        `\n[PrismaService] Failed to connect to database at ${host}:${port}. Is PostgreSQL running?\n`,
+      );
+      throw error;
+    }
     const poolMax = parseInt(process.env.DB_POOL_MAX || '10', 10);
     this.logger.log(`Database connected (pool max: ${poolMax})`);
   }
