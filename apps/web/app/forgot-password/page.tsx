@@ -64,16 +64,13 @@ export default function ForgotPasswordPage() {
               </form>
             </CardContent>
           )}
-          {submitted && (
-            <CardContent>
-              <a
-                href="/login"
-                className="text-sm underline-offset-4 hover:underline"
-              >
+          <CardContent>
+            <div className="text-center text-sm">
+              <a href="/login" className="underline-offset-4 hover:underline">
                 Back to login
               </a>
-            </CardContent>
-          )}
+            </div>
+          </CardContent>
         </Card>
       </div>
     </div>
