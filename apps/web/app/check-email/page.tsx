@@ -3,7 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getMe, logout, resendVerification } from '@/lib/api/auth';
+import { ApiError } from '@/lib/api/api';
 import { useUserStore } from '@/lib/stores/userStore';
+import { useConnectionStore } from '@/lib/stores/connectionStore';
+import { checkHealth } from '@/components/ConnectionGuard';
 import { useCalendarStore } from '@/lib/stores/calendarStore';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,18 +39,31 @@ export default function CheckEmailPage() {
       return;
     }
 
-    getMe().then((userData) => {
-      if (userData) {
-        if (userData.emailVerified) {
-          router.push('/');
+    getMe()
+      .then((userData) => {
+        if (userData) {
+          if (userData.emailVerified) {
+            router.push('/');
+            return;
+          }
+          setUser(userData);
+        } else {
+          router.push('/login');
+        }
+        setIsLoading(false);
+      })
+      .catch(async (error) => {
+        if (error instanceof ApiError && error.status === 0) {
+          const healthy = await checkHealth();
+          if (!healthy) {
+            useConnectionStore.getState().recordFailure();
+          }
+          setIsLoading(false);
           return;
         }
-        setUser(userData);
-      } else {
         router.push('/login');
-      }
-      setIsLoading(false);
-    });
+        setIsLoading(false);
+      });
   }, [user, setUser, router]);
 
   useEffect(() => {

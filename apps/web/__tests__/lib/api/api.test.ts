@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { api, ApiError, fetchCsrfToken } from '@/lib/api/api';
+import { useConnectionStore } from '@/lib/stores/connectionStore';
 
 const BACKEND_URL = 'http://localhost:3000';
 
@@ -14,6 +15,11 @@ describe('api() token refresh', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', mockFetch);
     mockFetch.mockReset();
+    useConnectionStore.setState({
+      consecutiveFailures: 0,
+      isBackendDown: false,
+      isRetrying: false,
+    });
   });
 
   afterEach(() => {
@@ -188,5 +194,77 @@ describe('api() token refresh', () => {
       (call) => call[0] === `${BACKEND_URL}/auth/refresh`,
     );
     expect(refreshCall[1].headers['x-csrf-token']).toBe('test-csrf-token');
+  });
+});
+
+describe('api() connection tracking', () => {
+  const mockFetch = vi.fn();
+
+  beforeEach(() => {
+    vi.stubGlobal('fetch', mockFetch);
+    mockFetch.mockReset();
+    useConnectionStore.setState({
+      consecutiveFailures: 0,
+      isBackendDown: false,
+      isRetrying: false,
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function jsonResponse(status: number, body: object) {
+    return new Response(JSON.stringify(body), {
+      status,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  it('records success on successful response', async () => {
+    // Simulate prior failure
+    useConnectionStore.setState({ consecutiveFailures: 1 });
+
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse(200, { data: { id: '1' }, message: '' }),
+    );
+
+    await api('/calendar', { showSuccessToast: false });
+
+    expect(useConnectionStore.getState().consecutiveFailures).toBe(0);
+  });
+
+  it('records failure on network error', async () => {
+    mockFetch.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+    await expect(api('/calendar')).rejects.toThrow(ApiError);
+
+    expect(useConnectionStore.getState().consecutiveFailures).toBe(1);
+  });
+
+  it('sets isBackendDown after 2 network errors', async () => {
+    mockFetch.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    await expect(api('/endpoint1')).rejects.toThrow(ApiError);
+    await expect(api('/endpoint2')).rejects.toThrow(ApiError);
+
+    expect(useConnectionStore.getState().isBackendDown).toBe(true);
+  });
+
+  it('suppresses toast when backend is already down', async () => {
+    const { toast } = await import('sonner');
+    const errorSpy = vi.mocked(toast.error);
+    errorSpy.mockClear();
+
+    mockFetch.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    // First two failures trigger isBackendDown
+    await expect(api('/endpoint1')).rejects.toThrow(ApiError);
+    await expect(api('/endpoint2')).rejects.toThrow(ApiError);
+    errorSpy.mockClear();
+
+    // Third failure should suppress toast
+    await expect(api('/endpoint3')).rejects.toThrow(ApiError);
+    expect(errorSpy).not.toHaveBeenCalled();
   });
 });

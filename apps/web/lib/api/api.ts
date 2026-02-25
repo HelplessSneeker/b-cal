@@ -1,4 +1,5 @@
 import { toast } from 'sonner';
+import { useConnectionStore } from '@/lib/stores/connectionStore';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
@@ -156,6 +157,8 @@ export async function api<T = unknown>(
       throw new ApiError(errorMessage, response.status);
     }
 
+    useConnectionStore.getState().recordSuccess();
+
     if (json.message && showSuccessToast) {
       toast.success(json.message);
     }
@@ -165,8 +168,10 @@ export async function api<T = unknown>(
     if (error instanceof ApiError) {
       throw error;
     }
-    const message = 'Network error. Please try again.';
-    toast.error(message);
-    throw new ApiError(message, 0);
+    useConnectionStore.getState().recordFailure();
+    if (!useConnectionStore.getState().isBackendDown) {
+      toast.error('Network error. Please try again.');
+    }
+    throw new ApiError('Network error. Please try again.', 0);
   }
 }

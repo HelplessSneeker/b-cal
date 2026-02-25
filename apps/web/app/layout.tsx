@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
+import { ConnectionGuard } from '@/components/ConnectionGuard';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -39,6 +40,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <ConnectionGuard />
         <Toaster />
       </body>
     </html>

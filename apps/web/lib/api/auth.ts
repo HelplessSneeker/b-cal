@@ -165,7 +165,10 @@ export async function getMe(): Promise<User | null> {
       showSuccessToast: false,
     });
     return user;
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 0) {
+      throw error;
+    }
     return null;
   }
 }

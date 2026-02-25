@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 import { useUserStore } from '@/lib/stores/userStore';
 import { useCalendarStore, CalendarView } from '@/lib/stores/calendarStore';
+import { useConnectionStore } from '@/lib/stores/connectionStore';
 
 export { render, screen, waitFor, within, act } from '@testing-library/react';
 export { default as userEvent } from '@testing-library/user-event';
@@ -48,5 +49,10 @@ export function resetStores() {
     isEntryModalOpen: false,
     editingEntry: null,
     defaultStartDate: null,
+  });
+  useConnectionStore.setState({
+    consecutiveFailures: 0,
+    isBackendDown: false,
+    isRetrying: false,
   });
 }

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, userEvent, resetStores } from '../test-utils';
 import CheckEmailPage from '@/app/check-email/page';
 import { useUserStore } from '@/lib/stores/userStore';
+import { ApiError } from '@/lib/api/api';
 
 const mockPush = vi.fn();
 
@@ -15,10 +16,17 @@ vi.mock('@/lib/api/auth', () => ({
   logout: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('@/components/ConnectionGuard', () => ({
+  checkHealth: vi.fn().mockResolvedValue(false),
+  ConnectionGuard: () => null,
+}));
+
 import { getMe, resendVerification, logout } from '@/lib/api/auth';
+import { checkHealth } from '@/components/ConnectionGuard';
 const getMeMock = vi.mocked(getMe);
 const resendMock = vi.mocked(resendVerification);
 const logoutMock = vi.mocked(logout);
+const checkHealthMock = vi.mocked(checkHealth);
 
 beforeEach(() => {
   resetStores();
@@ -26,6 +34,7 @@ beforeEach(() => {
   getMeMock.mockClear();
   resendMock.mockClear();
   logoutMock.mockClear();
+  checkHealthMock.mockReset().mockResolvedValue(false);
 });
 
 describe('CheckEmailPage', () => {
@@ -130,6 +139,15 @@ describe('CheckEmailPage', () => {
       expect(logoutMock).toHaveBeenCalled();
       expect(mockPush).toHaveBeenCalledWith('/login');
       expect(useUserStore.getState().user).toBeNull();
+    });
+  });
+
+  it('does not redirect to /login on network error (status 0)', async () => {
+    getMeMock.mockRejectedValue(new ApiError('Network error', 0));
+    render(<CheckEmailPage />);
+
+    await waitFor(() => {
+      expect(mockPush).not.toHaveBeenCalled();
     });
   });
 });

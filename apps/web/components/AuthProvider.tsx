@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getMe } from '@/lib/api/auth';
-import { fetchCsrfToken } from '@/lib/api/api';
+import { fetchCsrfToken, ApiError } from '@/lib/api/api';
 import { useUserStore } from '@/lib/stores/userStore';
+import { useConnectionStore } from '@/lib/stores/connectionStore';
+import { checkHealth } from '@/components/ConnectionGuard';
 import { Loading } from '@/components/ui/loading';
 
 interface AuthProviderProps {
@@ -37,6 +39,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // Token was invalid/expired - proxy didn't catch it
           router.push('/login');
         }
+        setHasChecked(true);
+      })
+      .catch(async (error) => {
+        if (cancelled) return;
+        if (error instanceof ApiError && error.status === 0) {
+          // Confirm the backend is truly down with a health check.
+          // getMe() already recorded 1 failure via api(); if health
+          // also fails, recordFailure() brings us to 2 → isBackendDown.
+          const healthy = await checkHealth();
+          if (cancelled) return;
+          if (!healthy) {
+            useConnectionStore.getState().recordFailure();
+          }
+          setHasChecked(true);
+          return;
+        }
+        router.push('/login');
         setHasChecked(true);
       });
 
