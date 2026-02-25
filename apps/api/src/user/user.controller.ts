@@ -3,6 +3,7 @@ import * as express from 'express';
 import { EmailVerifiedGuard } from 'src/auth/guard/email-verified.guard';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { cookieConfig } from 'src/auth/constants';
+import { csrfCookieName, csrfCookieOptions } from 'src/csrf/csrf.config';
 import { UserService } from './user.service';
 import { User } from 'src/auth/decorators/user.decorator';
 
@@ -26,6 +27,7 @@ export class UserController {
       cookieConfig.refreshToken.name,
       cookieConfig.refreshToken.options,
     );
+    res.clearCookie(csrfCookieName, csrfCookieOptions);
 
     return { message: 'Successfully deleted user' };
   }

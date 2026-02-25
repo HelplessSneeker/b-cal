@@ -41,7 +41,7 @@ describe('UserController', () => {
 
       expect(result).toEqual({ message: 'Successfully deleted user' });
       expect(mockUserService.deleteUser).toHaveBeenCalledWith('user-1');
-      expect(mockRes.clearCookie).toHaveBeenCalledTimes(2);
+      expect(mockRes.clearCookie).toHaveBeenCalledTimes(3);
     });
   });
 });
