@@ -1,5 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
   "tasks": {
     "dev": {
       "cache": false,
@@ -38,10 +39,12 @@
       "cache": false
     },
     "prisma:migrate": {
-      "cache": false
+      "cache": false,
+      "interactive": true
     },
     "prisma:seed": {
-      "cache": false
+      "cache": false,
+      "interactive": true
     },
     "prisma:studio": {
       "cache": false,
