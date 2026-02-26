@@ -16,6 +16,8 @@
     "prisma:migrate": "turbo run prisma:migrate --filter=@b-cal/api",
     "prisma:seed": "turbo run prisma:seed --filter=@b-cal/api",
     "prisma:studio": "turbo run prisma:studio --filter=@b-cal/api",
+    "db:up": "docker compose up postgres -d",
+    "db:down": "docker compose down postgres",
     "prepare": "husky"
   },
   "keywords": [],

@@ -44,7 +44,7 @@ pnpm test:e2e                                # Run e2e tests (uses separate test
 pnpm prisma:migrate                          # Apply database migrations
 pnpm prisma:generate                         # Regenerate Prisma client
 pnpm prisma:seed                             # Seed database with test data
-docker compose up -d                         # Start PostgreSQL
+pnpm db:up                                   # Start PostgreSQL (from root)
 ```
 
 ## Docker

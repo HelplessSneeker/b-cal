@@ -28,7 +28,7 @@ Run from this directory (`apps/api`):
 - `pnpm run prisma:seed` — seed database with test data (prompts for confirmation, use `--force` to skip)
 - `pnpm run prisma:migrate` — apply migrations
 - `pnpm run prisma:generate` — regenerate Prisma client
-- `docker compose up -d` — start PostgreSQL
+- `pnpm db:up` — start PostgreSQL (run from monorepo root)
 
 Or from monorepo root:
 
@@ -40,7 +40,7 @@ Multi-stage Dockerfile (`Dockerfile`) using Node 22 Alpine. Builds with `pnpm de
 
 ## Infrastructure
 
-PostgreSQL 16 runs via `docker-compose.yml`. Environment variables in `.env` (dev) and `.env.test` (e2e tests):
+PostgreSQL 16 runs via the root `docker-compose.yml`. Environment variables in `.env` (dev) and `.env.test` (e2e tests):
 - `PORT` (default 3000), `FRONTEND_URL` (CORS origin)
 - `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `DB_HOST`
 - `SECRET_KEY` (access token), `REFRESH_SECRET_KEY` (refresh token), `MAIL_SECRET_KEY` (email tokens), `CSRF_SECRET` (CSRF double-submit cookie) — all require min 32 characters
