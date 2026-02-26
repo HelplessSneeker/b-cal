@@ -6,6 +6,38 @@ export enum CalendarView {
   Month = 'Month',
 }
 
+const STORAGE_PREFIX = 'b-cal:';
+
+function loadStoredValue<T>(
+  key: string,
+  fallback: T,
+  validate: (v: unknown) => v is T,
+): T {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const raw = localStorage.getItem(`${STORAGE_PREFIX}${key}`);
+    if (raw === null) return fallback;
+    const parsed: unknown = JSON.parse(raw);
+    return validate(parsed) ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function storeValue(key: string, value: unknown): void {
+  try {
+    localStorage.setItem(`${STORAGE_PREFIX}${key}`, JSON.stringify(value));
+  } catch {
+    // Storage full or unavailable — silently ignore
+  }
+}
+
+const validViews = new Set<string>(Object.values(CalendarView));
+
+function isCalendarView(v: unknown): v is CalendarView {
+  return typeof v === 'string' && validViews.has(v);
+}
+
 export interface CalendarEntry {
   id: string;
   startDate: Date;
@@ -71,7 +103,7 @@ interface CalendarState {
 }
 
 export const useCalendarStore = create<CalendarState>((set) => ({
-  view: CalendarView.Month,
+  view: loadStoredValue('view', CalendarView.Month, isCalendarView),
   currentDate: new Date(),
   entries: [],
   entryMap: new Map(),
@@ -80,7 +112,10 @@ export const useCalendarStore = create<CalendarState>((set) => ({
   isEntryModalOpen: false,
   editingEntry: null,
   defaultStartDate: null,
-  setView: (view) => set({ view }),
+  setView: (view) => {
+    storeValue('view', view);
+    set({ view });
+  },
   setCurrentDate: (currentDate) => set({ currentDate }),
   mergeEntries: (entries) =>
     set((state) => {
