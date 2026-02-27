@@ -13,9 +13,13 @@ import { cn } from '@/lib/utils/utils';
 
 const WEEKDAY_NAMES = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
-export function MonthView() {
-  const { currentDate, entries, setView, setCurrentDate, openEntryModal } =
-    useCalendarStore();
+export function MonthView({ date }: { date?: Date }) {
+  const storeDate = useCalendarStore((s) => s.currentDate);
+  const entries = useCalendarStore((s) => s.entries);
+  const setView = useCalendarStore((s) => s.setView);
+  const setCurrentDate = useCalendarStore((s) => s.setCurrentDate);
+  const openEntryModal = useCalendarStore((s) => s.openEntryModal);
+  const currentDate = date ?? storeDate;
 
   const gridDates = getMonthGridDates(currentDate);
   const currentMonth = currentDate.getMonth();

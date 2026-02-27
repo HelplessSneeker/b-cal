@@ -38,6 +38,26 @@ function isCalendarView(v: unknown): v is CalendarView {
   return typeof v === 'string' && validViews.has(v);
 }
 
+export function getAdjacentDate(
+  date: Date,
+  view: CalendarView,
+  direction: -1 | 1,
+): Date {
+  const newDate = new Date(date);
+  switch (view) {
+    case CalendarView.Day:
+      newDate.setDate(newDate.getDate() + direction);
+      break;
+    case CalendarView.Week:
+      newDate.setDate(newDate.getDate() + direction * 7);
+      break;
+    case CalendarView.Month:
+      newDate.setMonth(newDate.getMonth() + direction);
+      break;
+  }
+  return newDate;
+}
+
 export interface CalendarEntry {
   id: string;
   startDate: Date;
@@ -95,6 +115,7 @@ interface CalendarState {
   addLoadedRange: (start: number, end: number) => void;
   setIsFetching: (isFetching: boolean) => void;
   clearCache: () => void;
+  navigate: (direction: -1 | 1) => void;
   openEntryModal: (entry?: CalendarEntry, defaultStart?: Date) => void;
   closeEntryModal: () => void;
   addEntry: (entry: CalendarEntry) => void;
@@ -131,6 +152,10 @@ export const useCalendarStore = create<CalendarState>((set) => ({
     })),
   setIsFetching: (isFetching) => set({ isFetching }),
   clearCache: () => set({ entryMap: new Map(), entries: [], loadedRanges: [] }),
+  navigate: (direction) =>
+    set((state) => ({
+      currentDate: getAdjacentDate(state.currentDate, state.view, direction),
+    })),
   openEntryModal: (entry, defaultStart) =>
     set({
       isEntryModalOpen: true,

@@ -19,8 +19,11 @@ function formatDayHeader(date: Date): string {
   });
 }
 
-export function DayView() {
-  const { currentDate, entries, openEntryModal } = useCalendarStore();
+export function DayView({ date }: { date?: Date }) {
+  const storeDate = useCalendarStore((s) => s.currentDate);
+  const entries = useCalendarStore((s) => s.entries);
+  const openEntryModal = useCalendarStore((s) => s.openEntryModal);
+  const currentDate = date ?? storeDate;
 
   const dayEntries = entries.filter((entry) =>
     entryOverlapsDay(entry, currentDate),

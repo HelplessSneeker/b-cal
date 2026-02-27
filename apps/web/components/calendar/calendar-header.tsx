@@ -98,6 +98,7 @@ export function CalendarHeader() {
     setView,
     setCurrentDate,
     clearCache,
+    navigate,
     openEntryModal,
   } = useCalendarStore();
   const initials = user?.email ? getAvatarInitials(user.email) : '?';
@@ -113,22 +114,6 @@ export function CalendarHeader() {
 
   const handleViewChange = (newView: CalendarView) => {
     setView(newView);
-  };
-
-  const handleNavigate = (direction: -1 | 1) => {
-    const newDate = new Date(currentDate);
-    switch (view) {
-      case CalendarView.Day:
-        newDate.setDate(newDate.getDate() + direction);
-        break;
-      case CalendarView.Week:
-        newDate.setDate(newDate.getDate() + direction * 7);
-        break;
-      case CalendarView.Month:
-        newDate.setMonth(newDate.getMonth() + direction);
-        break;
-    }
-    setCurrentDate(newDate);
   };
 
   const handleLogout = async () => {
@@ -165,17 +150,13 @@ export function CalendarHeader() {
         </div>
 
         <div className="flex flex-1 items-center justify-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleNavigate(-1)}
-          >
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ChevronLeftIcon className="size-4" />
           </Button>
           <span className="min-w-48 text-center text-muted-foreground">
             {formatDateDisplay(currentDate, view)}
           </span>
-          <Button variant="ghost" size="icon" onClick={() => handleNavigate(1)}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(1)}>
             <ChevronRightIcon className="size-4" />
           </Button>
         </div>
@@ -248,7 +229,7 @@ export function CalendarHeader() {
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={() => handleNavigate(-1)}
+            onClick={() => navigate(-1)}
             aria-label="Previous"
           >
             <ChevronLeftIcon className="size-4" />
@@ -263,7 +244,7 @@ export function CalendarHeader() {
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={() => handleNavigate(1)}
+            onClick={() => navigate(1)}
             aria-label="Next"
           >
             <ChevronRightIcon className="size-4" />

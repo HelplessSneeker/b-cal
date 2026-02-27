@@ -34,8 +34,11 @@ function isToday(date: Date): boolean {
   return isSameDay(date, today);
 }
 
-export function WeekView() {
-  const { currentDate, entries, openEntryModal } = useCalendarStore();
+export function WeekView({ date }: { date?: Date }) {
+  const storeDate = useCalendarStore((s) => s.currentDate);
+  const entries = useCalendarStore((s) => s.entries);
+  const openEntryModal = useCalendarStore((s) => s.openEntryModal);
+  const currentDate = date ?? storeDate;
 
   const startOfWeek = getStartOfWeek(currentDate);
   const weekDays = getWeekDays(startOfWeek);

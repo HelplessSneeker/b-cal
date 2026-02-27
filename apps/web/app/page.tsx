@@ -1,8 +1,10 @@
 'use client';
 
+import { useCallback } from 'react';
 import { AuthProvider } from '@/components/AuthProvider';
 import { CalendarHeader } from '@/components/calendar/calendar-header';
 import { CalendarSidebar } from '@/components/calendar/calendar-sidebar';
+import { SwipeContainer } from '@/components/calendar/swipe-container';
 import { DayView } from '@/components/calendar/views/day-view';
 import { WeekView } from '@/components/calendar/views/week-view';
 import { MonthView } from '@/components/calendar/views/month-view';
@@ -18,15 +20,24 @@ function CalendarPage() {
 
   useCalendarData();
 
+  const renderView = useCallback(
+    (date: Date) => (
+      <>
+        {view === CalendarView.Day && <DayView date={date} />}
+        {view === CalendarView.Week && <WeekView date={date} />}
+        {view === CalendarView.Month && <MonthView date={date} />}
+      </>
+    ),
+    [view],
+  );
+
   return (
     <div className="flex h-screen flex-col">
       <CalendarHeader />
       <div className="flex flex-1 overflow-hidden">
         <CalendarSidebar />
         <main className="flex-1">
-          {view === CalendarView.Day && <DayView />}
-          {view === CalendarView.Week && <WeekView />}
-          {view === CalendarView.Month && <MonthView />}
+          <SwipeContainer renderView={renderView} />
         </main>
       </div>
       <EntryModal />
