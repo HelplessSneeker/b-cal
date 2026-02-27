@@ -1,6 +1,7 @@
 'use client';
 
 import { type CalendarEntry } from '@/lib/stores/calendarStore';
+import { isEffectiveWholeDay } from '@/lib/calendar/spanning-utils';
 import { cn } from '@/lib/utils/utils';
 
 interface EntryPreviewProps {
@@ -21,7 +22,7 @@ export function EntryPreview({ entry, onClick }: EntryPreviewProps) {
       )}
       onClick={onClick}
     >
-      {entry.wholeDay ? (
+      {isEffectiveWholeDay(entry) ? (
         <span className="font-medium">{entry.title}</span>
       ) : (
         <>

@@ -1,5 +1,12 @@
 import { type CalendarEntry } from '@/lib/stores/calendarStore';
 
+export function isEffectiveWholeDay(entry: CalendarEntry): boolean {
+  return (
+    entry.wholeDay ||
+    entry.startDate.toDateString() !== entry.endDate.toDateString()
+  );
+}
+
 export function isSameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&

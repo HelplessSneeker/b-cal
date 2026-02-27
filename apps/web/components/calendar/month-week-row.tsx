@@ -5,9 +5,11 @@ import { type CalendarEntry } from '@/lib/stores/calendarStore';
 import {
   computeSpanningEntries,
   entryOverlapsDay,
+  isEffectiveWholeDay,
   isSameDay,
 } from '@/lib/calendar/spanning-utils';
-import { DateCell } from '@/components/calendar/date-cell';
+import { EntryPreview } from '@/components/calendar/entry-preview';
+import { MoreIndicator } from '@/components/calendar/more-indicator';
 import { cn } from '@/lib/utils/utils';
 
 interface MonthWeekRowProps {
@@ -19,8 +21,7 @@ interface MonthWeekRowProps {
   onMoreClick: (date: Date) => void;
 }
 
-const MAX_SPANNING_ROWS = 3;
-const MAX_TOTAL_ENTRIES = 3;
+const MAX_ENTRIES_PER_DAY = 3;
 
 export function MonthWeekRow({
   days,
@@ -33,12 +34,12 @@ export function MonthWeekRow({
   const today = useMemo(() => new Date(), []);
 
   const wholeDayEntries = useMemo(
-    () => entries.filter((e) => e.wholeDay),
+    () => entries.filter(isEffectiveWholeDay),
     [entries],
   );
 
   const timedEntries = useMemo(
-    () => entries.filter((e) => !e.wholeDay),
+    () => entries.filter((e) => !isEffectiveWholeDay(e)),
     [entries],
   );
 
@@ -48,16 +49,38 @@ export function MonthWeekRow({
   );
 
   const visibleSpanningEntries = spanningEntries.filter(
-    (se) => se.row < MAX_SPANNING_ROWS,
+    (se) => se.row < MAX_ENTRIES_PER_DAY,
   );
 
-  const totalSpanningRows =
-    spanningEntries.length > 0
-      ? Math.min(
-          Math.max(...spanningEntries.map((se) => se.row)) + 1,
-          MAX_SPANNING_ROWS,
-        )
-      : 0;
+  const hasEntries = entries.length > 0;
+
+  // Per-day: compute which rows are free and how many timed entries to show
+  const dayData = useMemo(() => {
+    return days.map((day, colIdx) => {
+      const occupiedRows = new Set(
+        visibleSpanningEntries
+          .filter((se) => entryOverlapsDay(se.entry, day))
+          .map((se) => se.row),
+      );
+
+      const freeRows: number[] = [];
+      for (let r = 0; r < MAX_ENTRIES_PER_DAY; r++) {
+        if (!occupiedRows.has(r)) freeRows.push(r);
+      }
+
+      const dayTimed = timedEntries.filter((e) => entryOverlapsDay(e, day));
+
+      const hiddenSpanning = spanningEntries.filter(
+        (se) =>
+          se.row >= MAX_ENTRIES_PER_DAY && entryOverlapsDay(se.entry, day),
+      ).length;
+
+      const timedToShow = Math.min(dayTimed.length, freeRows.length);
+      const hiddenCount = dayTimed.length - timedToShow + hiddenSpanning;
+
+      return { day, colIdx, dayTimed, freeRows, timedToShow, hiddenCount };
+    });
+  }, [days, visibleSpanningEntries, spanningEntries, timedEntries]);
 
   return (
     <div
@@ -109,12 +132,15 @@ export function MonthWeekRow({
         })}
       </div>
 
-      {/* Spanning bars */}
-      {visibleSpanningEntries.length > 0 && (
+      {/* Unified entries grid: spanning bars + timed entries share rows */}
+      {hasEntries && (
         <div
           className="grid grid-cols-7 gap-y-0.5"
-          style={{ gridTemplateRows: `repeat(${totalSpanningRows}, 20px)` }}
+          style={{
+            gridTemplateRows: `repeat(${MAX_ENTRIES_PER_DAY}, 20px)`,
+          }}
         >
+          {/* Spanning (multi-day) entries */}
           {visibleSpanningEntries.map((se) => (
             <div
               key={se.entry.id}
@@ -136,40 +162,48 @@ export function MonthWeekRow({
               <span className="truncate">{se.entry.title}</span>
             </div>
           ))}
+
+          {/* Timed entries placed in free row slots per day */}
+          {dayData.flatMap(({ dayTimed, freeRows, timedToShow, colIdx }) =>
+            dayTimed.slice(0, timedToShow).map((entry, i) => (
+              <div
+                key={entry.id}
+                className="px-0.5"
+                style={{
+                  gridColumn: colIdx + 1,
+                  gridRow: freeRows[i] + 1,
+                }}
+              >
+                <EntryPreview
+                  entry={entry}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEntryClick(entry);
+                  }}
+                />
+              </div>
+            )),
+          )}
         </div>
       )}
 
-      {/* Per-cell timed entries */}
-      <div className="grid min-h-0 flex-1 grid-cols-7 overflow-hidden">
-        {days.map((day) => {
-          const dayTimed = timedEntries.filter((e) => entryOverlapsDay(e, day));
-          const daySpanningRowCount = new Set(
-            visibleSpanningEntries
-              .filter((se) => entryOverlapsDay(se.entry, day))
-              .map((se) => se.row),
-          ).size;
-          const dayMaxTimedVisible = Math.max(
-            MAX_TOTAL_ENTRIES - daySpanningRowCount,
-            0,
-          );
-          const hiddenSpanningForDay = spanningEntries.filter(
-            (se) =>
-              se.row >= MAX_SPANNING_ROWS && entryOverlapsDay(se.entry, day),
-          ).length;
-
-          return (
-            <DateCell
-              key={day.toISOString()}
-              date={day}
-              entries={dayTimed}
-              onCellClick={onCellClick}
-              onEntryClick={onEntryClick}
-              onMoreClick={onMoreClick}
-              maxVisibleEntries={dayMaxTimedVisible}
-              extraHiddenCount={hiddenSpanningForDay}
-            />
-          );
-        })}
+      {/* "+N more" indicators */}
+      <div className="grid grid-cols-7">
+        {dayData.map(({ day, hiddenCount }) =>
+          hiddenCount > 0 ? (
+            <div key={day.toISOString()} className="px-0.5">
+              <MoreIndicator
+                count={hiddenCount}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMoreClick(day);
+                }}
+              />
+            </div>
+          ) : (
+            <div key={day.toISOString()} />
+          ),
+        )}
       </div>
     </div>
   );
