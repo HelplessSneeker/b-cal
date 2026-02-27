@@ -25,7 +25,9 @@ function getCookieDomain(): string | undefined {
   const frontendUrl = process.env.FRONTEND_URL;
   if (!frontendUrl) return undefined;
   try {
-    return new URL(frontendUrl).hostname;
+    const hostname = new URL(frontendUrl).hostname;
+    if (hostname === 'localhost') return undefined;
+    return hostname;
   } catch {
     return undefined;
   }
