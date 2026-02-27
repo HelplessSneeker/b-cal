@@ -36,7 +36,7 @@ function CalendarPage() {
       <CalendarHeader />
       <div className="flex flex-1 overflow-hidden">
         <CalendarSidebar />
-        <main className="flex-1">
+        <main className="min-w-0 flex-1 overflow-hidden">
           <SwipeContainer renderView={renderView} />
         </main>
       </div>
