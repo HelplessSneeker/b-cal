@@ -3,6 +3,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
   userEvent,
   resetStores,
 } from '../../test-utils';
@@ -39,6 +40,14 @@ beforeEach(() => {
   });
 });
 
+function getDesktopHeader() {
+  return within(screen.getByTestId('desktop-header'));
+}
+
+function getMobileHeader() {
+  return within(screen.getByTestId('mobile-header'));
+}
+
 describe('CalendarHeader', () => {
   it('displays user avatar initials from email', () => {
     render(<CalendarHeader />);
@@ -50,7 +59,8 @@ describe('CalendarHeader', () => {
     const user = userEvent.setup();
     render(<CalendarHeader />);
 
-    await user.click(screen.getByRole('button', { name: 'Today' }));
+    const desktop = getDesktopHeader();
+    await user.click(desktop.getByRole('button', { name: 'Today' }));
 
     const state = useCalendarStore.getState();
     const today = new Date();
@@ -67,8 +77,8 @@ describe('CalendarHeader', () => {
     const user = userEvent.setup();
     render(<CalendarHeader />);
 
-    const buttons = screen.getAllByRole('button');
-    // Find the navigation buttons (they have chevron icons)
+    const desktop = getDesktopHeader();
+    const buttons = desktop.getAllByRole('button');
     const prevBtn = buttons.find((b) =>
       b.querySelector('.lucide-chevron-left'),
     )!;
@@ -91,7 +101,8 @@ describe('CalendarHeader', () => {
     const user = userEvent.setup();
     render(<CalendarHeader />);
 
-    const nextBtn = screen
+    const desktop = getDesktopHeader();
+    const nextBtn = desktop
       .getAllByRole('button')
       .find((b) => b.querySelector('.lucide-chevron-right'))!;
 
@@ -107,7 +118,8 @@ describe('CalendarHeader', () => {
     const user = userEvent.setup();
     render(<CalendarHeader />);
 
-    const nextBtn = screen
+    const desktop = getDesktopHeader();
+    const nextBtn = desktop
       .getAllByRole('button')
       .find((b) => b.querySelector('.lucide-chevron-right'))!;
 
@@ -119,11 +131,10 @@ describe('CalendarHeader', () => {
     const user = userEvent.setup();
     render(<CalendarHeader />);
 
-    // Open the view dropdown (has aria-haspopup="menu")
-    const viewTrigger = screen.getByRole('button', { name: /^Day/ });
+    const desktop = getDesktopHeader();
+    const viewTrigger = desktop.getByRole('button', { name: /^Day/ });
     await user.click(viewTrigger);
 
-    // Select Week
     await user.click(screen.getByRole('menuitem', { name: 'Week' }));
     expect(useCalendarStore.getState().view).toBe(CalendarView.Week);
   });
@@ -181,6 +192,63 @@ describe('CalendarHeader', () => {
       expect(deleteUserMock).toHaveBeenCalled();
       expect(mockPush).toHaveBeenCalledWith('/login');
       expect(useUserStore.getState().user).toBeNull();
+    });
+  });
+
+  describe('mobile header', () => {
+    it('hamburger opens drawer with mini calendar', async () => {
+      const user = userEvent.setup();
+      render(<CalendarHeader />);
+
+      const mobile = getMobileHeader();
+      await user.click(mobile.getByRole('button', { name: 'Open menu' }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+      const dialog = within(screen.getByRole('dialog'));
+      expect(dialog.getByText('Calendar')).toBeInTheDocument();
+    });
+
+    it('mobile date tap navigates to today', async () => {
+      useCalendarStore.setState({ currentDate: new Date(2020, 0, 1) });
+      const user = userEvent.setup();
+      render(<CalendarHeader />);
+
+      const mobile = getMobileHeader();
+      await user.click(mobile.getByRole('button', { name: 'Go to today' }));
+
+      const state = useCalendarStore.getState();
+      const today = new Date();
+      expect(state.currentDate.getDate()).toBe(today.getDate());
+      expect(state.currentDate.getMonth()).toBe(today.getMonth());
+      expect(state.currentDate.getFullYear()).toBe(today.getFullYear());
+    });
+
+    it('mobile + button opens entry modal', async () => {
+      const user = userEvent.setup();
+      render(<CalendarHeader />);
+
+      const mobile = getMobileHeader();
+      await user.click(mobile.getByRole('button', { name: 'New entry' }));
+
+      expect(useCalendarStore.getState().isEntryModalOpen).toBe(true);
+    });
+
+    it('mobile nav buttons change date', async () => {
+      useCalendarStore.setState({
+        view: CalendarView.Day,
+        currentDate: new Date(2025, 5, 15),
+      });
+      const user = userEvent.setup();
+      render(<CalendarHeader />);
+
+      const mobile = getMobileHeader();
+      await user.click(mobile.getByRole('button', { name: 'Next' }));
+      expect(useCalendarStore.getState().currentDate.getDate()).toBe(16);
+
+      await user.click(mobile.getByRole('button', { name: 'Previous' }));
+      expect(useCalendarStore.getState().currentDate.getDate()).toBe(15);
     });
   });
 });

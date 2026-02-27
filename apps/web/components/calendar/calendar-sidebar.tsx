@@ -13,7 +13,7 @@ export function CalendarSidebar() {
   };
 
   return (
-    <aside className="flex w-64 flex-col items-center gap-4 border-r p-4">
+    <aside className="hidden w-64 flex-col items-center gap-4 border-r p-4 md:flex">
       <Button onClick={handleNewEntry} className="w-full self-stretch">
         <PlusIcon className="mr-2 size-4" />
         New Entry

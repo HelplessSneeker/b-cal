@@ -9,9 +9,12 @@ import { MonthView } from '@/components/calendar/views/month-view';
 import { CalendarView, useCalendarStore } from '@/lib/stores/calendarStore';
 import { EntryModal } from '@/components/entry-modal';
 import { useCalendarData } from '@/lib/hooks/useCalendarData';
+import { Button } from '@/components/ui/button';
+import { PlusIcon } from 'lucide-react';
 
 function CalendarPage() {
   const view = useCalendarStore((s) => s.view);
+  const openEntryModal = useCalendarStore((s) => s.openEntryModal);
 
   useCalendarData();
 
@@ -27,6 +30,13 @@ function CalendarPage() {
         </main>
       </div>
       <EntryModal />
+      <Button
+        className="fixed bottom-6 right-6 z-40 size-14 rounded-full shadow-lg md:hidden"
+        onClick={() => openEntryModal()}
+        aria-label="New entry"
+      >
+        <PlusIcon className="size-6" />
+      </Button>
     </div>
   );
 }
