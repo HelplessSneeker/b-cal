@@ -15,6 +15,7 @@ interface DayColumnProps {
   onSlotClick: (time: Date) => void;
   onEntryClick: (entry: CalendarEntry) => void;
   maxVisibleColumns?: number;
+  compact?: boolean;
 }
 
 export function DayColumn({
@@ -23,6 +24,7 @@ export function DayColumn({
   onSlotClick,
   onEntryClick,
   maxVisibleColumns = DAY_VIEW_MAX_COLUMNS,
+  compact = false,
 }: DayColumnProps) {
   const slots = Array.from({ length: 48 }, (_, i) => {
     const slotTime = new Date(date);
@@ -47,6 +49,7 @@ export function DayColumn({
           onClick={onEntryClick}
           left={event.left}
           width={event.width}
+          compact={compact}
         />
       ))}
       {layout.overflowGroups.map((group, i) => (

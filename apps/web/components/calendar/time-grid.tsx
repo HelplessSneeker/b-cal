@@ -7,9 +7,10 @@ import { HOUR_HEIGHT } from '@/lib/calendar/calendar-constants';
 
 interface TimeGridProps {
   children: ReactNode;
+  timeColumnWidth?: number;
 }
 
-export function TimeGrid({ children }: TimeGridProps) {
+export function TimeGrid({ children, timeColumnWidth }: TimeGridProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export function TimeGrid({ children }: TimeGridProps) {
   return (
     <ScrollArea className="h-full" viewportRef={viewportRef}>
       <div className="flex min-w-full pr-2.5">
-        <TimeColumn />
+        <TimeColumn columnWidth={timeColumnWidth} />
         {children}
       </div>
     </ScrollArea>

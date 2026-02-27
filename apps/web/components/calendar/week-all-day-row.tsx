@@ -10,12 +10,14 @@ interface WeekAllDayRowProps {
   weekDays: Date[];
   allDayEntries: CalendarEntry[];
   onEntryClick: (entry: CalendarEntry) => void;
+  timeColumnWidth?: number;
 }
 
 export function WeekAllDayRow({
   weekDays,
   allDayEntries,
   onEntryClick,
+  timeColumnWidth = TIME_COLUMN_WIDTH,
 }: WeekAllDayRowProps) {
   const spanningEntries = useMemo(
     () => computeSpanningEntries(allDayEntries, weekDays),
@@ -31,10 +33,10 @@ export function WeekAllDayRow({
   return (
     <div className="flex border-b pr-2.5">
       <div
-        className="flex shrink-0 items-center justify-end pr-2 text-xs text-muted-foreground"
-        style={{ width: TIME_COLUMN_WIDTH }}
+        className="flex shrink-0 items-center justify-end pr-1 text-xs text-muted-foreground"
+        style={{ width: timeColumnWidth }}
       >
-        all-day
+        {timeColumnWidth >= TIME_COLUMN_WIDTH ? 'all-day' : ''}
       </div>
       <div className="relative flex-1">
         {/* Column borders */}
@@ -55,7 +57,8 @@ export function WeekAllDayRow({
             <div
               key={se.entry.id}
               className={cn(
-                'flex cursor-pointer items-center truncate bg-blue-500/20 px-2 text-xs font-medium transition-colors hover:bg-blue-500/30',
+                'flex cursor-pointer items-center truncate bg-blue-500/20 text-xs font-medium transition-colors hover:bg-blue-500/30',
+                timeColumnWidth >= TIME_COLUMN_WIDTH ? 'px-2' : 'px-0.5',
                 !se.continuesBefore &&
                   'rounded-l-md border-l-[3px] border-blue-500',
                 !se.continuesAfter && 'rounded-r-md',

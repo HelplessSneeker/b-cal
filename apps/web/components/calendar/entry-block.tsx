@@ -10,6 +10,7 @@ interface EntryBlockProps {
   onClick: (entry: CalendarEntry) => void;
   left?: number;
   width?: number;
+  compact?: boolean;
 }
 
 function formatTimeRange(start: Date, end: Date): string {
@@ -18,7 +19,13 @@ function formatTimeRange(start: Date, end: Date): string {
   return `${format(start)} - ${format(end)}`;
 }
 
-export function EntryBlock({ entry, onClick, left, width }: EntryBlockProps) {
+export function EntryBlock({
+  entry,
+  onClick,
+  left,
+  width,
+  compact = false,
+}: EntryBlockProps) {
   const top = getEventTopPosition(entry.startDate);
   const height = getEventHeight(entry.startDate, entry.endDate);
   const isShort = height < 40;
@@ -27,7 +34,8 @@ export function EntryBlock({ entry, onClick, left, width }: EntryBlockProps) {
   return (
     <div
       className={cn(
-        'absolute cursor-pointer overflow-hidden rounded-md border-l-[3px] border-blue-500 bg-blue-500/20 px-2 py-1 transition-colors hover:z-10 hover:bg-blue-500/30',
+        'absolute cursor-pointer overflow-hidden rounded-md border-l-[3px] border-blue-500 bg-blue-500/20 transition-colors hover:z-10 hover:bg-blue-500/30',
+        compact ? 'px-0.5 py-0.5' : 'px-2 py-1',
         !hasOverlapLayout && 'left-1 right-1',
         isShort && 'py-0',
       )}
@@ -43,8 +51,12 @@ export function EntryBlock({ entry, onClick, left, width }: EntryBlockProps) {
       }
       onClick={() => onClick(entry)}
     >
-      <p className="truncate text-sm font-medium">{entry.title}</p>
-      {!isShort && (
+      <p
+        className={cn('truncate font-medium', compact ? 'text-xs' : 'text-sm')}
+      >
+        {entry.title}
+      </p>
+      {!isShort && !compact && (
         <p className="truncate text-xs text-muted-foreground">
           {formatTimeRange(entry.startDate, entry.endDate)}
         </p>

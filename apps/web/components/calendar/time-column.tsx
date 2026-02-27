@@ -8,24 +8,32 @@ import {
 } from '@/lib/calendar/calendar-constants';
 import { formatHour } from '@/lib/calendar/time-utils';
 
-export function TimeColumn() {
+interface TimeColumnProps {
+  columnWidth?: number;
+}
+
+export function TimeColumn({
+  columnWidth = TIME_COLUMN_WIDTH,
+}: TimeColumnProps) {
   const hours = Array.from(
     { length: END_HOUR - START_HOUR },
     (_, i) => START_HOUR + i,
   );
 
+  const compact = columnWidth < TIME_COLUMN_WIDTH;
+
   return (
     <div
       className="shrink-0 flex flex-col text-xs text-muted-foreground"
-      style={{ width: TIME_COLUMN_WIDTH }}
+      style={{ width: columnWidth }}
     >
       {hours.map((hour) => (
         <div
           key={hour}
-          className="flex items-center justify-end pr-2"
+          className="flex items-center justify-end pr-1"
           style={{ height: HOUR_HEIGHT }}
         >
-          {formatHour(hour)}
+          {compact ? hour.toString() : formatHour(hour)}
         </div>
       ))}
     </div>

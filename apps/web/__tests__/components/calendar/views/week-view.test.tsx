@@ -12,6 +12,19 @@ vi.mock('@/components/calendar/current-time-indicator', () => ({
 
 beforeEach(() => {
   resetStores();
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
 });
 
 // June 18, 2025 is a Wednesday
