@@ -144,7 +144,7 @@ describe('EntryModal', () => {
     expect(useCalendarStore.getState().isEntryModalOpen).toBe(false);
   });
 
-  it('all-day toggle changes input types', async () => {
+  it('always uses datetime-local inputs regardless of all-day toggle', async () => {
     useCalendarStore.setState({
       isEntryModalOpen: true,
       editingEntry: null,
@@ -164,11 +164,41 @@ describe('EntryModal', () => {
       'datetime-local',
     );
 
-    // Toggle all-day on
+    // Toggle all-day on — inputs stay as datetime-local
     await user.click(screen.getByLabelText('All day'));
 
-    expect(screen.getByLabelText('Start')).toHaveAttribute('type', 'date');
-    expect(screen.getByLabelText('End')).toHaveAttribute('type', 'date');
+    expect(screen.getByLabelText('Start')).toHaveAttribute(
+      'type',
+      'datetime-local',
+    );
+    expect(screen.getByLabelText('End')).toHaveAttribute(
+      'type',
+      'datetime-local',
+    );
+  });
+
+  it('auto-sets all-day for multi-day entries', async () => {
+    const multiDayEntry: CalendarEntry = {
+      id: 'multi-1',
+      title: 'Multi-day Event',
+      startDate: new Date(2025, 5, 15, 10, 0),
+      endDate: new Date(2025, 5, 17, 14, 0),
+      wholeDay: true,
+      content: '',
+    };
+
+    useCalendarStore.setState({
+      isEntryModalOpen: true,
+      editingEntry: multiDayEntry,
+      entries: [multiDayEntry],
+      entryMap: new Map([[multiDayEntry.id, multiDayEntry]]),
+    });
+
+    render(<EntryModal />);
+
+    const checkbox = screen.getByRole('checkbox', { name: 'All day' });
+    expect(checkbox).toBeChecked();
+    expect(checkbox).toBeDisabled();
   });
 
   it('shows "New Entry" title for create, "Edit Entry" for edit', () => {

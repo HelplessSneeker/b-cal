@@ -33,17 +33,8 @@ function formatDateTimeLocal(date: Date): string {
   return format(date, "yyyy-MM-dd'T'HH:mm");
 }
 
-function formatDateLocal(date: Date): string {
-  return format(date, 'yyyy-MM-dd');
-}
-
 function parseDateTimeLocal(value: string): Date {
   return new Date(value);
-}
-
-function parseDateLocal(value: string): Date {
-  const [year, month, day] = value.split('-').map(Number);
-  return new Date(year, month - 1, day);
 }
 
 interface EntryFormProps {
@@ -68,12 +59,8 @@ function EntryForm({
       return {
         title: editingEntry.title,
         wholeDay: editingEntry.wholeDay,
-        startDate: editingEntry.wholeDay
-          ? formatDateLocal(editingEntry.startDate)
-          : formatDateTimeLocal(editingEntry.startDate),
-        endDate: editingEntry.wholeDay
-          ? formatDateLocal(editingEntry.endDate)
-          : formatDateTimeLocal(editingEntry.endDate),
+        startDate: formatDateTimeLocal(editingEntry.startDate),
+        endDate: formatDateTimeLocal(editingEntry.endDate),
         content: editingEntry.content ?? '',
       };
     }
@@ -103,21 +90,14 @@ function EntryForm({
   const [wholeDay, setWholeDay] = useState(initialValues.wholeDay);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleWholeDayChange = (checked: boolean) => {
-    setWholeDay(checked);
+  const isMultiDay = useMemo(() => {
+    if (!startDate || !endDate) return false;
+    const start = parseDateTimeLocal(startDate);
+    const end = parseDateTimeLocal(endDate);
+    return start.toDateString() !== end.toDateString();
+  }, [startDate, endDate]);
 
-    if (checked && startDate.includes('T')) {
-      setStartDate(formatDateLocal(parseDateTimeLocal(startDate)));
-      setEndDate(formatDateLocal(parseDateTimeLocal(endDate)));
-    } else if (!checked && !startDate.includes('T')) {
-      const start = parseDateLocal(startDate);
-      start.setHours(9, 0, 0, 0);
-      const end = parseDateLocal(endDate);
-      end.setHours(10, 0, 0, 0);
-      setStartDate(formatDateTimeLocal(start));
-      setEndDate(formatDateTimeLocal(end));
-    }
-  };
+  const effectiveWholeDay = wholeDay || isMultiDay;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,12 +113,8 @@ function EntryForm({
       newErrors.endDate = 'End date is required';
     }
     if (startDate && endDate) {
-      const start = wholeDay
-        ? parseDateLocal(startDate)
-        : parseDateTimeLocal(startDate);
-      const end = wholeDay
-        ? parseDateLocal(endDate)
-        : parseDateTimeLocal(endDate);
+      const start = parseDateTimeLocal(startDate);
+      const end = parseDateTimeLocal(endDate);
       if (start > end) {
         newErrors.endDate = 'End date must be on or after start date';
       }
@@ -151,11 +127,9 @@ function EntryForm({
     const entry: CalendarEntry = {
       id: editingEntry?.id ?? crypto.randomUUID(),
       title: title.trim(),
-      startDate: wholeDay
-        ? parseDateLocal(startDate)
-        : parseDateTimeLocal(startDate),
-      endDate: wholeDay ? parseDateLocal(endDate) : parseDateTimeLocal(endDate),
-      wholeDay,
+      startDate: parseDateTimeLocal(startDate),
+      endDate: parseDateTimeLocal(endDate),
+      wholeDay: effectiveWholeDay,
       content: content.trim() || undefined,
     };
 
@@ -184,10 +158,9 @@ function EntryForm({
         <Field orientation="horizontal" className="items-center">
           <Checkbox
             id="wholeDay"
-            checked={wholeDay}
-            onCheckedChange={(checked) =>
-              handleWholeDayChange(checked === true)
-            }
+            checked={effectiveWholeDay}
+            onCheckedChange={(checked) => setWholeDay(checked === true)}
+            disabled={isMultiDay}
           />
           <FieldLabel htmlFor="wholeDay" className="cursor-pointer">
             All day
@@ -199,7 +172,7 @@ function EntryForm({
             <FieldLabel htmlFor="startDate">Start</FieldLabel>
             <Input
               id="startDate"
-              type={wholeDay ? 'date' : 'datetime-local'}
+              type="datetime-local"
               value={startDate}
               onChange={(e) => {
                 setStartDate(e.target.value);
@@ -217,7 +190,7 @@ function EntryForm({
             <FieldLabel htmlFor="endDate">End</FieldLabel>
             <Input
               id="endDate"
-              type={wholeDay ? 'date' : 'datetime-local'}
+              type="datetime-local"
               value={endDate}
               onChange={(e) => {
                 setEndDate(e.target.value);
