@@ -113,7 +113,7 @@ describe('WeekView', () => {
     expect(elements).toHaveLength(1);
 
     // The bar should use grid-column to span 3 columns
-    const bar = elements[0];
+    const bar = elements[0].closest('div')!;
     expect(bar.style.gridColumn).toBe('1 / span 3');
   });
 });

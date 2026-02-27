@@ -57,7 +57,7 @@ export function WeekAllDayRow({
             <div
               key={se.entry.id}
               className={cn(
-                'flex cursor-pointer items-center truncate bg-blue-500/20 text-xs font-medium transition-colors hover:bg-blue-500/30',
+                'flex min-w-0 cursor-pointer items-center overflow-hidden bg-blue-500/20 text-xs font-medium transition-colors hover:bg-blue-500/30',
                 timeColumnWidth >= TIME_COLUMN_WIDTH ? 'px-2' : 'px-0.5',
                 !se.continuesBefore &&
                   'rounded-l-md border-l-[3px] border-blue-500',
@@ -69,7 +69,7 @@ export function WeekAllDayRow({
               }}
               onClick={() => onEntryClick(se.entry)}
             >
-              {se.entry.title}
+              <span className="truncate">{se.entry.title}</span>
             </div>
           ))}
         </div>

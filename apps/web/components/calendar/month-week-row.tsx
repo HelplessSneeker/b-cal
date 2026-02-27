@@ -119,7 +119,7 @@ export function MonthWeekRow({
             <div
               key={se.entry.id}
               className={cn(
-                'flex cursor-pointer items-center truncate bg-blue-500/20 px-1 text-xs font-medium transition-colors hover:bg-blue-500/30',
+                'flex min-w-0 cursor-pointer items-center overflow-hidden bg-blue-500/20 px-1 text-xs font-medium transition-colors hover:bg-blue-500/30',
                 !se.continuesBefore &&
                   'ml-0.5 rounded-l border-l-2 border-blue-500',
                 !se.continuesAfter && 'mr-0.5 rounded-r',
@@ -133,7 +133,7 @@ export function MonthWeekRow({
                 onEntryClick(se.entry);
               }}
             >
-              {se.entry.title}
+              <span className="truncate">{se.entry.title}</span>
             </div>
           ))}
         </div>
