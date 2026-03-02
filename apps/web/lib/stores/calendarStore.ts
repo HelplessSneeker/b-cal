@@ -32,6 +32,15 @@ function storeValue(key: string, value: unknown): void {
   }
 }
 
+function isValidDateString(v: unknown): v is string {
+  return typeof v === 'string' && !isNaN(new Date(v).getTime());
+}
+
+function loadStoredDate(): Date {
+  const iso = loadStoredValue<string>('currentDate', '', isValidDateString);
+  return iso ? new Date(iso) : new Date();
+}
+
 const validViews = new Set<string>(Object.values(CalendarView));
 
 function isCalendarView(v: unknown): v is CalendarView {
@@ -125,7 +134,7 @@ interface CalendarState {
 
 export const useCalendarStore = create<CalendarState>((set) => ({
   view: loadStoredValue('view', CalendarView.Month, isCalendarView),
-  currentDate: new Date(),
+  currentDate: loadStoredDate(),
   entries: [],
   entryMap: new Map(),
   loadedRanges: [],
@@ -137,7 +146,10 @@ export const useCalendarStore = create<CalendarState>((set) => ({
     storeValue('view', view);
     set({ view });
   },
-  setCurrentDate: (currentDate) => set({ currentDate }),
+  setCurrentDate: (currentDate) => {
+    storeValue('currentDate', currentDate.toISOString());
+    set({ currentDate });
+  },
   mergeEntries: (entries) =>
     set((state) => {
       const newMap = new Map(state.entryMap);
@@ -153,9 +165,15 @@ export const useCalendarStore = create<CalendarState>((set) => ({
   setIsFetching: (isFetching) => set({ isFetching }),
   clearCache: () => set({ entryMap: new Map(), entries: [], loadedRanges: [] }),
   navigate: (direction) =>
-    set((state) => ({
-      currentDate: getAdjacentDate(state.currentDate, state.view, direction),
-    })),
+    set((state) => {
+      const currentDate = getAdjacentDate(
+        state.currentDate,
+        state.view,
+        direction,
+      );
+      storeValue('currentDate', currentDate.toISOString());
+      return { currentDate };
+    }),
   openEntryModal: (entry, defaultStart) =>
     set({
       isEntryModalOpen: true,
