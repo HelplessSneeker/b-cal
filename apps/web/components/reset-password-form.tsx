@@ -18,7 +18,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Spinner } from '@/components/ui/spinner';
 
 export function ResetPasswordForm() {
@@ -87,9 +87,8 @@ export function ResetPasswordForm() {
           <FieldGroup>
             <Field data-invalid={!!errors.password || undefined}>
               <FieldLabel htmlFor="password">New password</FieldLabel>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 required
                 maxLength={128}
                 value={password}
@@ -104,9 +103,8 @@ export function ResetPasswordForm() {
               <FieldLabel htmlFor="confirm-password">
                 Confirm password
               </FieldLabel>
-              <Input
+              <PasswordInput
                 id="confirm-password"
-                type="password"
                 required
                 maxLength={128}
                 value={confirmPassword}

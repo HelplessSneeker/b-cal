@@ -144,10 +144,11 @@ describe('LoginForm', () => {
 
     await user.type(screen.getByLabelText('Email'), 'alice@example.com');
     await user.type(screen.getByLabelText('Password'), 'password123!');
-    await user.click(screen.getByRole('button'));
+    const submitButton = screen.getByRole('button', { name: 'Login' });
+    await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByRole('button')).toBeDisabled();
+      expect(submitButton).toBeDisabled();
     });
   });
 });

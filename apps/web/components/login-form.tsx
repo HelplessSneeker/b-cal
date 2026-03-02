@@ -21,6 +21,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Spinner } from './ui/spinner';
 
 interface LoginFormProps extends React.ComponentProps<'div'> {
@@ -124,9 +125,8 @@ export function LoginForm({
                 {isSignup && (
                   <FieldLabel htmlFor="password">Password</FieldLabel>
                 )}
-                <Input
+                <PasswordInput
                   id="password"
-                  type="password"
                   required
                   maxLength={128}
                   value={password}
@@ -142,9 +142,8 @@ export function LoginForm({
                   <FieldLabel htmlFor="confirm-password">
                     Confirm Password
                   </FieldLabel>
-                  <Input
+                  <PasswordInput
                     id="confirm-password"
-                    type="password"
                     required
                     maxLength={128}
                     value={confirmPassword}
