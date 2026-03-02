@@ -210,7 +210,7 @@ describe('CalendarHeader', () => {
       expect(dialog.getByText('Calendar')).toBeInTheDocument();
     });
 
-    it('mobile date tap navigates to today', async () => {
+    it('mobile today button navigates to today', async () => {
       useCalendarStore.setState({ currentDate: new Date(2020, 0, 1) });
       const user = userEvent.setup();
       render(<CalendarHeader />);
@@ -223,16 +223,6 @@ describe('CalendarHeader', () => {
       expect(state.currentDate.getDate()).toBe(today.getDate());
       expect(state.currentDate.getMonth()).toBe(today.getMonth());
       expect(state.currentDate.getFullYear()).toBe(today.getFullYear());
-    });
-
-    it('mobile + button opens entry modal', async () => {
-      const user = userEvent.setup();
-      render(<CalendarHeader />);
-
-      const mobile = getMobileHeader();
-      await user.click(mobile.getByRole('button', { name: 'New entry' }));
-
-      expect(useCalendarStore.getState().isEntryModalOpen).toBe(true);
     });
 
     it('mobile nav buttons change date', async () => {

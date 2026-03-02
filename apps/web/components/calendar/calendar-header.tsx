@@ -8,7 +8,6 @@ import {
   ChevronRightIcon,
   LogOutIcon,
   MenuIcon,
-  PlusIcon,
   Trash2Icon,
 } from 'lucide-react';
 import { logout, deleteUser } from '@/lib/api/auth';
@@ -92,15 +91,8 @@ function formatDateDisplayShort(date: Date, view: CalendarView): string {
 export function CalendarHeader() {
   const router = useRouter();
   const { user, clearUser } = useUserStore();
-  const {
-    view,
-    currentDate,
-    setView,
-    setCurrentDate,
-    clearCache,
-    navigate,
-    openEntryModal,
-  } = useCalendarStore();
+  const { view, currentDate, setView, setCurrentDate, clearCache, navigate } =
+    useCalendarStore();
   const initials = user?.email ? getAvatarInitials(user.email) : '?';
 
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -216,14 +208,24 @@ export function CalendarHeader() {
         className="flex items-center justify-between border-b px-3 py-2 md:hidden"
         data-testid="mobile-header"
       >
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setDrawerOpen(true)}
-          aria-label="Open menu"
-        >
-          <MenuIcon className="size-5" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Open menu"
+          >
+            <MenuIcon className="size-5" />
+          </Button>
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={handleTodayClick}
+            aria-label="Go to today"
+          >
+            Today
+          </Button>
+        </div>
 
         <div className="flex items-center gap-1">
           <Button
@@ -234,13 +236,9 @@ export function CalendarHeader() {
           >
             <ChevronLeftIcon className="size-4" />
           </Button>
-          <button
-            onClick={handleTodayClick}
-            className="text-muted-foreground text-sm font-medium"
-            aria-label="Go to today"
-          >
+          <span className="text-muted-foreground text-sm font-medium">
             {formatDateDisplayShort(currentDate, view)}
-          </button>
+          </span>
           <Button
             variant="ghost"
             size="icon-sm"
@@ -277,15 +275,6 @@ export function CalendarHeader() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => openEntryModal()}
-            aria-label="New entry"
-          >
-            <PlusIcon className="size-4" />
-          </Button>
         </div>
       </header>
 
