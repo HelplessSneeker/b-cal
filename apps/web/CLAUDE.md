@@ -34,7 +34,7 @@ pnpm build --filter=web    # Build web only
 
 ## Docker
 
-Multi-stage Dockerfile using Node 22 Alpine with Next.js standalone output. Requires `NEXT_PUBLIC_BACKEND_URL` as a build arg. Exposes port 8080. Includes a healthcheck on `/health`.
+Multi-stage Dockerfile using Node 24 Alpine with Next.js standalone output. Requires `NEXT_PUBLIC_BACKEND_URL` as a build arg. Exposes port 8080. Includes a healthcheck on `/health`.
 
 ## Architecture
 
@@ -55,11 +55,12 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
   - `app/health/route.ts` - Health check endpoint (returns `{ status: 'ok' }`)
   - `app/page.tsx` - Main calendar page (protected by AuthProvider)
 - `components/` - React components
-  - `components/ui/` - shadcn/ui primitives (avatar, button, calendar, card, checkbox, dialog, dropdown-menu, field, input, label, loading, popover, scroll-area, separator, sonner, spinner, textarea)
+  - `components/ui/` - shadcn/ui primitives (avatar, button, calendar, card, checkbox, dialog, dropdown-menu, field, input, label, loading, password-input, popover, scroll-area, separator, sheet, sonner, spinner, textarea)
   - `components/AuthProvider.tsx` - Wraps protected routes; redirects unauthenticated users to `/login` and unverified users to `/check-email`
   - `components/login-form.tsx` - Shared form for login/signup pages with "Forgot your password?" link
   - `components/verify-email-content.tsx` - Client component handling email verification API call and redirect
   - `components/reset-password-form.tsx` - Client component with password/confirm fields and client-side validation
+  - `components/ConnectionGuard.tsx` - Full-screen overlay when backend is unreachable; polls backend `/health` every 10s and reloads on recovery
   - `components/entry-modal.tsx` - Modal dialog for creating/editing/deleting calendar entries
   - `components/calendar/` - Calendar-specific components
     - `calendar-header.tsx` - Top navigation with view selector, date navigation, and user menu
@@ -78,6 +79,7 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
     - `month-week-row.tsx` - Single week row within month view grid
     - `more-indicator.tsx` - "+N more" indicator for overflow entries
     - `overflow-pill.tsx` - Overflow pill for truncated entries
+    - `swipe-container.tsx` - Swipe gesture support for mobile navigation
     - `views/` - View-specific components
       - `day-view.tsx` - Day view container
       - `week-view.tsx` - Week view with 7-day grid
@@ -99,7 +101,8 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
     - `useCalendarData.ts` - Fetches calendar entries for a 3-month window around the current date, with smart caching to avoid redundant requests
   - `lib/stores/` - Zustand stores for client state
     - `userStore.ts` - Current authenticated user (id, email, emailVerified)
-    - `calendarStore.ts` - Calendar view state, entries, and modal state. Uses an `entryMap` (Map by ID) for deduplication, with `loadedRanges` to track fetched date windows and avoid re-fetching.
+    - `calendarStore.ts` - Calendar view state, entries, and modal state. Uses an `entryMap` (Map by ID) for deduplication, with `loadedRanges` to track fetched date windows and avoid re-fetching. View and current date are persisted to `localStorage` (keys `b-cal:view`, `b-cal:currentDate`).
+    - `connectionStore.ts` - Backend connectivity state. Tracks consecutive failures and marks backend as down after 2 failures. Used by `ConnectionGuard`.
 - `proxy.ts` - Next.js 16 proxy (replaces `middleware.ts`). Handles route protection (auth routes, open routes, protected routes) and generates a per-request CSP nonce. Sets a strict `Content-Security-Policy` header (script-src with nonce + strict-dynamic, `frame-ancestors 'none'`, `object-src 'none'`; adds `upgrade-insecure-requests` in production). Exports a `proxy()` function and matcher config.
 - `src/config/env.ts` - Environment variable validation (validates `NEXT_PUBLIC_BACKEND_URL` at build time via `next.config.ts` and at server startup via `instrumentation.ts`)
 - `instrumentation.ts` - Sentry SDK initialization for the Next.js server runtime
@@ -132,11 +135,12 @@ This is a Next.js 16 application using the App Router with React 19 and TypeScri
 
 - Zustand for client-side state (`lib/stores/`)
 - `useUserStore` - Current authenticated user (id, email, emailVerified)
-- `useCalendarStore` - Calendar view state (Day/Week/Month), current date, entries, and entry modal state
+- `useCalendarStore` - Calendar view state (Day/Week/Month, default: Month), current date, entries, and entry modal state
   - `CalendarEntry` interface: id, startDate, endDate, title, wholeDay, content?
   - Smart caching: `entryMap` (Map by ID) for deduplication, `loadedRanges` to track fetched windows, `mergeEntries` to incrementally add data
   - Modal actions: openEntryModal, closeEntryModal
   - Entry actions: addEntry, updateEntry, deleteEntry, mergeEntries, clearCache
+- `useConnectionStore` - Backend health tracking (consecutive failures, isBackendDown, isRetrying)
 
 ### Calendar Views
 

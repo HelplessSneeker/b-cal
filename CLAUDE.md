@@ -9,6 +9,8 @@ b-cal is a calendar application built as a Turborepo monorepo with pnpm workspac
 - **apps/web** (`@b-cal/web`) - Next.js 16 frontend with React 19
 - **apps/api** (`@b-cal/api`) - NestJS 11 REST API with Prisma/PostgreSQL
 
+Node 24+ required (`engines` in root `package.json`).
+
 See `apps/web/CLAUDE.md` and `apps/api/CLAUDE.md` for detailed architecture documentation.
 
 ## Commands
@@ -25,6 +27,8 @@ pnpm test           # Run all tests (API unit + web integration)
 pnpm format         # Format all packages (Prettier)
 pnpm format:check   # Check formatting without fixing
 pnpm prisma:studio  # Launch Prisma Studio (API)
+pnpm db:up          # Start PostgreSQL via Docker Compose
+pnpm db:down        # Stop PostgreSQL
 ```
 
 From individual app directories (`apps/web/` or `apps/api/`):
@@ -44,15 +48,14 @@ pnpm test:e2e                                # Run e2e tests (uses separate test
 pnpm prisma:migrate                          # Apply database migrations
 pnpm prisma:generate                         # Regenerate Prisma client
 pnpm prisma:seed                             # Seed database with test data
-pnpm db:up                                   # Start PostgreSQL (from root)
 ```
 
 ## Docker
 
 Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerfile`). A root `.dockerignore` excludes node_modules, build outputs, env files, and logs.
 
-- **API**: Node 22 Alpine, runs `prisma migrate deploy` then `node dist/src/main`, exposes port 3000, includes a healthcheck on `/health`
-- **Web**: Node 22 Alpine, uses Next.js standalone output, exposes port 8080. Requires `NEXT_PUBLIC_BACKEND_URL` as a build arg. Includes a healthcheck on `/health`.
+- **API**: Node 24 Alpine, runs `prisma migrate deploy` then `node dist/src/main`, exposes port 3000, includes a healthcheck on `/health`
+- **Web**: Node 24 Alpine, uses Next.js standalone output, exposes port 8080. Requires `NEXT_PUBLIC_BACKEND_URL` as a build arg. Includes a healthcheck on `/health`.
 
 ## Architecture
 
@@ -60,7 +63,7 @@ Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerf
 
 **CSRF Protection**: Double-submit cookie pattern via `csrf-csrf`. The API sets an httpOnly CSRF cookie (`__Secure-csrf-token` in production with a cookie domain, `__Host-csrf-token` without a domain, `csrf-token` in development) and validates the `x-csrf-token` header on state-changing requests. The frontend fetches a CSRF token on mount via `GET /auth/csrf-token` and auto-retries on CSRF failures.
 
-**Frontend State**: Zustand stores for user state and calendar state (view mode, entries, modals).
+**Frontend State**: Zustand stores for user state, calendar state (view mode, entries, modals), and connection state (backend health monitoring). Calendar view and current date are persisted to `localStorage`.
 
 **API Structure**: NestJS modules (AuthModule, UserModule, CalendarModule, PrismaModule, MailModule, HealthModule). Swagger docs at `/api` (development only — disabled in production).
 
@@ -82,7 +85,7 @@ Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerf
 
 **Input Validation**: Global payload limit of 1MB (JSON + URL-encoded). DTO string fields have max length constraints (title: 100, content: 5000, email: 254, password: 128). Calendar entry title and content fields are sanitized via `stripHtmlTags` transform.
 
-**Database**: PostgreSQL via Prisma. Models: User (with emailVerified, verificationToken, resetToken, createdAt, updatedAt fields), CalendarEntry (with createdAt, updatedAt). Indexes on User.email, CalendarEntry.userId, CalendarEntry.startDate, CalendarEntry.endDate, and a composite (endDate, startDate) index.
+**Database**: PostgreSQL via Prisma. Models: User (with emailVerified, verificationToken, resetToken, createdAt, updatedAt fields), CalendarEntry (with createdAt, updatedAt). User.email has a unique constraint (implicit unique index). CalendarEntry has indexes on userId, startDate, endDate, and a composite (endDate, startDate) index.
 
 **Email**: Nodemailer-based mail service. Uses Ethereal test accounts in development (preview URLs logged to console). Production requires SMTP configuration.
 

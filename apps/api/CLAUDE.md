@@ -36,7 +36,7 @@ Or from monorepo root:
 
 ## Docker
 
-Multi-stage Dockerfile (`Dockerfile`) using Node 22 Alpine. Builds with `pnpm deploy --legacy --prod` for a minimal production image. CMD runs `prisma migrate deploy` then `node dist/src/main`. Includes a healthcheck on `/health`. Exposes port 3000.
+Multi-stage Dockerfile (`Dockerfile`) using Node 24 Alpine. Builds with `pnpm deploy --legacy --prod` for a minimal production image. CMD runs `prisma migrate deploy` then `node dist/src/main`. Includes a healthcheck on `/health`. Exposes port 3000.
 
 ## Infrastructure
 
@@ -76,7 +76,7 @@ src/
 ├── calendar/       # CalendarController, CalendarService, DTOs, validators
 ├── common/filters/ # GlobalExceptionFilter (Sentry-integrated, includes request ID in responses)
 ├── common/logging/ # Custom pino serializers (redact sensitive headers and query params)
-├── common/utils/   # stripHtmlTags utility
+├── common/utils/   # strip-html-tags utility
 ├── config/         # env.validation.ts (runtime env var validation via class-validator)
 ├── csrf/           # CSRF protection config (double-submit cookie via csrf-csrf)
 ├── health/         # HealthController, HealthModule (@nestjs/terminus)
@@ -131,7 +131,7 @@ src/
 
 **DTO max lengths:** `MaxLength` constraints on all string fields — email: 254, password: 128, title: 100, content: 5000. Calendar entry title and content fields are sanitized via `stripHtmlTags` transform.
 
-**Prisma schema:** `User` (id, email, password, refreshToken, verificationToken, emailVerified, resetToken, createdAt, updatedAt) and `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId→User, createdAt, updatedAt). Indexes: User has `@@index([email])`. CalendarEntry has `@@index([userId])`, `@@index([startDate])`, `@@index([endDate])`, and `@@index([endDate, startDate])`.
+**Prisma schema:** `User` (id, email, password, refreshToken, verificationToken, emailVerified, resetToken, createdAt, updatedAt) and `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId→User, createdAt, updatedAt). User.email has a `@unique` constraint (implicit unique index). CalendarEntry has `@@index([userId])`, `@@index([startDate])`, `@@index([endDate])`, and `@@index([endDate, startDate])`.
 
 **Mail service:** Uses nodemailer. In development, auto-creates Ethereal test accounts (preview URLs logged to console). In production, requires `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS` env vars.
 
