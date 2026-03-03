@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma, User } from 'generated/prisma/client';
+import { Prisma, User, UserPreferences } from 'generated/prisma/client';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -129,6 +129,32 @@ export class UserService {
       where: {
         id: userId,
       },
+    });
+  }
+
+  async findPreferences(userId: string): Promise<UserPreferences | null> {
+    return this.prisma.userPreferences.findUnique({
+      where: { userId },
+    });
+  }
+
+  async upsertPreferences(
+    userId: string,
+    data: { language: string; timezone: string },
+  ): Promise<UserPreferences> {
+    return this.prisma.userPreferences.upsert({
+      where: { userId },
+      create: { userId, ...data },
+      update: data,
+    });
+  }
+
+  async findByIdWithPreferences(
+    id: string,
+  ): Promise<(User & { preferences: UserPreferences | null }) | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: { preferences: true },
     });
   }
 }

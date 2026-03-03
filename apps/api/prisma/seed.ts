@@ -67,6 +67,7 @@ async function main() {
   console.log('Seeding database...');
 
   // Clear existing data
+  await prisma.userPreferences.deleteMany();
   await prisma.calendarEntry.deleteMany();
   await prisma.user.deleteMany();
 
@@ -86,6 +87,22 @@ async function main() {
       email: 'bob@example.com',
       password: hashedPassword,
       emailVerified: true,
+    },
+  });
+
+  // Create user preferences
+  await prisma.userPreferences.create({
+    data: {
+      userId: user1.id,
+      language: 'en-US',
+      timezone: 'America/New_York',
+    },
+  });
+  await prisma.userPreferences.create({
+    data: {
+      userId: user2.id,
+      language: 'de-DE',
+      timezone: 'Europe/Berlin',
     },
   });
 

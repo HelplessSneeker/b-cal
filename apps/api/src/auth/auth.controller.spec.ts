@@ -126,7 +126,7 @@ describe('AuthController', () => {
   });
 
   describe('me', () => {
-    it('should return user profile from database', async () => {
+    it('should return user profile with preferences from database', async () => {
       const user: JwtUser = {
         id: 'user-1',
         email: 'test@example.com',
@@ -137,6 +137,7 @@ describe('AuthController', () => {
         email: 'test@example.com',
         emailVerified: true,
         createdAt: new Date('2025-01-01'),
+        preferences: { language: 'en-US', timezone: 'America/New_York' },
       };
       mockAuthService.getProfile.mockResolvedValue(profileData);
 

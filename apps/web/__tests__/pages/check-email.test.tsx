@@ -14,6 +14,7 @@ vi.mock('@/lib/api/auth', () => ({
   getMe: vi.fn().mockResolvedValue(null),
   resendVerification: vi.fn().mockResolvedValue({ success: true }),
   logout: vi.fn().mockResolvedValue(undefined),
+  updatePreferences: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock('@/components/ConnectionGuard', () => ({
@@ -40,7 +41,13 @@ beforeEach(() => {
 describe('CheckEmailPage', () => {
   it('shows page with user email when unverified user is in store', () => {
     useUserStore.setState({
-      user: { id: '1', email: 'alice@example.com', emailVerified: false },
+      user: {
+        id: '1',
+        email: 'alice@example.com',
+        emailVerified: false,
+        createdAt: '2025-01-01T00:00:00.000Z',
+        preferences: null,
+      },
     });
     render(<CheckEmailPage />);
 
@@ -50,7 +57,13 @@ describe('CheckEmailPage', () => {
 
   it('redirects to / when user is verified', async () => {
     useUserStore.setState({
-      user: { id: '1', email: 'alice@example.com', emailVerified: true },
+      user: {
+        id: '1',
+        email: 'alice@example.com',
+        emailVerified: true,
+        createdAt: '2025-01-01T00:00:00.000Z',
+        preferences: null,
+      },
     });
     render(<CheckEmailPage />);
 
@@ -64,6 +77,8 @@ describe('CheckEmailPage', () => {
       id: '1',
       email: 'alice@example.com',
       emailVerified: false,
+      createdAt: '2025-01-01T00:00:00.000Z',
+      preferences: null,
     });
     render(<CheckEmailPage />);
 
@@ -85,7 +100,13 @@ describe('CheckEmailPage', () => {
   it('resend button calls API and starts 60s cooldown', async () => {
     resendMock.mockResolvedValue({ success: true });
     useUserStore.setState({
-      user: { id: '1', email: 'alice@example.com', emailVerified: false },
+      user: {
+        id: '1',
+        email: 'alice@example.com',
+        emailVerified: false,
+        createdAt: '2025-01-01T00:00:00.000Z',
+        preferences: null,
+      },
     });
     const user = userEvent.setup();
     render(<CheckEmailPage />);
@@ -110,7 +131,13 @@ describe('CheckEmailPage', () => {
   it('button shows countdown text during cooldown', async () => {
     resendMock.mockResolvedValue({ success: true });
     useUserStore.setState({
-      user: { id: '1', email: 'alice@example.com', emailVerified: false },
+      user: {
+        id: '1',
+        email: 'alice@example.com',
+        emailVerified: false,
+        createdAt: '2025-01-01T00:00:00.000Z',
+        preferences: null,
+      },
     });
     const user = userEvent.setup();
     render(<CheckEmailPage />);
@@ -128,7 +155,13 @@ describe('CheckEmailPage', () => {
   it('logout clears user and redirects to /login', async () => {
     logoutMock.mockResolvedValue(undefined);
     useUserStore.setState({
-      user: { id: '1', email: 'alice@example.com', emailVerified: false },
+      user: {
+        id: '1',
+        email: 'alice@example.com',
+        emailVerified: false,
+        createdAt: '2025-01-01T00:00:00.000Z',
+        preferences: null,
+      },
     });
     const user = userEvent.setup();
     render(<CheckEmailPage />);

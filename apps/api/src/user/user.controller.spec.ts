@@ -10,6 +10,8 @@ jest.mock('generated/prisma/browser', () => ({}));
 
 const mockUserService = {
   deleteUser: jest.fn(),
+  findPreferences: jest.fn(),
+  upsertPreferences: jest.fn(),
 };
 
 describe('UserController', () => {
@@ -42,6 +44,82 @@ describe('UserController', () => {
       expect(result).toEqual({ message: 'Successfully deleted user' });
       expect(mockUserService.deleteUser).toHaveBeenCalledWith('user-1');
       expect(mockRes.clearCookie).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  describe('getPreferences', () => {
+    it('should return user preferences', async () => {
+      const preferences = {
+        userId: 'user-1',
+        language: 'en-US',
+        timezone: 'America/New_York',
+      };
+      mockUserService.findPreferences.mockResolvedValue(preferences);
+
+      const result = await controller.getPreferences('user-1');
+
+      expect(result).toEqual({ data: preferences });
+      expect(mockUserService.findPreferences).toHaveBeenCalledWith('user-1');
+    });
+
+    it('should return null data when no preferences exist', async () => {
+      mockUserService.findPreferences.mockResolvedValue(null);
+
+      const result = await controller.getPreferences('user-1');
+
+      expect(result).toEqual({ data: null });
+    });
+  });
+
+  describe('updatePreferences', () => {
+    it('should create preferences when none exist and both fields provided', async () => {
+      const dto = { language: 'en-US', timezone: 'America/New_York' };
+      const created = { userId: 'user-1', ...dto };
+      mockUserService.findPreferences.mockResolvedValue(null);
+      mockUserService.upsertPreferences.mockResolvedValue(created);
+
+      const result = await controller.updatePreferences('user-1', dto);
+
+      expect(result).toEqual({
+        message: 'Preferences updated',
+        data: created,
+      });
+      expect(mockUserService.upsertPreferences).toHaveBeenCalledWith(
+        'user-1',
+        dto,
+      );
+    });
+
+    it('should throw BadRequestException when creating without both fields', async () => {
+      mockUserService.findPreferences.mockResolvedValue(null);
+
+      await expect(
+        controller.updatePreferences('user-1', { language: 'en-US' }),
+      ).rejects.toThrow('Both language and timezone are required');
+    });
+
+    it('should update existing preferences with partial data', async () => {
+      const existing = {
+        userId: 'user-1',
+        language: 'en-US',
+        timezone: 'America/New_York',
+      };
+      const updated = { ...existing, language: 'de-DE' };
+      mockUserService.findPreferences.mockResolvedValue(existing);
+      mockUserService.upsertPreferences.mockResolvedValue(updated);
+
+      const result = await controller.updatePreferences('user-1', {
+        language: 'de-DE',
+      });
+
+      expect(result).toEqual({
+        message: 'Preferences updated',
+        data: updated,
+      });
+      expect(mockUserService.upsertPreferences).toHaveBeenCalledWith('user-1', {
+        language: 'de-DE',
+        timezone: 'America/New_York',
+      });
     });
   });
 });

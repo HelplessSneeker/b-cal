@@ -1,10 +1,16 @@
 import { api, ApiError, getCsrfToken, clearCsrfToken } from './api';
 
+export interface UserPreferences {
+  language: string;
+  timezone: string;
+}
+
 export interface User {
   id: string;
   email: string;
   emailVerified: boolean;
   createdAt: string;
+  preferences: UserPreferences | null;
 }
 
 export interface AuthResponse {
@@ -157,6 +163,17 @@ export async function deleteUser(): Promise<AuthResponse> {
     }
     return { success: false, error: 'An unexpected error occurred' };
   }
+}
+
+export async function updatePreferences(
+  data: Partial<UserPreferences>,
+): Promise<User['preferences']> {
+  const result = await api<User['preferences']>('/user/preferences', {
+    method: 'PATCH',
+    body: data,
+    showSuccessToast: false,
+  });
+  return result;
 }
 
 export async function getMe(): Promise<User | null> {

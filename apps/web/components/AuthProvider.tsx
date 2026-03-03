@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getMe } from '@/lib/api/auth';
+import { getMe, updatePreferences } from '@/lib/api/auth';
 import { fetchCsrfToken, ApiError } from '@/lib/api/api';
 import { useUserStore } from '@/lib/stores/userStore';
 import { useConnectionStore } from '@/lib/stores/connectionStore';
@@ -35,6 +35,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
             return;
           }
           setUser(userData);
+
+          if (!userData.preferences) {
+            const language = navigator.language || 'en-US';
+            const timezone =
+              Intl.DateTimeFormat().resolvedOptions().timeZone ||
+              'Europe/London';
+            updatePreferences({ language, timezone })
+              .then((prefs) => {
+                if (!cancelled && prefs) {
+                  useUserStore
+                    .getState()
+                    .setUser({ ...userData, preferences: prefs });
+                }
+              })
+              .catch(() => {
+                // Fire-and-forget — retries on next page load
+              });
+          }
         } else {
           // Token was invalid/expired - proxy didn't catch it
           router.push('/login');

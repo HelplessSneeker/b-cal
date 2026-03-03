@@ -13,6 +13,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/lib/api/auth', () => ({
   getMe: vi.fn().mockResolvedValue(null),
+  updatePreferences: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock('@/components/ConnectionGuard', () => ({
@@ -46,7 +47,13 @@ describe('AuthProvider', () => {
 
   it('renders children when user is verified', () => {
     useUserStore.setState({
-      user: { id: '1', email: 'alice@example.com', emailVerified: true },
+      user: {
+        id: '1',
+        email: 'alice@example.com',
+        emailVerified: true,
+        createdAt: '2025-01-01T00:00:00.000Z',
+        preferences: null,
+      },
     });
     render(
       <AuthProvider>
@@ -61,6 +68,8 @@ describe('AuthProvider', () => {
       id: '1',
       email: 'alice@example.com',
       emailVerified: false,
+      createdAt: '2025-01-01T00:00:00.000Z',
+      preferences: null,
     });
     render(
       <AuthProvider>

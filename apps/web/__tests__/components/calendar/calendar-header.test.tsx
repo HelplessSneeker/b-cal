@@ -34,6 +34,7 @@ beforeEach(() => {
       email: 'alice@example.com',
       emailVerified: true,
       createdAt: '2025-01-01T00:00:00.000Z',
+      preferences: null,
     },
   });
   useCalendarStore.setState({

@@ -270,7 +270,7 @@ export class AuthService {
   }
 
   async getProfile(userId: string) {
-    const user = await this.userService.findById(userId);
+    const user = await this.userService.findByIdWithPreferences(userId);
     if (!user) {
       throw new BadRequestException('User not found');
     }
@@ -279,6 +279,12 @@ export class AuthService {
       email: user.email,
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
+      preferences: user.preferences
+        ? {
+            language: user.preferences.language,
+            timezone: user.preferences.timezone,
+          }
+        : null,
     };
   }
 

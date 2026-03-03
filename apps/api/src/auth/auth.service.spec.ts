@@ -31,6 +31,7 @@ const mockUser = {
 const mockUserService = {
   findOne: jest.fn(),
   findById: jest.fn(),
+  findByIdWithPreferences: jest.fn(),
   create: jest.fn(),
   updateRefreshToken: jest.fn(),
   updateVerificationToken: jest.fn(),
@@ -502,6 +503,63 @@ describe('AuthService', () => {
         }),
       ).rejects.toThrow(BadRequestException);
       expect(mockUserService.changePassword).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getProfile', () => {
+    it('should return user profile with preferences', async () => {
+      const userWithPrefs = {
+        ...mockUser,
+        createdAt: new Date('2025-01-01'),
+        preferences: {
+          userId: 'user-1',
+          language: 'en-US',
+          timezone: 'America/New_York',
+        },
+      };
+      mockUserService.findByIdWithPreferences.mockResolvedValue(userWithPrefs);
+
+      const result = await service.getProfile('user-1');
+
+      expect(result).toEqual({
+        id: 'user-1',
+        email: 'test@example.com',
+        emailVerified: false,
+        createdAt: new Date('2025-01-01'),
+        preferences: { language: 'en-US', timezone: 'America/New_York' },
+      });
+      expect(mockUserService.findByIdWithPreferences).toHaveBeenCalledWith(
+        'user-1',
+      );
+    });
+
+    it('should return user profile with null preferences', async () => {
+      const userWithoutPrefs = {
+        ...mockUser,
+        createdAt: new Date('2025-01-01'),
+        preferences: null,
+      };
+      mockUserService.findByIdWithPreferences.mockResolvedValue(
+        userWithoutPrefs,
+      );
+
+      const result = await service.getProfile('user-1');
+
+      expect(result).toEqual({
+        id: 'user-1',
+        email: 'test@example.com',
+        emailVerified: false,
+        createdAt: new Date('2025-01-01'),
+        preferences: null,
+      });
+    });
+
+    it('should throw BadRequestException when user not found', async () => {
+      mockUserService.findByIdWithPreferences.mockResolvedValue(null);
+
+      await expect(service.getProfile('nonexistent')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

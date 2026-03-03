@@ -15,12 +15,24 @@ const mockUser = {
   refreshToken: null,
 };
 
+const mockPreferences = {
+  userId: 'user-1',
+  language: 'en-US',
+  timezone: 'America/New_York',
+  createdAt: new Date(),
+  updatedAt: null,
+};
+
 const mockPrisma = {
   user: {
     findUnique: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+  },
+  userPreferences: {
+    findUnique: jest.fn(),
+    upsert: jest.fn(),
   },
 };
 
@@ -142,6 +154,78 @@ describe('UserService', () => {
       expect(mockPrisma.user.delete).toHaveBeenCalledWith({
         where: { id: 'user-1' },
       });
+    });
+  });
+
+  describe('findPreferences', () => {
+    it('should return preferences for a user', async () => {
+      mockPrisma.userPreferences.findUnique.mockResolvedValue(mockPreferences);
+
+      const result = await service.findPreferences('user-1');
+
+      expect(result).toEqual(mockPreferences);
+      expect(mockPrisma.userPreferences.findUnique).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+      });
+    });
+
+    it('should return null when no preferences exist', async () => {
+      mockPrisma.userPreferences.findUnique.mockResolvedValue(null);
+
+      const result = await service.findPreferences('user-1');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('upsertPreferences', () => {
+    it('should upsert preferences for a user', async () => {
+      const data = { language: 'de-DE', timezone: 'Europe/Berlin' };
+      mockPrisma.userPreferences.upsert.mockResolvedValue({
+        userId: 'user-1',
+        ...data,
+      });
+
+      const result = await service.upsertPreferences('user-1', data);
+
+      expect(result).toEqual({ userId: 'user-1', ...data });
+      expect(mockPrisma.userPreferences.upsert).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+        create: { userId: 'user-1', ...data },
+        update: data,
+      });
+    });
+  });
+
+  describe('findByIdWithPreferences', () => {
+    it('should return user with preferences', async () => {
+      const userWithPrefs = { ...mockUser, preferences: mockPreferences };
+      mockPrisma.user.findUnique.mockResolvedValue(userWithPrefs);
+
+      const result = await service.findByIdWithPreferences('user-1');
+
+      expect(result).toEqual(userWithPrefs);
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        include: { preferences: true },
+      });
+    });
+
+    it('should return user with null preferences', async () => {
+      const userWithoutPrefs = { ...mockUser, preferences: null };
+      mockPrisma.user.findUnique.mockResolvedValue(userWithoutPrefs);
+
+      const result = await service.findByIdWithPreferences('user-1');
+
+      expect(result).toEqual(userWithoutPrefs);
+    });
+
+    it('should return null when user not found', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+
+      const result = await service.findByIdWithPreferences('nonexistent');
+
+      expect(result).toBeNull();
     });
   });
 });

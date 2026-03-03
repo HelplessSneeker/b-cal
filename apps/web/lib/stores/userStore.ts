@@ -1,10 +1,16 @@
 import { create } from 'zustand';
 
+export interface UserPreferences {
+  language: string;
+  timezone: string;
+}
+
 export interface User {
   id: string;
   email: string;
   emailVerified: boolean;
   createdAt: string;
+  preferences: UserPreferences | null;
 }
 
 interface UserState {
