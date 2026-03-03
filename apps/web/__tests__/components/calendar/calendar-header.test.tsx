@@ -19,20 +19,22 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/lib/api/auth', () => ({
   logout: vi.fn().mockResolvedValue(undefined),
-  deleteUser: vi.fn().mockResolvedValue({ success: false }),
 }));
 
-import { logout, deleteUser } from '@/lib/api/auth';
+import { logout } from '@/lib/api/auth';
 const logoutMock = vi.mocked(logout);
-const deleteUserMock = vi.mocked(deleteUser);
 
 beforeEach(() => {
   resetStores();
   mockPush.mockClear();
   logoutMock.mockClear();
-  deleteUserMock.mockClear();
   useUserStore.setState({
-    user: { id: '1', email: 'alice@example.com', emailVerified: true },
+    user: {
+      id: '1',
+      email: 'alice@example.com',
+      emailVerified: true,
+      createdAt: '2025-01-01T00:00:00.000Z',
+    },
   });
   useCalendarStore.setState({
     view: CalendarView.Day,
@@ -152,44 +154,6 @@ describe('CalendarHeader', () => {
 
     await waitFor(() => {
       expect(logoutMock).toHaveBeenCalled();
-      expect(mockPush).toHaveBeenCalledWith('/login');
-      expect(useUserStore.getState().user).toBeNull();
-    });
-  });
-
-  it('delete account requires email match, calls API, redirects', async () => {
-    deleteUserMock.mockResolvedValue({ success: true });
-    const user = userEvent.setup();
-    render(<CalendarHeader />);
-
-    // Open user dropdown
-    const avatarButton = screen.getByText('AE').closest('button')!;
-    await user.click(avatarButton);
-
-    await user.click(screen.getByRole('menuitem', { name: 'Delete Account' }));
-
-    // Dialog opens
-    await waitFor(() => {
-      expect(
-        screen.getByText('Delete Account', {
-          selector: "[role='heading'], h2",
-        }),
-      ).toBeInTheDocument();
-    });
-
-    // Delete button should be disabled until email matches
-    const deleteBtn = screen.getByRole('button', { name: 'Delete Account' });
-    expect(deleteBtn).toBeDisabled();
-
-    // Type matching email
-    const emailInput = screen.getByPlaceholderText('alice@example.com');
-    await user.type(emailInput, 'alice@example.com');
-
-    expect(deleteBtn).toBeEnabled();
-    await user.click(deleteBtn);
-
-    await waitFor(() => {
-      expect(deleteUserMock).toHaveBeenCalled();
       expect(mockPush).toHaveBeenCalledWith('/login');
       expect(useUserStore.getState().user).toBeNull();
     });

@@ -8,15 +8,14 @@ import {
   ChevronRightIcon,
   LogOutIcon,
   MenuIcon,
-  Trash2Icon,
+  SettingsIcon,
 } from 'lucide-react';
-import { logout, deleteUser } from '@/lib/api/auth';
+import { logout } from '@/lib/api/auth';
 import { useUserStore } from '@/lib/stores/userStore';
 import { useCalendarStore, CalendarView } from '@/lib/stores/calendarStore';
 import { getWeekNumber } from '@/lib/calendar/date-utils';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,15 +24,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Field, FieldLabel } from '@/components/ui/field';
 import {
   Sheet,
   SheetContent,
@@ -96,9 +86,6 @@ export function CalendarHeader() {
   const initials = user?.email ? getAvatarInitials(user.email) : '?';
 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [confirmEmail, setConfirmEmail] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleTodayClick = () => {
     setCurrentDate(new Date());
@@ -114,17 +101,6 @@ export function CalendarHeader() {
     clearUser();
     clearCache();
     router.push('/login');
-  };
-
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    const result = await deleteUser();
-    if (result.success) {
-      clearUser();
-      clearCache();
-      router.push('/login');
-    }
-    setIsDeleting(false);
   };
 
   return (
@@ -191,13 +167,10 @@ export function CalendarHeader() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => setDeleteDialogOpen(true)}
-              >
-                Delete Account
+              <DropdownMenuItem onClick={() => router.push('/settings')}>
+                Settings
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -295,68 +268,27 @@ export function CalendarHeader() {
                 variant="ghost"
                 size="sm"
                 className="justify-start"
+                onClick={() => {
+                  setDrawerOpen(false);
+                  router.push('/settings');
+                }}
+              >
+                <SettingsIcon className="mr-2 size-4" />
+                Settings
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="justify-start"
                 onClick={handleLogout}
               >
                 <LogOutIcon className="mr-2 size-4" />
                 Logout
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-destructive hover:text-destructive justify-start"
-                onClick={() => {
-                  setDrawerOpen(false);
-                  setDeleteDialogOpen(true);
-                }}
-              >
-                <Trash2Icon className="mr-2 size-4" />
-                Delete Account
-              </Button>
             </div>
           </div>
         </SheetContent>
       </Sheet>
-
-      <Dialog
-        open={deleteDialogOpen}
-        onOpenChange={(open) => {
-          setDeleteDialogOpen(open);
-          if (!open) setConfirmEmail('');
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Account</DialogTitle>
-            <DialogDescription>
-              This action is permanent and cannot be undone. All your data will
-              be deleted. Type your email address to confirm.
-            </DialogDescription>
-          </DialogHeader>
-          <Field>
-            <FieldLabel>Email</FieldLabel>
-            <Input
-              placeholder={user?.email}
-              value={confirmEmail}
-              onChange={(e) => setConfirmEmail(e.target.value)}
-            />
-          </Field>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={confirmEmail !== user?.email || isDeleting}
-              onClick={handleDelete}
-            >
-              {isDeleting ? 'Deleting...' : 'Delete Account'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
