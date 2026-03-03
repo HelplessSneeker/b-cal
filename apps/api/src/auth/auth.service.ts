@@ -269,6 +269,19 @@ export class AuthService {
     this.logger.log(`Password changed: ${user.id}`);
   }
 
+  async getProfile(userId: string) {
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+    return {
+      id: user.id,
+      email: user.email,
+      emailVerified: user.emailVerified,
+      createdAt: user.createdAt,
+    };
+  }
+
   async logout(userId: string) {
     await this.userService.updateRefreshToken(userId, null);
     this.logger.log(`User logged out: ${userId}`);

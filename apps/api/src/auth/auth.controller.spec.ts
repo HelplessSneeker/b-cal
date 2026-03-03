@@ -15,6 +15,7 @@ const mockAuthService = {
   refreshTokens: jest.fn(),
   logout: jest.fn(),
   resendVerificationEmail: jest.fn(),
+  getProfile: jest.fn(),
 };
 
 const mockUser = {
@@ -125,18 +126,24 @@ describe('AuthController', () => {
   });
 
   describe('me', () => {
-    it('should return user data including emailVerified', () => {
+    it('should return user profile from database', async () => {
       const user: JwtUser = {
         id: 'user-1',
         email: 'test@example.com',
         emailVerified: true,
       };
+      const profileData = {
+        id: 'user-1',
+        email: 'test@example.com',
+        emailVerified: true,
+        createdAt: new Date('2025-01-01'),
+      };
+      mockAuthService.getProfile.mockResolvedValue(profileData);
 
-      const result = controller.me(user);
+      const result = await controller.me(user);
 
-      expect(result).toEqual({
-        data: { id: 'user-1', email: 'test@example.com', emailVerified: true },
-      });
+      expect(result).toEqual({ data: profileData });
+      expect(mockAuthService.getProfile).toHaveBeenCalledWith('user-1');
     });
   });
 

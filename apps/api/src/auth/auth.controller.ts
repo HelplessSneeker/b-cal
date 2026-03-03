@@ -123,8 +123,9 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  me(@User() user: JwtUser) {
-    return { data: user };
+  async me(@User() user: JwtUser) {
+    const dbUser = await this.authService.getProfile(user.id);
+    return { data: dbUser };
   }
 
   @Throttle({
