@@ -1,6 +1,7 @@
 'use client';
 
 import { type CalendarEntry } from '@/lib/stores/calendarStore';
+import { useLocale } from '@/lib/hooks/useLocale';
 import { type OverflowGroup } from '@/lib/calendar/overlap-utils';
 import { OVERLAP_GAP_PX } from '@/lib/calendar/calendar-constants';
 import {
@@ -14,13 +15,18 @@ interface OverflowPillProps {
   onEntryClick: (entry: CalendarEntry) => void;
 }
 
-function formatTimeRange(start: Date, end: Date): string {
-  const format = (d: Date) =>
-    `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-  return `${format(start)} - ${format(end)}`;
+function formatTimeRange(start: Date, end: Date, timezone: string): string {
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  });
+  return `${fmt.format(start)} - ${fmt.format(end)}`;
 }
 
 export function OverflowPill({ group, onEntryClick }: OverflowPillProps) {
+  const { timezone } = useLocale();
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -49,7 +55,7 @@ export function OverflowPill({ group, onEntryClick }: OverflowPillProps) {
               >
                 <p className="truncate text-sm font-medium">{entry.title}</p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {formatTimeRange(entry.startDate, entry.endDate)}
+                  {formatTimeRange(entry.startDate, entry.endDate, timezone)}
                 </p>
               </button>
             </li>

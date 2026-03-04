@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { format } from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -23,19 +22,16 @@ import {
   useCalendarStore,
   type CalendarEntry,
 } from '@/lib/stores/calendarStore';
+import { useLocale } from '@/lib/hooks/useLocale';
+import {
+  formatDateTimeLocal,
+  parseDateTimeLocal,
+} from '@/lib/calendar/time-utils';
 import {
   createEntry as createEntryApi,
   updateEntry as updateEntryApi,
   deleteEntry as deleteEntryApi,
 } from '@/lib/api/calendar';
-
-function formatDateTimeLocal(date: Date): string {
-  return format(date, "yyyy-MM-dd'T'HH:mm");
-}
-
-function parseDateTimeLocal(value: string): Date {
-  return new Date(value);
-}
 
 interface EntryFormProps {
   editingEntry: CalendarEntry | null;
@@ -54,13 +50,14 @@ function EntryForm({
   onDelete,
   isSubmitting,
 }: EntryFormProps) {
+  const { timezone } = useLocale();
   const initialValues = useMemo(() => {
     if (editingEntry) {
       return {
         title: editingEntry.title,
         wholeDay: editingEntry.wholeDay,
-        startDate: formatDateTimeLocal(editingEntry.startDate),
-        endDate: formatDateTimeLocal(editingEntry.endDate),
+        startDate: formatDateTimeLocal(editingEntry.startDate, timezone),
+        endDate: formatDateTimeLocal(editingEntry.endDate, timezone),
         content: editingEntry.content ?? '',
       };
     }
@@ -77,11 +74,11 @@ function EntryForm({
     return {
       title: '',
       wholeDay: false,
-      startDate: formatDateTimeLocal(start),
-      endDate: formatDateTimeLocal(end),
+      startDate: formatDateTimeLocal(start, timezone),
+      endDate: formatDateTimeLocal(end, timezone),
       content: '',
     };
-  }, [editingEntry, defaultStartDate]);
+  }, [editingEntry, defaultStartDate, timezone]);
 
   const [title, setTitle] = useState(initialValues.title);
   const [startDate, setStartDate] = useState(initialValues.startDate);
@@ -92,9 +89,7 @@ function EntryForm({
 
   const isMultiDay = useMemo(() => {
     if (!startDate || !endDate) return false;
-    const start = parseDateTimeLocal(startDate);
-    const end = parseDateTimeLocal(endDate);
-    return start.toDateString() !== end.toDateString();
+    return startDate.split('T')[0] !== endDate.split('T')[0];
   }, [startDate, endDate]);
 
   const effectiveWholeDay = wholeDay || isMultiDay;
@@ -113,8 +108,8 @@ function EntryForm({
       newErrors.endDate = 'End date is required';
     }
     if (startDate && endDate) {
-      const start = parseDateTimeLocal(startDate);
-      const end = parseDateTimeLocal(endDate);
+      const start = parseDateTimeLocal(startDate, timezone);
+      const end = parseDateTimeLocal(endDate, timezone);
       if (start > end) {
         newErrors.endDate = 'End date must be on or after start date';
       }
@@ -127,8 +122,8 @@ function EntryForm({
     const entry: CalendarEntry = {
       id: editingEntry?.id ?? crypto.randomUUID(),
       title: title.trim(),
-      startDate: parseDateTimeLocal(startDate),
-      endDate: parseDateTimeLocal(endDate),
+      startDate: parseDateTimeLocal(startDate, timezone),
+      endDate: parseDateTimeLocal(endDate, timezone),
       wholeDay: effectiveWholeDay,
       content: content.trim() || undefined,
     };

@@ -5,6 +5,7 @@ import {
   useCalendarStore,
   type CalendarEntry,
 } from '@/lib/stores/calendarStore';
+import { useUserStore } from '@/lib/stores/userStore';
 
 vi.mock('@/components/calendar/current-time-indicator', () => ({
   CurrentTimeIndicator: () => null,
@@ -42,6 +43,15 @@ const otherDayEntry: CalendarEntry = {
 
 describe('DayView', () => {
   it('displays formatted day header', () => {
+    useUserStore.setState({
+      user: {
+        id: '1',
+        email: 'test@example.com',
+        emailVerified: true,
+        createdAt: '',
+        preferences: { language: 'de-DE', timezone: 'Europe/Vienna' },
+      },
+    });
     useCalendarStore.setState({ currentDate, entries: [] });
     render(<DayView />);
     // German locale format: "Sonntag, 15. Juni 2025"

@@ -13,6 +13,7 @@ import {
 import { logout } from '@/lib/api/auth';
 import { useUserStore } from '@/lib/stores/userStore';
 import { useCalendarStore, CalendarView } from '@/lib/stores/calendarStore';
+import { useLocale } from '@/lib/hooks/useLocale';
 import { getWeekNumber } from '@/lib/calendar/date-utils';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -40,11 +41,14 @@ function getAvatarInitials(email: string): string {
   return `${localInitial}${domainInitial}`;
 }
 
-function formatDateDisplay(date: Date, view: CalendarView): string {
+function formatDateDisplay(
+  date: Date,
+  view: CalendarView,
+  locale: string,
+): string {
   switch (view) {
     case CalendarView.Day:
-      // todo change based on localization
-      return date.toLocaleDateString('at-DE', {
+      return date.toLocaleDateString(locale, {
         month: 'long',
         day: 'numeric',
         year: 'numeric',
@@ -52,18 +56,21 @@ function formatDateDisplay(date: Date, view: CalendarView): string {
     case CalendarView.Week:
       return `CW ${getWeekNumber(date)}`;
     case CalendarView.Month:
-      // todo change based on localization
-      return date.toLocaleDateString('at-DE', {
+      return date.toLocaleDateString(locale, {
         month: 'long',
         year: 'numeric',
       });
   }
 }
 
-function formatDateDisplayShort(date: Date, view: CalendarView): string {
+function formatDateDisplayShort(
+  date: Date,
+  view: CalendarView,
+  locale: string,
+): string {
   switch (view) {
     case CalendarView.Day:
-      return date.toLocaleDateString('at-DE', {
+      return date.toLocaleDateString(locale, {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
@@ -71,7 +78,7 @@ function formatDateDisplayShort(date: Date, view: CalendarView): string {
     case CalendarView.Week:
       return `CW ${getWeekNumber(date)}`;
     case CalendarView.Month:
-      return date.toLocaleDateString('at-DE', {
+      return date.toLocaleDateString(locale, {
         month: 'short',
         year: 'numeric',
       });
@@ -81,6 +88,7 @@ function formatDateDisplayShort(date: Date, view: CalendarView): string {
 export function CalendarHeader() {
   const router = useRouter();
   const { user, clearUser } = useUserStore();
+  const { language } = useLocale();
   const { view, currentDate, setView, setCurrentDate, clearCache, navigate } =
     useCalendarStore();
   const initials = user?.email ? getAvatarInitials(user.email) : '?';
@@ -122,7 +130,7 @@ export function CalendarHeader() {
             <ChevronLeftIcon className="size-4" />
           </Button>
           <span className="min-w-48 text-center text-muted-foreground">
-            {formatDateDisplay(currentDate, view)}
+            {formatDateDisplay(currentDate, view, language)}
           </span>
           <Button variant="ghost" size="icon" onClick={() => navigate(1)}>
             <ChevronRightIcon className="size-4" />
@@ -210,7 +218,7 @@ export function CalendarHeader() {
             <ChevronLeftIcon className="size-4" />
           </Button>
           <span className="text-muted-foreground text-sm font-medium">
-            {formatDateDisplayShort(currentDate, view)}
+            {formatDateDisplayShort(currentDate, view, language)}
           </span>
           <Button
             variant="ghost"

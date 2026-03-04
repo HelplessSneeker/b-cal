@@ -5,6 +5,7 @@ import {
   useCalendarStore,
   type CalendarEntry,
 } from '@/lib/stores/calendarStore';
+import { useUserStore } from '@/lib/stores/userStore';
 
 vi.mock('@/components/calendar/current-time-indicator', () => ({
   CurrentTimeIndicator: () => null,
@@ -48,6 +49,15 @@ const allDayEntry: CalendarEntry = {
 
 describe('WeekView', () => {
   it('renders 7 day headers starting from Monday', () => {
+    useUserStore.setState({
+      user: {
+        id: '1',
+        email: 'test@example.com',
+        emailVerified: true,
+        createdAt: '',
+        preferences: { language: 'de-DE', timezone: 'Europe/Vienna' },
+      },
+    });
     useCalendarStore.setState({ currentDate, entries: [] });
     render(<WeekView />);
 

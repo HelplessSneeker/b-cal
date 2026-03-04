@@ -2,8 +2,10 @@
 
 import { useMemo } from 'react';
 import { CalendarEntry } from '@/lib/stores/calendarStore';
+import { useLocale } from '@/lib/hooks/useLocale';
 import { DAY_VIEW_MAX_COLUMNS } from '@/lib/calendar/calendar-constants';
 import { computeOverlapLayout } from '@/lib/calendar/overlap-utils';
+import { createSlotTime } from '@/lib/calendar/time-utils';
 import { TimeSlot } from '@/components/calendar/time-slot';
 import { EntryBlock } from '@/components/calendar/entry-block';
 import { OverflowPill } from '@/components/calendar/overflow-pill';
@@ -26,11 +28,10 @@ export function DayColumn({
   maxVisibleColumns = DAY_VIEW_MAX_COLUMNS,
   compact = false,
 }: DayColumnProps) {
-  const slots = Array.from({ length: 48 }, (_, i) => {
-    const slotTime = new Date(date);
-    slotTime.setHours(Math.floor(i / 2), (i % 2) * 30, 0, 0);
-    return slotTime;
-  });
+  const { timezone } = useLocale();
+  const slots = Array.from({ length: 48 }, (_, i) =>
+    createSlotTime(date, Math.floor(i / 2), (i % 2) * 30, timezone),
+  );
 
   const layout = useMemo(
     () => computeOverlapLayout(entries, maxVisibleColumns),

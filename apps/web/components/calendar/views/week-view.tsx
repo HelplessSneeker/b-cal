@@ -5,6 +5,7 @@ import {
   useCalendarStore,
   type CalendarEntry,
 } from '@/lib/stores/calendarStore';
+import { useLocale } from '@/lib/hooks/useLocale';
 import { TimeGrid } from '@/components/calendar/time-grid';
 import { DayColumn } from '@/components/calendar/day-column';
 import { WeekAllDayRow } from '@/components/calendar/week-all-day-row';
@@ -25,8 +26,11 @@ function getWeekDays(startOfWeek: Date): Date[] {
   });
 }
 
-function formatDayHeader(date: Date): { weekday: string; dayNumber: string } {
-  const weekday = date.toLocaleDateString('de-DE', { weekday: 'short' });
+function formatDayHeader(
+  date: Date,
+  locale: string,
+): { weekday: string; dayNumber: string } {
+  const weekday = date.toLocaleDateString(locale, { weekday: 'short' });
   const dayNumber = date.getDate().toString();
   return { weekday, dayNumber };
 }
@@ -40,6 +44,7 @@ export function WeekView({ date }: { date?: Date }) {
   const storeDate = useCalendarStore((s) => s.currentDate);
   const entries = useCalendarStore((s) => s.entries);
   const openEntryModal = useCalendarStore((s) => s.openEntryModal);
+  const { language } = useLocale();
   const currentDate = date ?? storeDate;
   const isMobile = useMediaQuery('(max-width: 767px)');
 
@@ -80,7 +85,7 @@ export function WeekView({ date }: { date?: Date }) {
         {/* Day headers */}
         <div className="flex flex-1">
           {weekDays.map((day) => {
-            const { weekday, dayNumber } = formatDayHeader(day);
+            const { weekday, dayNumber } = formatDayHeader(day, language);
             const today = isToday(day);
             return (
               <div

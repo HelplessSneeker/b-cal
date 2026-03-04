@@ -1,6 +1,7 @@
 'use client';
 
 import { CalendarEntry } from '@/lib/stores/calendarStore';
+import { useLocale } from '@/lib/hooks/useLocale';
 import { getEventTopPosition, getEventHeight } from '@/lib/calendar/time-utils';
 import { OVERLAP_GAP_PX } from '@/lib/calendar/calendar-constants';
 import { cn } from '@/lib/utils/utils';
@@ -13,10 +14,14 @@ interface EntryBlockProps {
   compact?: boolean;
 }
 
-function formatTimeRange(start: Date, end: Date): string {
-  const format = (d: Date) =>
-    `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-  return `${format(start)} - ${format(end)}`;
+function formatTimeRange(start: Date, end: Date, timezone: string): string {
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  });
+  return `${fmt.format(start)} - ${fmt.format(end)}`;
 }
 
 export function EntryBlock({
@@ -26,7 +31,8 @@ export function EntryBlock({
   width,
   compact = false,
 }: EntryBlockProps) {
-  const top = getEventTopPosition(entry.startDate);
+  const { timezone } = useLocale();
+  const top = getEventTopPosition(entry.startDate, timezone);
   const height = getEventHeight(entry.startDate, entry.endDate);
   const isShort = height < 40;
   const hasOverlapLayout = left !== undefined && width !== undefined;
@@ -58,7 +64,7 @@ export function EntryBlock({
       </p>
       {!isShort && !compact && (
         <p className="truncate text-xs text-muted-foreground">
-          {formatTimeRange(entry.startDate, entry.endDate)}
+          {formatTimeRange(entry.startDate, entry.endDate, timezone)}
         </p>
       )}
     </div>

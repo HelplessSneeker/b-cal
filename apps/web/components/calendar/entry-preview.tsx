@@ -1,6 +1,7 @@
 'use client';
 
 import { type CalendarEntry } from '@/lib/stores/calendarStore';
+import { useLocale } from '@/lib/hooks/useLocale';
 import { isEffectiveWholeDay } from '@/lib/calendar/spanning-utils';
 import { cn } from '@/lib/utils/utils';
 
@@ -9,11 +10,17 @@ interface EntryPreviewProps {
   onClick: (e: React.MouseEvent) => void;
 }
 
-function formatTime(date: Date): string {
-  return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+function formatTime(date: Date, timezone: string): string {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(date);
 }
 
 export function EntryPreview({ entry, onClick }: EntryPreviewProps) {
+  const { timezone } = useLocale();
   return (
     <div
       className={cn(
@@ -27,7 +34,7 @@ export function EntryPreview({ entry, onClick }: EntryPreviewProps) {
       ) : (
         <>
           <span className="text-muted-foreground">
-            {formatTime(entry.startDate)}
+            {formatTime(entry.startDate, timezone)}
           </span>
           <span className="ml-1 font-medium">{entry.title}</span>
         </>

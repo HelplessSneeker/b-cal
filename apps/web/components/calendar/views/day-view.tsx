@@ -4,14 +4,15 @@ import {
   useCalendarStore,
   type CalendarEntry,
 } from '@/lib/stores/calendarStore';
+import { useLocale } from '@/lib/hooks/useLocale';
 import { entryOverlapsDay } from '@/lib/calendar/spanning-utils';
 import { DAY_VIEW_MAX_COLUMNS } from '@/lib/calendar/calendar-constants';
 import { TimeGrid } from '@/components/calendar/time-grid';
 import { DayColumn } from '@/components/calendar/day-column';
 import { AllDaySection } from '@/components/calendar/all-day-section';
 
-function formatDayHeader(date: Date): string {
-  return date.toLocaleDateString('de-DE', {
+function formatDayHeader(date: Date, locale: string): string {
+  return date.toLocaleDateString(locale, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -23,6 +24,7 @@ export function DayView({ date }: { date?: Date }) {
   const storeDate = useCalendarStore((s) => s.currentDate);
   const entries = useCalendarStore((s) => s.entries);
   const openEntryModal = useCalendarStore((s) => s.openEntryModal);
+  const { language } = useLocale();
   const currentDate = date ?? storeDate;
 
   const dayEntries = entries.filter((entry) =>
@@ -44,7 +46,7 @@ export function DayView({ date }: { date?: Date }) {
     <div className="flex h-full flex-col">
       <div className="border-b px-4 py-3">
         <h2 className="text-lg font-semibold capitalize">
-          {formatDayHeader(currentDate)}
+          {formatDayHeader(currentDate, language)}
         </h2>
       </div>
       <AllDaySection

@@ -7,7 +7,7 @@ export const settingsTabs = [
   { key: 'profile', label: 'Profile', icon: UserIcon },
   { key: 'security', label: 'Security', icon: ShieldIcon },
   { key: 'appearance', label: 'Appearance', icon: PaletteIcon },
-  { key: 'language', label: 'Language', icon: GlobeIcon },
+  { key: 'localization', label: 'Localization', icon: GlobeIcon },
 ] as const;
 
 export type SettingsTab = (typeof settingsTabs)[number]['key'];

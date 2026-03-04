@@ -10,6 +10,7 @@ import {
   type SettingsTab,
 } from '@/components/settings/settings-sidebar';
 import { ProfileTab } from '@/components/settings/profile-tab';
+import { LocalizationTab } from '@/components/settings/localization-tab';
 
 function SettingsContent() {
   const router = useRouter();
@@ -34,6 +35,7 @@ function SettingsContent() {
 
         <main className="flex-1 overflow-auto p-6">
           {activeTab === 'profile' && <ProfileTab />}
+          {activeTab === 'localization' && <LocalizationTab />}
         </main>
       </div>
     </div>

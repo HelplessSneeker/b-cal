@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getEventTopPosition } from '@/lib/calendar/time-utils';
+import { useLocale } from '@/lib/hooks/useLocale';
 
 interface CurrentTimeIndicatorProps {
   date: Date;
@@ -16,6 +17,7 @@ function isSameDay(a: Date, b: Date): boolean {
 }
 
 export function CurrentTimeIndicator({ date }: CurrentTimeIndicatorProps) {
+  const { timezone } = useLocale();
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export function CurrentTimeIndicator({ date }: CurrentTimeIndicatorProps) {
     return null;
   }
 
-  const top = getEventTopPosition(now);
+  const top = getEventTopPosition(now, timezone);
 
   return (
     <div

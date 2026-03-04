@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { deleteUser } from '@/lib/api/auth';
 import { useUserStore } from '@/lib/stores/userStore';
 import { useCalendarStore } from '@/lib/stores/calendarStore';
+import { useLocale } from '@/lib/hooks/useLocale';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -35,6 +36,7 @@ function getAvatarInitials(email: string): string {
 export function ProfileTab() {
   const router = useRouter();
   const { user, clearUser } = useUserStore();
+  const { language } = useLocale();
   const clearCache = useCalendarStore((s) => s.clearCache);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState('');
@@ -42,7 +44,7 @@ export function ProfileTab() {
 
   const initials = user?.email ? getAvatarInitials(user.email) : '?';
   const memberSince = user?.createdAt
-    ? new Date(user.createdAt).toLocaleDateString('en-US', {
+    ? new Date(user.createdAt).toLocaleDateString(language, {
         month: 'long',
         year: 'numeric',
       })
