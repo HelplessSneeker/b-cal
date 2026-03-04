@@ -300,6 +300,38 @@ export class AuthService {
     this.logger.log(`Password changed: ${user.id}`);
   }
 
+  async updatePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+    currentSessionId?: string,
+  ) {
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      throw new BadRequestException('Current password is incorrect');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    await this.prisma.$transaction(async (tx) => {
+      await this.userService.updatePassword(userId, hashedPassword, tx);
+      if (currentSessionId) {
+        await this.sessionService.deleteOtherSessions(
+          userId,
+          currentSessionId,
+          tx,
+        );
+      }
+    });
+
+    this.logger.log(`Password updated: ${userId}`);
+  }
+
   async getProfile(userId: string) {
     const user = await this.userService.findByIdWithPreferences(userId);
     if (!user) {

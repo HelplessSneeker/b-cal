@@ -95,6 +95,17 @@ export class SessionService {
     });
   }
 
+  async deleteOtherSessions(
+    userId: string,
+    currentSessionId: string,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    return client.session.deleteMany({
+      where: { userId, id: { not: currentSessionId } },
+    });
+  }
+
   async listUserSessions(userId: string) {
     return this.prisma.session.findMany({
       where: {

@@ -31,6 +31,7 @@ import { cookieConfig } from './constants';
 import { User } from './decorators/user.decorator';
 import { RequestPasswordResetDTO } from './dto/request-password-reset.dto';
 import { ChangePasswordDTO } from './dto/change-password.dto';
+import { UpdatePasswordDTO } from './dto/update-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -186,6 +187,19 @@ export class AuthController {
   async resetPassword(@Body() changePasswordDTO: ChangePasswordDTO) {
     await this.authService.changePassword(changePasswordDTO);
     return { message: 'Password changed successfully' };
+  }
+
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
+  @Post('update-password')
+  async updatePassword(@Body() dto: UpdatePasswordDTO, @User() user: JwtUser) {
+    await this.authService.updatePassword(
+      user.id,
+      dto.currentPassword,
+      dto.newPassword,
+      user.sessionId,
+    );
+    return { message: 'Password updated successfully' };
   }
 
   @UseGuards(JwtAuthGuard, EmailVerifiedGuard)

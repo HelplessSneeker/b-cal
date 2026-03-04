@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { UnauthorizedException } from '@nestjs/common';
 import { JwtStrategy } from './jwt.strategy';
+import { SessionService } from '../session.service';
 import { JwtPayload } from '../types';
 
 jest.mock('generated/prisma/client', () => ({
@@ -12,15 +14,23 @@ jest.mock('../constants', () => ({
   },
 }));
 
+const mockSessionService = {
+  findById: jest.fn(),
+};
+
 describe('JwtStrategy', () => {
   let strategy: JwtStrategy;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [JwtStrategy],
+      providers: [
+        JwtStrategy,
+        { provide: SessionService, useValue: mockSessionService },
+      ],
     }).compile();
 
     strategy = module.get<JwtStrategy>(JwtStrategy);
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -28,15 +38,16 @@ describe('JwtStrategy', () => {
   });
 
   describe('validate', () => {
-    it('should return user object with id, email, emailVerified, and sessionId from payload', () => {
+    it('should return user object when session exists', async () => {
       const payload: JwtPayload = {
         sub: 'user-123',
         email: 'test@example.com',
         emailVerified: true,
         sid: 'session-abc',
       };
+      mockSessionService.findById.mockResolvedValue({ id: 'session-abc' });
 
-      const result = strategy.validate(payload);
+      const result = await strategy.validate(payload);
 
       expect(result).toEqual({
         id: 'user-123',
@@ -44,22 +55,39 @@ describe('JwtStrategy', () => {
         emailVerified: true,
         sessionId: 'session-abc',
       });
+      expect(mockSessionService.findById).toHaveBeenCalledWith('session-abc');
     });
 
-    it('should map sub to id and sid to sessionId correctly', () => {
+    it('should throw UnauthorizedException when session is revoked', async () => {
       const payload: JwtPayload = {
-        sub: 'different-user-id',
-        email: 'another@example.com',
-        emailVerified: false,
-        sid: 'different-session-id',
+        sub: 'user-123',
+        email: 'test@example.com',
+        emailVerified: true,
+        sid: 'revoked-session',
+      };
+      mockSessionService.findById.mockResolvedValue(null);
+
+      await expect(strategy.validate(payload)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should skip session check when sid is not present', async () => {
+      const payload: JwtPayload = {
+        sub: 'user-123',
+        email: 'test@example.com',
+        emailVerified: true,
       };
 
-      const result = strategy.validate(payload);
+      const result = await strategy.validate(payload);
 
-      expect(result.id).toBe('different-user-id');
-      expect(result.email).toBe('another@example.com');
-      expect(result.emailVerified).toBe(false);
-      expect(result.sessionId).toBe('different-session-id');
+      expect(result).toEqual({
+        id: 'user-123',
+        email: 'test@example.com',
+        emailVerified: true,
+        sessionId: undefined,
+      });
+      expect(mockSessionService.findById).not.toHaveBeenCalled();
     });
   });
 });

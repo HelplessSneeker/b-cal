@@ -38,6 +38,7 @@ const mockUserService = {
   validateEmail: jest.fn(),
   setPasswordResetToken: jest.fn(),
   changePassword: jest.fn(),
+  updatePassword: jest.fn(),
 };
 
 const mockJwtService = {
@@ -61,6 +62,7 @@ const mockSessionService = {
   touchSession: jest.fn(),
   deleteSession: jest.fn(),
   deleteAllSessions: jest.fn(),
+  deleteOtherSessions: jest.fn(),
   listUserSessions: jest.fn(),
   deleteSessionForUser: jest.fn(),
   deleteExpiredSessions: jest.fn(),
@@ -529,6 +531,59 @@ describe('AuthService', () => {
         }),
       ).rejects.toThrow(BadRequestException);
       expect(mockUserService.changePassword).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updatePassword', () => {
+    it('should update password and delete other sessions', async () => {
+      mockUserService.findById.mockResolvedValue(mockUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed-password');
+      mockUserService.updatePassword.mockResolvedValue(undefined);
+      mockSessionService.deleteOtherSessions.mockResolvedValue(undefined);
+
+      await service.updatePassword(
+        'user-1',
+        'currentpass',
+        'newpass123!',
+        'session-1',
+      );
+
+      expect(mockUserService.findById).toHaveBeenCalledWith('user-1');
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        'currentpass',
+        mockUser.password,
+      );
+      expect(bcrypt.hash).toHaveBeenCalledWith('newpass123!', 10);
+      expect(mockUserService.updatePassword).toHaveBeenCalledWith(
+        'user-1',
+        'new-hashed-password',
+        mockPrismaService,
+      );
+      expect(mockSessionService.deleteOtherSessions).toHaveBeenCalledWith(
+        'user-1',
+        'session-1',
+        mockPrismaService,
+      );
+    });
+
+    it('should throw BadRequestException when current password is wrong', async () => {
+      mockUserService.findById.mockResolvedValue(mockUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      await expect(
+        service.updatePassword('user-1', 'wrongpass', 'newpass123!'),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockUserService.updatePassword).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when user not found', async () => {
+      mockUserService.findById.mockResolvedValue(null);
+
+      await expect(
+        service.updatePassword('bad-id', 'currentpass', 'newpass123!'),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockUserService.updatePassword).not.toHaveBeenCalled();
     });
   });
 

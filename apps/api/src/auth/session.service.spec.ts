@@ -176,6 +176,18 @@ describe('SessionService', () => {
     });
   });
 
+  describe('deleteOtherSessions', () => {
+    it('should delete all sessions except the current one', async () => {
+      mockPrismaService.session.deleteMany.mockResolvedValue({ count: 2 });
+
+      await service.deleteOtherSessions('user-1', 'current-session');
+
+      expect(mockPrismaService.session.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1', id: { not: 'current-session' } },
+      });
+    });
+  });
+
   describe('listUserSessions', () => {
     it('should list non-expired sessions ordered by lastUsedAt', async () => {
       const sessions = [{ id: 'session-1' }, { id: 'session-2' }];

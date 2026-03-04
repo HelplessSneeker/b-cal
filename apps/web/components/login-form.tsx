@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
+import { PasswordStrengthIndicator } from './ui/password-strength';
 import { Spinner } from './ui/spinner';
 
 interface LoginFormProps extends React.ComponentProps<'div'> {
@@ -135,6 +136,9 @@ export function LoginForm({
                     setErrors((prev) => ({ ...prev, password: '' }));
                   }}
                 />
+                {isSignup && password && (
+                  <PasswordStrengthIndicator password={password} />
+                )}
                 <FieldError>{errors.password}</FieldError>
               </Field>
               {isSignup && (

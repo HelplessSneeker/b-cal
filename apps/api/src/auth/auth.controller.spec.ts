@@ -16,6 +16,7 @@ const mockAuthService = {
   logout: jest.fn(),
   resendVerificationEmail: jest.fn(),
   getProfile: jest.fn(),
+  updatePassword: jest.fn(),
   listSessions: jest.fn(),
   revokeSession: jest.fn(),
   revokeAllSessions: jest.fn(),
@@ -175,6 +176,31 @@ describe('AuthController', () => {
 
       expect(result).toEqual({ data: profileData });
       expect(mockAuthService.getProfile).toHaveBeenCalledWith('user-1');
+    });
+  });
+
+  describe('updatePassword', () => {
+    it('should call authService.updatePassword and return success message', async () => {
+      mockAuthService.updatePassword.mockResolvedValue(undefined);
+      const user: JwtUser = {
+        id: 'user-1',
+        email: 'test@example.com',
+        emailVerified: true,
+        sessionId: 'session-1',
+      };
+
+      const result = await controller.updatePassword(
+        { currentPassword: 'oldpass', newPassword: 'newpass123!' },
+        user,
+      );
+
+      expect(result).toEqual({ message: 'Password updated successfully' });
+      expect(mockAuthService.updatePassword).toHaveBeenCalledWith(
+        'user-1',
+        'oldpass',
+        'newpass123!',
+        'session-1',
+      );
     });
   });
 

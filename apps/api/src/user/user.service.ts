@@ -112,6 +112,18 @@ export class UserService {
     });
   }
 
+  async updatePassword(
+    userId: string,
+    hashedPassword: string,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+    await client.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+  }
+
   async deleteUser(userId: string) {
     await this.prisma.user.delete({
       where: {

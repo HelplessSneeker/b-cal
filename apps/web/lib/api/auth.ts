@@ -176,6 +176,53 @@ export async function updatePreferences(
   return result;
 }
 
+export interface Session {
+  id: string;
+  deviceName: string | null;
+  ipAddress: string | null;
+  lastUsedAt: string;
+  createdAt: string;
+  expiresAt: string;
+  isCurrent: boolean;
+}
+
+export async function updatePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<AuthResponse> {
+  try {
+    await api('/auth/update-password', {
+      method: 'POST',
+      body: { currentPassword, newPassword },
+    });
+    return { success: true };
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return { success: false, error: error.message };
+    }
+    return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
+export async function getSessions(): Promise<Session[]> {
+  return api<Session[]>('/auth/sessions', {
+    method: 'GET',
+    showSuccessToast: false,
+  });
+}
+
+export async function revokeSession(sessionId: string): Promise<void> {
+  await api(`/auth/sessions/${sessionId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function revokeAllOtherSessions(): Promise<void> {
+  await api('/auth/sessions', {
+    method: 'DELETE',
+  });
+}
+
 export async function getMe(): Promise<User | null> {
   try {
     const user = await api<User>('/auth/me', {
