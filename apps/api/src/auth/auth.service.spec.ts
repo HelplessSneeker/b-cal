@@ -3,12 +3,14 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
 import { MailService } from 'src/mail/mail.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { SessionService } from './session.service';
 import { JwtUser } from './types';
 import * as bcrypt from 'bcrypt';
 
@@ -22,7 +24,6 @@ const mockUser = {
   id: 'user-1',
   email: 'test@example.com',
   password: 'hashedpassword',
-  refreshToken: 'hashedRefreshToken',
   emailVerified: false,
   verificationToken: 'verification-token',
   resetToken: null,
@@ -33,7 +34,6 @@ const mockUserService = {
   findById: jest.fn(),
   findByIdWithPreferences: jest.fn(),
   create: jest.fn(),
-  updateRefreshToken: jest.fn(),
   updateVerificationToken: jest.fn(),
   validateEmail: jest.fn(),
   setPasswordResetToken: jest.fn(),
@@ -53,9 +53,18 @@ const mockMailService = {
 const mockPrismaService = {
   // eslint-disable-next-line
   $transaction: jest.fn((fn) => fn(mockPrismaService)),
-  user: {
-    updateMany: jest.fn(),
-  },
+};
+
+const mockSessionService = {
+  createSession: jest.fn(),
+  findById: jest.fn(),
+  touchSession: jest.fn(),
+  deleteSession: jest.fn(),
+  deleteAllSessions: jest.fn(),
+  listUserSessions: jest.fn(),
+  deleteSessionForUser: jest.fn(),
+  deleteExpiredSessions: jest.fn(),
+  parseDeviceName: jest.fn(),
 };
 
 describe('AuthService', () => {
@@ -70,6 +79,7 @@ describe('AuthService', () => {
         { provide: MailService, useValue: mockMailService },
         // eslint-disable-next-line
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: SessionService, useValue: mockSessionService },
       ],
     }).compile();
 
@@ -115,22 +125,30 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('should return tokens and store hashed refresh token', async () => {
+    it('should return tokens and create session', async () => {
       mockJwtService.signAsync
-        .mockResolvedValueOnce('access-token')
-        .mockResolvedValueOnce('refresh-token');
+        .mockResolvedValueOnce('refresh-token')
+        .mockResolvedValueOnce('access-token');
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-refresh');
-      mockUserService.updateRefreshToken.mockResolvedValue(undefined);
+      mockSessionService.createSession.mockResolvedValue({ id: 'session-1' });
 
-      const result = await service.login(mockUser as JwtUser);
+      const result = await service.login(
+        mockUser as JwtUser,
+        'Mozilla/5.0',
+        '127.0.0.1',
+      );
 
       expect(result).toEqual({
         access_token: 'access-token',
         refresh_token: 'refresh-token',
       });
-      expect(mockUserService.updateRefreshToken).toHaveBeenCalledWith(
-        'user-1',
-        'hashed-refresh',
+      expect(mockSessionService.createSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-1',
+          hashedRefreshToken: 'hashed-refresh',
+          userAgent: 'Mozilla/5.0',
+          ipAddress: '127.0.0.1',
+        }),
       );
     });
   });
@@ -140,8 +158,8 @@ describe('AuthService', () => {
       mockUserService.findOne.mockResolvedValue(null);
       mockJwtService.signAsync
         .mockResolvedValueOnce('verification-token')
-        .mockResolvedValueOnce('access-token')
-        .mockResolvedValueOnce('refresh-token');
+        .mockResolvedValueOnce('refresh-token')
+        .mockResolvedValueOnce('access-token');
       (bcrypt.hash as jest.Mock)
         .mockResolvedValueOnce('hashed-verification')
         .mockResolvedValueOnce('hashedpw')
@@ -152,7 +170,7 @@ describe('AuthService', () => {
         emailVerified: false,
       });
       mockMailService.sendVerificationEmail.mockResolvedValue(undefined);
-      mockUserService.updateRefreshToken.mockResolvedValue(undefined);
+      mockSessionService.createSession.mockResolvedValue({ id: 'session-1' });
 
       const result = await service.signup({
         email: 'new@example.com',
@@ -171,6 +189,13 @@ describe('AuthService', () => {
         },
         mockPrismaService,
       );
+      expect(mockSessionService.createSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'new-user',
+          hashedRefreshToken: 'hashed-refresh',
+        }),
+        mockPrismaService,
+      );
       expect(mockMailService.sendVerificationEmail).toHaveBeenCalledWith(
         'new@example.com',
         'verification-token',
@@ -187,82 +212,78 @@ describe('AuthService', () => {
   });
 
   describe('refreshTokens', () => {
-    it('should return new tokens when refresh token is valid', async () => {
-      mockUserService.findById.mockResolvedValue(mockUser);
+    const mockSession = {
+      id: 'session-1',
+      userId: 'user-1',
+      refreshToken: 'hashed-refresh-token',
+      expiresAt: new Date(Date.now() + 86400000),
+    };
+
+    it('should return new access token when refresh token is valid', async () => {
+      mockSessionService.findById.mockResolvedValue(mockSession);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-      (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed-refresh');
-      mockJwtService.signAsync
-        .mockResolvedValueOnce('new-access')
-        .mockResolvedValueOnce('new-refresh');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      mockPrismaService.user.updateMany.mockResolvedValue({ count: 1 });
-
-      const result = await service.refreshTokens('user-1', 'valid-refresh');
-
-      expect(result).toEqual({
-        access_token: 'new-access',
-        refresh_token: 'new-refresh',
-      });
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      expect(mockPrismaService.user.updateMany).toHaveBeenCalledWith({
-        where: { id: 'user-1', refreshToken: 'hashedRefreshToken' },
-        data: { refreshToken: 'new-hashed-refresh' },
-      });
-    });
-
-    it('should throw ForbiddenException when user not found', async () => {
-      mockUserService.findById.mockResolvedValue(null);
-
-      await expect(service.refreshTokens('bad-id', 'token')).rejects.toThrow(
-        ForbiddenException,
-      );
-    });
-
-    it('should throw ForbiddenException when user has no refresh token', async () => {
-      mockUserService.findById.mockResolvedValue({
-        ...mockUser,
-        refreshToken: null,
-      });
-
-      await expect(service.refreshTokens('user-1', 'token')).rejects.toThrow(
-        ForbiddenException,
-      );
-    });
-
-    it('should throw ForbiddenException when refresh token does not match', async () => {
+      mockSessionService.touchSession.mockResolvedValue(undefined);
       mockUserService.findById.mockResolvedValue(mockUser);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+      mockJwtService.signAsync.mockResolvedValueOnce('new-access');
+
+      const result = await service.refreshTokens(
+        'user-1',
+        'valid-refresh',
+        'session-1',
+      );
+
+      expect(result).toEqual({ access_token: 'new-access' });
+      expect(mockSessionService.touchSession).toHaveBeenCalledWith('session-1');
+    });
+
+    it('should throw ForbiddenException when session not found', async () => {
+      mockSessionService.findById.mockResolvedValue(null);
 
       await expect(
-        service.refreshTokens('user-1', 'wrong-token'),
+        service.refreshTokens('user-1', 'token', 'bad-session'),
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('should throw ForbiddenException on concurrent refresh (race condition)', async () => {
-      mockUserService.findById.mockResolvedValue(mockUser);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-      (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed-refresh');
-      mockJwtService.signAsync
-        .mockResolvedValueOnce('new-access')
-        .mockResolvedValueOnce('new-refresh');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      mockPrismaService.user.updateMany.mockResolvedValue({ count: 0 });
+    it('should throw ForbiddenException when session userId does not match', async () => {
+      mockSessionService.findById.mockResolvedValue({
+        ...mockSession,
+        userId: 'other-user',
+      });
 
       await expect(
-        service.refreshTokens('user-1', 'valid-refresh'),
+        service.refreshTokens('user-1', 'token', 'session-1'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw ForbiddenException when session is expired', async () => {
+      mockSessionService.findById.mockResolvedValue({
+        ...mockSession,
+        expiresAt: new Date(Date.now() - 1000),
+      });
+
+      await expect(
+        service.refreshTokens('user-1', 'token', 'session-1'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw ForbiddenException when refresh token does not match', async () => {
+      mockSessionService.findById.mockResolvedValue(mockSession);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      await expect(
+        service.refreshTokens('user-1', 'wrong-token', 'session-1'),
       ).rejects.toThrow(ForbiddenException);
     });
   });
 
   describe('logout', () => {
-    it('should clear the refresh token', async () => {
-      mockUserService.updateRefreshToken.mockResolvedValue(undefined);
+    it('should delete the session', async () => {
+      mockSessionService.deleteSession.mockResolvedValue(undefined);
 
-      await service.logout('user-1');
+      await service.logout('session-1');
 
-      expect(mockUserService.updateRefreshToken).toHaveBeenCalledWith(
-        'user-1',
-        null,
+      expect(mockSessionService.deleteSession).toHaveBeenCalledWith(
+        'session-1',
       );
     });
   });
@@ -401,12 +422,13 @@ describe('AuthService', () => {
       resetToken: 'valid-reset-token',
     };
 
-    it('should change password with valid token', async () => {
+    it('should change password with valid token and delete all sessions', async () => {
       mockJwtService.verify.mockReturnValue({ email: 'test@example.com' });
       mockUserService.findOne.mockResolvedValue(userWithResetToken);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed-password');
       mockUserService.changePassword.mockResolvedValue(undefined);
+      mockSessionService.deleteAllSessions.mockResolvedValue(undefined);
 
       await service.changePassword({
         token: 'valid-reset-token',
@@ -427,6 +449,10 @@ describe('AuthService', () => {
       expect(mockUserService.changePassword).toHaveBeenCalledWith(
         'test@example.com',
         'new-hashed-password',
+        mockPrismaService,
+      );
+      expect(mockSessionService.deleteAllSessions).toHaveBeenCalledWith(
+        'user-1',
         mockPrismaService,
       );
     });
@@ -559,6 +585,69 @@ describe('AuthService', () => {
 
       await expect(service.getProfile('nonexistent')).rejects.toThrow(
         BadRequestException,
+      );
+    });
+  });
+
+  describe('listSessions', () => {
+    it('should return sessions with isCurrent flag', async () => {
+      const sessions = [
+        {
+          id: 'session-1',
+          deviceName: 'Chrome on Windows',
+          ipAddress: '127.0.0.1',
+          lastUsedAt: new Date(),
+          createdAt: new Date(),
+          expiresAt: new Date(),
+        },
+        {
+          id: 'session-2',
+          deviceName: 'Firefox on Linux',
+          ipAddress: '192.168.1.1',
+          lastUsedAt: new Date(),
+          createdAt: new Date(),
+          expiresAt: new Date(),
+        },
+      ];
+      mockSessionService.listUserSessions.mockResolvedValue(sessions);
+
+      const result = await service.listSessions('user-1', 'session-1');
+
+      expect(result).toHaveLength(2);
+      expect(result[0].isCurrent).toBe(true);
+      expect(result[1].isCurrent).toBe(false);
+    });
+  });
+
+  describe('revokeSession', () => {
+    it('should revoke a session', async () => {
+      mockSessionService.deleteSessionForUser.mockResolvedValue(1);
+
+      await service.revokeSession('session-1', 'user-1');
+
+      expect(mockSessionService.deleteSessionForUser).toHaveBeenCalledWith(
+        'session-1',
+        'user-1',
+      );
+    });
+
+    it('should throw NotFoundException if session not found', async () => {
+      mockSessionService.deleteSessionForUser.mockResolvedValue(0);
+
+      await expect(
+        service.revokeSession('bad-session', 'user-1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('revokeAllSessions', () => {
+    it('should delete all sessions for user', async () => {
+      mockSessionService.deleteAllSessions.mockResolvedValue({ count: 3 });
+
+      await service.revokeAllSessions('user-1');
+
+      expect(mockSessionService.deleteAllSessions).toHaveBeenCalledWith(
+        'user-1',
       );
     });
   });

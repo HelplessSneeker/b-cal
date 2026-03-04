@@ -19,7 +19,6 @@ model User {
 
   email         String  @unique
   password      String
-  refreshToken  String?
   emailVerified Boolean @default(false)
 
   verificationToken String?
@@ -27,9 +26,26 @@ model User {
 
   calendarEntry CalendarEntry[]
   preferences   UserPreferences?
+  sessions      Session[]
 
   updatedAt DateTime? @updatedAt
   createdAt DateTime  @default(now())
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshToken String
+  deviceName   String?
+  ipAddress    String?
+  userAgent    String?
+  lastUsedAt   DateTime @default(now())
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model CalendarEntry {

@@ -63,6 +63,20 @@ interface UserResponse {
   };
 }
 
+interface SessionResponse {
+  id: string;
+  deviceName: string | null;
+  ipAddress: string | null;
+  lastUsedAt: string;
+  createdAt: string;
+  expiresAt: string;
+  isCurrent: boolean;
+}
+
+interface SessionsResponse {
+  data: SessionResponse[];
+}
+
 function extractCookies(response: request.Response): string[] {
   const cookies = response.headers['set-cookie'];
   if (!cookies) return [];
@@ -110,6 +124,9 @@ describe('AuthController (e2e)', () => {
   });
 
   afterAll(async () => {
+    await prisma.session.deleteMany({
+      where: { user: { email: testUser.email } },
+    });
     await prisma.user.deleteMany({
       where: { email: testUser.email },
     });
@@ -257,6 +274,9 @@ describe('AuthController (e2e)', () => {
       expect(getCookieValue(cookies, 'refresh_token')).toBeDefined();
 
       // Cleanup
+      await prisma.session.deleteMany({
+        where: { user: { email: unverifiedUser.email } },
+      });
       await prisma.user.delete({ where: { email: unverifiedUser.email } });
     });
   });
@@ -271,7 +291,7 @@ describe('AuthController (e2e)', () => {
       cookies = extractCookies(response);
     });
 
-    it('should return new tokens with valid refresh token cookie', async () => {
+    it('should return new access token with valid refresh token cookie', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/refresh')
         .set('Cookie', cookies)
@@ -282,7 +302,8 @@ describe('AuthController (e2e)', () => {
 
       const newCookies = extractCookies(response);
       expect(getCookieValue(newCookies, 'access_token')).toBeDefined();
-      expect(getCookieValue(newCookies, 'refresh_token')).toBeDefined();
+      // Refresh token should NOT be rotated
+      expect(getCookieValue(newCookies, 'refresh_token')).toBeUndefined();
     });
 
     it('should return 401 without cookies', async () => {
@@ -397,6 +418,9 @@ describe('AuthController (e2e)', () => {
     });
 
     afterAll(async () => {
+      await prisma.session.deleteMany({
+        where: { user: { email: verifyEmailUser.email } },
+      });
       await prisma.user.deleteMany({
         where: { email: verifyEmailUser.email },
       });
@@ -482,6 +506,9 @@ describe('AuthController (e2e)', () => {
       expect(body.message).toBe('Invalid or expired token');
 
       // Cleanup
+      await prisma.session.deleteMany({
+        where: { user: { email: anotherUser.email } },
+      });
       await prisma.user.delete({ where: { email: anotherUser.email } });
     });
   });
@@ -502,6 +529,9 @@ describe('AuthController (e2e)', () => {
     });
 
     afterAll(async () => {
+      await prisma.session.deleteMany({
+        where: { user: { email: unverifiedUser.email } },
+      });
       await prisma.user.deleteMany({
         where: { email: unverifiedUser.email },
       });
@@ -624,6 +654,9 @@ describe('AuthController (e2e)', () => {
     });
 
     afterAll(async () => {
+      await prisma.session.deleteMany({
+        where: { user: { email: resetPasswordUser.email } },
+      });
       await prisma.user.deleteMany({
         where: { email: resetPasswordUser.email },
       });
@@ -790,6 +823,9 @@ describe('AuthController (e2e)', () => {
       expect(body.message).toBe('Invalid or expired token');
 
       // Cleanup
+      await prisma.session.deleteMany({
+        where: { user: { email: anotherUser.email } },
+      });
       await prisma.user.delete({ where: { email: anotherUser.email } });
     }, 15000);
 
@@ -808,6 +844,198 @@ describe('AuthController (e2e)', () => {
           token: resetToken,
         })
         .expect(400);
+    });
+  });
+
+  describe('Session management', () => {
+    const sessionUser = {
+      email: `session-mgmt-${Date.now()}@example.com`,
+      password: 'testpassword123!',
+    };
+
+    let sessionCookies: string[];
+
+    beforeAll(async () => {
+      // Create and verify user
+      await request(app.getHttpServer()).post('/auth/signup').send(sessionUser);
+      const verificationToken =
+        testMailService.lastVerificationTokenByEmail.get(sessionUser.email);
+      await request(app.getHttpServer())
+        .get('/auth/verify-email')
+        .query({ token: verificationToken });
+
+      // Login to get cookies
+      const loginResponse = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send(sessionUser);
+      sessionCookies = extractCookies(loginResponse);
+    });
+
+    afterAll(async () => {
+      await prisma.session.deleteMany({
+        where: { user: { email: sessionUser.email } },
+      });
+      await prisma.user.deleteMany({
+        where: { email: sessionUser.email },
+      });
+    });
+
+    describe('GET /auth/sessions', () => {
+      it('should list sessions with isCurrent flag', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/auth/sessions')
+          .set('Cookie', sessionCookies)
+          .expect(200);
+
+        const body = response.body as SessionsResponse;
+        expect(body.data.length).toBeGreaterThanOrEqual(1);
+
+        const currentSession = body.data.find((s) => s.isCurrent);
+        expect(currentSession).toBeDefined();
+      });
+
+      it('should return 401 without authentication', async () => {
+        await request(app.getHttpServer()).get('/auth/sessions').expect(401);
+      });
+
+      it('should show multiple sessions from different logins', async () => {
+        // Login again with a different user-agent
+        await request(app.getHttpServer())
+          .post('/auth/login')
+          .set(
+            'User-Agent',
+            'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/121.0',
+          )
+          .send(sessionUser);
+
+        const response = await request(app.getHttpServer())
+          .get('/auth/sessions')
+          .set('Cookie', sessionCookies)
+          .expect(200);
+
+        const body = response.body as SessionsResponse;
+        expect(body.data.length).toBeGreaterThanOrEqual(2);
+      });
+    });
+
+    describe('DELETE /auth/sessions/:id', () => {
+      it('should revoke a specific session', async () => {
+        // Login to create another session
+        const loginResponse = await request(app.getHttpServer())
+          .post('/auth/login')
+          .set(
+            'User-Agent',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0',
+          )
+          .send(sessionUser);
+        const otherCookies = extractCookies(loginResponse);
+
+        // List sessions to find the other session's ID
+        const sessionsResponse = await request(app.getHttpServer())
+          .get('/auth/sessions')
+          .set('Cookie', sessionCookies)
+          .expect(200);
+
+        const body = sessionsResponse.body as SessionsResponse;
+        const otherSession = body.data.find((s) => !s.isCurrent);
+        expect(otherSession).toBeDefined();
+
+        // Revoke the other session
+        await request(app.getHttpServer())
+          .delete(`/auth/sessions/${otherSession!.id}`)
+          .set('Cookie', sessionCookies)
+          .expect(200);
+
+        // Refresh with the revoked session's token should fail
+        await request(app.getHttpServer())
+          .post('/auth/refresh')
+          .set('Cookie', otherCookies)
+          .expect(403);
+      });
+
+      it('should return 404 for non-existent session', async () => {
+        await request(app.getHttpServer())
+          .delete('/auth/sessions/00000000-0000-0000-0000-000000000000')
+          .set('Cookie', sessionCookies)
+          .expect(404);
+      });
+    });
+
+    describe('DELETE /auth/sessions', () => {
+      it('should revoke all sessions and clear cookies', async () => {
+        // Login again so we have a session to work with
+        const loginResponse = await request(app.getHttpServer())
+          .post('/auth/login')
+          .send(sessionUser);
+        const freshCookies = extractCookies(loginResponse);
+
+        const response = await request(app.getHttpServer())
+          .delete('/auth/sessions')
+          .set('Cookie', freshCookies)
+          .expect(200);
+
+        const body = response.body as MessageResponse;
+        expect(body.message).toBe('All sessions revoked');
+
+        // Refresh should fail since all sessions are revoked
+        await request(app.getHttpServer())
+          .post('/auth/refresh')
+          .set('Cookie', freshCookies)
+          .expect(403);
+      });
+    });
+
+    describe('Session cap', () => {
+      it('should enforce max 5 sessions per user', async () => {
+        const capUser = {
+          email: `session-cap-${Date.now()}@example.com`,
+          password: 'testpassword123!',
+        };
+
+        // Create and verify user
+        await request(app.getHttpServer()).post('/auth/signup').send(capUser);
+        const verificationToken =
+          testMailService.lastVerificationTokenByEmail.get(capUser.email);
+        await request(app.getHttpServer())
+          .get('/auth/verify-email')
+          .query({ token: verificationToken });
+
+        // Login 6 times with different user agents
+        const userAgents = [
+          'Mozilla/5.0 UA-1',
+          'Mozilla/5.0 UA-2',
+          'Mozilla/5.0 UA-3',
+          'Mozilla/5.0 UA-4',
+          'Mozilla/5.0 UA-5',
+          'Mozilla/5.0 UA-6',
+        ];
+
+        let lastCookies: string[] = [];
+        for (const ua of userAgents) {
+          const loginResponse = await request(app.getHttpServer())
+            .post('/auth/login')
+            .set('User-Agent', ua)
+            .send(capUser);
+          lastCookies = extractCookies(loginResponse);
+        }
+
+        // List sessions — should only have 5
+        const response = await request(app.getHttpServer())
+          .get('/auth/sessions')
+          .set('Cookie', lastCookies)
+          .expect(200);
+
+        const body = response.body as SessionsResponse;
+        expect(body.data.length).toBeLessThanOrEqual(5);
+
+        // Cleanup
+        await prisma.session.deleteMany({
+          where: { user: { email: capUser.email } },
+        });
+        await prisma.user.deleteMany({
+          where: { email: capUser.email },
+        });
+      }, 30000);
     });
   });
 });

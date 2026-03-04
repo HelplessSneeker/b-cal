@@ -15,7 +15,7 @@ jest.mock('../constants', () => ({
   },
   cookieConfig: {
     accessToken: { name: 'access_token', maxAge: 3600000 },
-    refreshToken: { name: 'refresh_token', maxAge: 604800000 },
+    refreshToken: { name: 'refresh_token', maxAge: 2592000000 },
     options: { httpOnly: true, secure: false, sameSite: 'strict' },
   },
 }));
@@ -36,7 +36,7 @@ describe('JwtRefreshStrategy', () => {
   });
 
   describe('validate', () => {
-    it('should return user object with id, email, and refreshToken', () => {
+    it('should return user object with id, email, refreshToken, and sessionId', () => {
       const mockRequest = {
         cookies: {
           refresh_token: 'test-refresh-token',
@@ -47,6 +47,7 @@ describe('JwtRefreshStrategy', () => {
         sub: 'user-123',
         email: 'test@example.com',
         emailVerified: false,
+        sid: 'session-abc',
       };
 
       const result = strategy.validate(mockRequest, payload);
@@ -54,7 +55,9 @@ describe('JwtRefreshStrategy', () => {
       expect(result).toEqual({
         id: 'user-123',
         email: 'test@example.com',
+        emailVerified: false,
         refreshToken: 'test-refresh-token',
+        sessionId: 'session-abc',
       });
     });
 
@@ -69,6 +72,7 @@ describe('JwtRefreshStrategy', () => {
         sub: 'user-456',
         email: 'another@example.com',
         emailVerified: false,
+        sid: 'session-def',
       };
 
       const result = strategy.validate(mockRequest, payload);
@@ -76,7 +80,7 @@ describe('JwtRefreshStrategy', () => {
       expect(result.refreshToken).toBe('my-secret-refresh-token');
     });
 
-    it('should map sub to id correctly', () => {
+    it('should map sub to id and sid to sessionId correctly', () => {
       const mockRequest = {
         cookies: {
           refresh_token: 'token',
@@ -87,12 +91,14 @@ describe('JwtRefreshStrategy', () => {
         sub: 'specific-user-id',
         email: 'user@example.com',
         emailVerified: false,
+        sid: 'specific-session-id',
       };
 
       const result = strategy.validate(mockRequest, payload);
 
       expect(result.id).toBe('specific-user-id');
       expect(result.email).toBe('user@example.com');
+      expect(result.sessionId).toBe('specific-session-id');
     });
   });
 });

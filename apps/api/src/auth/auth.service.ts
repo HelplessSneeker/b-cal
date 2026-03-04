@@ -4,16 +4,19 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
-import { JwtUser, TokenResponse } from './types';
+import { JwtUser, TokenResponse, AccessTokenResponse } from './types';
 import { SignupDto } from './dto/signup.dto';
 import { jwtConstants, saltRounds } from './constants';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { MailService } from 'src/mail/mail.service';
 import { ChangePasswordDTO } from './dto/change-password.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { SessionService } from './session.service';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +27,7 @@ export class AuthService {
     private jwtService: JwtService,
     private mailService: MailService,
     private prisma: PrismaService,
+    private sessionService: SessionService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<JwtUser | null> {
@@ -42,39 +46,63 @@ export class AuthService {
     return null;
   }
 
-  private async generateTokens(user: {
-    id: string;
-    email: string;
-    emailVerified: boolean;
-  }): Promise<TokenResponse> {
+  private generateAccessToken(
+    user: { id: string; email: string; emailVerified: boolean },
+    sessionId: string,
+  ): Promise<string> {
     const payload = {
       email: user.email,
       sub: user.id,
       emailVerified: user.emailVerified,
+      sid: sessionId,
     };
-    const [access_token, refresh_token] = await Promise.all([
-      this.jwtService.signAsync(payload),
-      this.jwtService.signAsync(payload, {
-        secret: jwtConstants.refreshSecret,
-        expiresIn: '7d',
-        algorithm: 'HS256' as const,
-      }),
-    ]);
+    return this.jwtService.signAsync(payload);
+  }
+
+  private generateRefreshToken(
+    user: { id: string; email: string; emailVerified: boolean },
+    sessionId: string,
+  ): Promise<string> {
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      emailVerified: user.emailVerified,
+      sid: sessionId,
+    };
+    return this.jwtService.signAsync(payload, {
+      secret: jwtConstants.refreshSecret,
+      expiresIn: '30d',
+      algorithm: 'HS256' as const,
+    });
+  }
+
+  async login(
+    user: JwtUser,
+    userAgent?: string,
+    ipAddress?: string,
+  ): Promise<TokenResponse> {
+    const sessionId = crypto.randomUUID();
+    const refresh_token = await this.generateRefreshToken(user, sessionId);
+    const access_token = await this.generateAccessToken(user, sessionId);
+    const hashedRefreshToken = await bcrypt.hash(refresh_token, saltRounds);
+
+    await this.sessionService.createSession({
+      id: sessionId,
+      userId: user.id,
+      hashedRefreshToken,
+      userAgent,
+      ipAddress,
+    });
+
+    this.logger.log(`User logged in: ${user.id}`);
     return { access_token, refresh_token };
   }
 
-  async login(user: JwtUser): Promise<TokenResponse> {
-    const tokens = await this.generateTokens(user);
-    const hashedRefreshToken = await bcrypt.hash(
-      tokens.refresh_token,
-      saltRounds,
-    );
-    await this.userService.updateRefreshToken(user.id, hashedRefreshToken);
-    this.logger.log(`User logged in: ${user.id}`);
-    return tokens;
-  }
-
-  async signup(signupDto: SignupDto): Promise<TokenResponse> {
+  async signup(
+    signupDto: SignupDto,
+    userAgent?: string,
+    ipAddress?: string,
+  ): Promise<TokenResponse> {
     const { email, password } = signupDto;
 
     const existingUser = await this.userService.findOne(email);
@@ -98,6 +126,8 @@ export class AuthService {
     );
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
+    const sessionId = crypto.randomUUID();
+
     const { user, tokens } = await this.prisma.$transaction(async (tx) => {
       const user = await this.userService.create(
         {
@@ -107,18 +137,23 @@ export class AuthService {
         },
         tx,
       );
-      const tokens = await this.generateTokens(user);
-      const hashedRefreshToken = await bcrypt.hash(
-        tokens.refresh_token,
-        saltRounds,
-      );
-      await this.userService.updateRefreshToken(
-        user.id,
-        hashedRefreshToken,
+
+      const refresh_token = await this.generateRefreshToken(user, sessionId);
+      const access_token = await this.generateAccessToken(user, sessionId);
+      const hashedRefreshToken = await bcrypt.hash(refresh_token, saltRounds);
+
+      await this.sessionService.createSession(
+        {
+          id: sessionId,
+          userId: user.id,
+          hashedRefreshToken,
+          userAgent,
+          ipAddress,
+        },
         tx,
       );
 
-      return { user, tokens };
+      return { user, tokens: { access_token, refresh_token } };
     });
 
     await this.mailService.sendVerificationEmail(email, verificationToken);
@@ -130,35 +165,31 @@ export class AuthService {
   async refreshTokens(
     userId: string,
     refreshToken: string,
-  ): Promise<TokenResponse> {
-    const user = await this.userService.findById(userId);
-    if (!user || !user.refreshToken) {
+    sessionId: string,
+  ): Promise<AccessTokenResponse> {
+    const session = await this.sessionService.findById(sessionId);
+    if (!session || session.userId !== userId) {
       throw new ForbiddenException('Access denied');
     }
 
-    const isMatch = await bcrypt.compare(refreshToken, user.refreshToken);
+    if (session.expiresAt < new Date()) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    const isMatch = await bcrypt.compare(refreshToken, session.refreshToken);
     if (!isMatch) {
       throw new ForbiddenException('Access denied');
     }
 
-    const tokens = await this.generateTokens(user);
-    const hashedRefreshToken = await bcrypt.hash(
-      tokens.refresh_token,
-      saltRounds,
-    );
+    await this.sessionService.touchSession(sessionId);
 
-    // Conditional update: only succeeds if the refresh token hasn't been
-    // rotated by a concurrent request since we read it.
-    const { count } = await this.prisma.user.updateMany({
-      where: { id: user.id, refreshToken: user.refreshToken },
-      data: { refreshToken: hashedRefreshToken },
-    });
-
-    if (count === 0) {
+    const user = await this.userService.findById(userId);
+    if (!user) {
       throw new ForbiddenException('Access denied');
     }
 
-    return tokens;
+    const access_token = await this.generateAccessToken(user, sessionId);
+    return { access_token };
   }
 
   async resendVerificationEmail(userId: string) {
@@ -263,7 +294,7 @@ export class AuthService {
       );
 
       await this.userService.changePassword(payload.email, hashedPassword, tx);
-      await this.userService.updateRefreshToken(user.id, null, tx);
+      await this.sessionService.deleteAllSessions(user.id, tx);
     });
 
     this.logger.log(`Password changed: ${user.id}`);
@@ -288,8 +319,30 @@ export class AuthService {
     };
   }
 
-  async logout(userId: string) {
-    await this.userService.updateRefreshToken(userId, null);
-    this.logger.log(`User logged out: ${userId}`);
+  async logout(sessionId: string) {
+    await this.sessionService.deleteSession(sessionId);
+    this.logger.log(`Session logged out: ${sessionId}`);
+  }
+
+  async listSessions(userId: string, currentSessionId?: string) {
+    const sessions = await this.sessionService.listUserSessions(userId);
+    return sessions.map((session) => ({
+      ...session,
+      isCurrent: session.id === currentSessionId,
+    }));
+  }
+
+  async revokeSession(sessionId: string, userId: string) {
+    const count = await this.sessionService.deleteSessionForUser(
+      sessionId,
+      userId,
+    );
+    if (count === 0) {
+      throw new NotFoundException('Session not found');
+    }
+  }
+
+  async revokeAllSessions(userId: string) {
+    await this.sessionService.deleteAllSessions(userId);
   }
 }

@@ -8,6 +8,9 @@ export const jwtConstants = {
 
 export const saltRounds = 10;
 
+export const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days in ms
+export const SESSION_MAX_SESSIONS = 5;
+
 interface TokenConfig {
   name: string;
   maxAge: number;
@@ -50,7 +53,7 @@ export const cookieConfig: CookieConfig = {
   },
   refreshToken: {
     name: 'refresh_token',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
+    maxAge: SESSION_MAX_AGE_MS, // 30 days in ms
     options: { ...baseOptions, path: '/auth/refresh' },
   },
 };

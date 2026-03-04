@@ -67,6 +67,7 @@ async function main() {
   console.log('Seeding database...');
 
   // Clear existing data
+  await prisma.session.deleteMany();
   await prisma.userPreferences.deleteMany();
   await prisma.calendarEntry.deleteMany();
   await prisma.user.deleteMany();

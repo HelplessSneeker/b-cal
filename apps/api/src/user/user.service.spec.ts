@@ -12,7 +12,6 @@ const mockUser = {
   id: 'user-1',
   email: 'test@example.com',
   password: 'hashed-password',
-  refreshToken: null,
 };
 
 const mockPreferences = {
@@ -107,41 +106,12 @@ describe('UserService', () => {
       mockPrisma.user.create.mockResolvedValue({
         id: 'user-2',
         ...input,
-        refreshToken: null,
       });
 
       const result = await service.create(input);
 
-      expect(result).toEqual({ id: 'user-2', ...input, refreshToken: null });
+      expect(result).toEqual({ id: 'user-2', ...input });
       expect(mockPrisma.user.create).toHaveBeenCalledWith({ data: input });
-    });
-  });
-
-  describe('updateRefreshToken', () => {
-    it('should update the refresh token', async () => {
-      const updated = { ...mockUser, refreshToken: 'new-token' };
-      mockPrisma.user.update.mockResolvedValue(updated);
-
-      const result = await service.updateRefreshToken('user-1', 'new-token');
-
-      expect(result).toEqual(updated);
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
-        where: { id: 'user-1' },
-        data: { refreshToken: 'new-token' },
-      });
-    });
-
-    it('should clear the refresh token with null', async () => {
-      const updated = { ...mockUser, refreshToken: null };
-      mockPrisma.user.update.mockResolvedValue(updated);
-
-      const result = await service.updateRefreshToken('user-1', null);
-
-      expect(result).toEqual(updated);
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
-        where: { id: 'user-1' },
-        data: { refreshToken: null },
-      });
     });
   });
 

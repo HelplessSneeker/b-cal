@@ -50,18 +50,6 @@ export class UserService {
     });
   }
 
-  async updateRefreshToken(
-    id: string,
-    refreshToken: string | null,
-    tx?: Prisma.TransactionClient,
-  ) {
-    const client = tx ?? this.prisma;
-    return client.user.update({
-      where: { id },
-      data: { refreshToken },
-    });
-  }
-
   async validateEmail(email: string, verificationToken: string) {
     const user = await this.prisma.user.findUnique({
       where: { email },

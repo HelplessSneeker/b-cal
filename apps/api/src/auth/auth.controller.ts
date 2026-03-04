@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Query,
   Req,
@@ -18,6 +20,7 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guard/local-auth.guard';
 import { JwtAuthGuard } from './guard/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from './guard/jwt-refresh-auth.guard';
+import { EmailVerifiedGuard } from './guard/email-verified.guard';
 import type { JwtUser, JwtRefreshUser } from './types';
 import { SignupDto } from './dto/signup.dto';
 import { ApiBody } from '@nestjs/swagger';
@@ -75,9 +78,14 @@ export class AuthController {
   @Post('login')
   async login(
     @User() user: JwtUser,
+    @Req() req: express.Request,
     @Res({ passthrough: true }) res: express.Response,
   ) {
-    const tokens = await this.authService.login(user);
+    const tokens = await this.authService.login(
+      user,
+      req.headers['user-agent'],
+      req.ip,
+    );
     this.setTokenCookies(res, tokens.access_token, tokens.refresh_token);
     return { message: 'Login successful' };
   }
@@ -89,9 +97,14 @@ export class AuthController {
   @Post('signup')
   async signup(
     @Body() signupDto: SignupDto,
+    @Req() req: express.Request,
     @Res({ passthrough: true }) res: express.Response,
   ) {
-    const tokens = await this.authService.signup(signupDto);
+    const tokens = await this.authService.signup(
+      signupDto,
+      req.headers['user-agent'],
+      req.ip,
+    );
     this.setTokenCookies(res, tokens.access_token, tokens.refresh_token);
     return { message: 'Signup successful' };
   }
@@ -102,21 +115,27 @@ export class AuthController {
     @User() user: JwtRefreshUser,
     @Res({ passthrough: true }) res: express.Response,
   ) {
-    const tokens = await this.authService.refreshTokens(
+    const { access_token } = await this.authService.refreshTokens(
       user.id,
       user.refreshToken,
+      user.sessionId,
     );
-    this.setTokenCookies(res, tokens.access_token, tokens.refresh_token);
+    res.cookie(cookieConfig.accessToken.name, access_token, {
+      ...cookieConfig.accessToken.options,
+      maxAge: cookieConfig.accessToken.maxAge,
+    });
     return { message: 'Tokens refreshed' };
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   async logout(
-    @User('id') userId: string,
+    @User() user: JwtUser,
     @Res({ passthrough: true }) res: express.Response,
   ) {
-    await this.authService.logout(userId);
+    if (user.sessionId) {
+      await this.authService.logout(user.sessionId);
+    }
     this.clearTokenCookies(res);
     return { message: 'Logout successful' };
   }
@@ -167,5 +186,36 @@ export class AuthController {
   async resetPassword(@Body() changePasswordDTO: ChangePasswordDTO) {
     await this.authService.changePassword(changePasswordDTO);
     return { message: 'Password changed successfully' };
+  }
+
+  @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
+  @Get('sessions')
+  async listSessions(@User() user: JwtUser) {
+    const sessions = await this.authService.listSessions(
+      user.id,
+      user.sessionId,
+    );
+    return { data: sessions };
+  }
+
+  @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
+  @Delete('sessions/:id')
+  async revokeSession(@Param('id') sessionId: string, @User() user: JwtUser) {
+    if (sessionId === user.sessionId) {
+      return { message: 'Use logout to end your current session' };
+    }
+    await this.authService.revokeSession(sessionId, user.id);
+    return { message: 'Session revoked' };
+  }
+
+  @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
+  @Delete('sessions')
+  async revokeAllSessions(
+    @User() user: JwtUser,
+    @Res({ passthrough: true }) res: express.Response,
+  ) {
+    await this.authService.revokeAllSessions(user.id);
+    this.clearTokenCookies(res);
+    return { message: 'All sessions revoked' };
   }
 }

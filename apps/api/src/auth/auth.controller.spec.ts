@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import type { JwtUser, JwtRefreshUser } from './types';
 
 jest.mock('generated/prisma/client', () => ({
@@ -16,13 +16,9 @@ const mockAuthService = {
   logout: jest.fn(),
   resendVerificationEmail: jest.fn(),
   getProfile: jest.fn(),
-};
-
-const mockUser = {
-  id: 'user-1',
-  email: 'test@example.com',
-  password: 'hashed',
-  refreshToken: null,
+  listSessions: jest.fn(),
+  revokeSession: jest.fn(),
+  revokeAllSessions: jest.fn(),
 };
 
 const mockTokens = {
@@ -40,6 +36,11 @@ const mockResponse = (): MockResponse => {
     .mockReturnValue(res) as MockResponse['clearCookie'];
   return res;
 };
+
+const mockRequest = (): Partial<Request> => ({
+  headers: { 'user-agent': 'Mozilla/5.0 Test' },
+  ip: '127.0.0.1',
+});
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -62,16 +63,25 @@ describe('AuthController', () => {
     it('should set cookies and return success message', async () => {
       mockAuthService.login.mockResolvedValue(mockTokens);
       const res = mockResponse();
+      const req = mockRequest();
       const user: JwtUser = {
-        id: mockUser.id,
-        email: mockUser.email,
+        id: 'user-1',
+        email: 'test@example.com',
         emailVerified: true,
       };
 
-      const result = await controller.login(user, res as Response);
+      const result = await controller.login(
+        user,
+        req as Request,
+        res as Response,
+      );
 
       expect(result).toEqual({ message: 'Login successful' });
-      expect(mockAuthService.login).toHaveBeenCalledWith(user);
+      expect(mockAuthService.login).toHaveBeenCalledWith(
+        user,
+        'Mozilla/5.0 Test',
+        '127.0.0.1',
+      );
       expect(res.cookie).toHaveBeenCalledTimes(2);
     });
   });
@@ -81,23 +91,35 @@ describe('AuthController', () => {
       mockAuthService.signup.mockResolvedValue(mockTokens);
       const dto = { email: 'new@example.com', password: 'password' };
       const res = mockResponse();
+      const req = mockRequest();
 
-      const result = await controller.signup(dto, res as Response);
+      const result = await controller.signup(
+        dto,
+        req as Request,
+        res as Response,
+      );
 
       expect(result).toEqual({ message: 'Signup successful' });
-      expect(mockAuthService.signup).toHaveBeenCalledWith(dto);
+      expect(mockAuthService.signup).toHaveBeenCalledWith(
+        dto,
+        'Mozilla/5.0 Test',
+        '127.0.0.1',
+      );
       expect(res.cookie).toHaveBeenCalledTimes(2);
     });
   });
 
   describe('refresh', () => {
-    it('should set cookies and return success message', async () => {
-      mockAuthService.refreshTokens.mockResolvedValue(mockTokens);
+    it('should set access token cookie and return success message', async () => {
+      mockAuthService.refreshTokens.mockResolvedValue({
+        access_token: 'new-access',
+      });
       const user: JwtRefreshUser = {
         id: 'user-1',
         email: 'test@example.com',
         emailVerified: true,
         refreshToken: 'rt',
+        sessionId: 'session-1',
       };
       const res = mockResponse();
 
@@ -107,8 +129,10 @@ describe('AuthController', () => {
       expect(mockAuthService.refreshTokens).toHaveBeenCalledWith(
         'user-1',
         'rt',
+        'session-1',
       );
-      expect(res.cookie).toHaveBeenCalledTimes(2);
+      // Only access token cookie should be set (no refresh token rotation)
+      expect(res.cookie).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -116,11 +140,17 @@ describe('AuthController', () => {
     it('should clear cookies and return success message', async () => {
       mockAuthService.logout.mockResolvedValue(undefined);
       const res = mockResponse();
+      const user: JwtUser = {
+        id: 'user-1',
+        email: 'test@example.com',
+        emailVerified: true,
+        sessionId: 'session-1',
+      };
 
-      const result = await controller.logout('user-1', res as Response);
+      const result = await controller.logout(user, res as Response);
 
       expect(result).toEqual({ message: 'Logout successful' });
-      expect(mockAuthService.logout).toHaveBeenCalledWith('user-1');
+      expect(mockAuthService.logout).toHaveBeenCalledWith('session-1');
       expect(res.clearCookie).toHaveBeenCalledTimes(3);
     });
   });
