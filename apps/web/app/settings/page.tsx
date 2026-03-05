@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeftIcon } from 'lucide-react';
+import { ArrowLeftIcon, MenuIcon } from 'lucide-react';
 import { AuthProvider } from '@/components/AuthProvider';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,10 +17,21 @@ import { AppearanceTab } from '@/components/settings/appearance-tab';
 function SettingsContent() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <div className="flex h-svh flex-col overflow-hidden">
       <header className="flex items-center gap-3 border-b px-4 py-4 md:px-6">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open sidebar"
+        >
+          <MenuIcon className="size-5" />
+        </Button>
         <Button
           variant="ghost"
           size="icon"
@@ -33,7 +44,14 @@ function SettingsContent() {
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <SettingsSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        <SettingsSidebar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          collapsed={sidebarCollapsed}
+          onCollapsedChange={setSidebarCollapsed}
+          mobileOpen={mobileOpen}
+          onMobileOpenChange={setMobileOpen}
+        />
 
         <main className="flex-1 overflow-auto p-6">
           {activeTab === 'profile' && <ProfileTab />}
