@@ -1,0 +1,100 @@
+{
+  "title": "Einstellungen",
+  "nav": {
+    "openSidebar": "Seitenleiste öffnen",
+    "closeSidebar": "Seitenleiste schließen",
+    "expandSidebar": "Seitenleiste erweitern",
+    "collapseSidebar": "Seitenleiste einklappen",
+    "backToCalendar": "Zurück zum Kalender"
+  },
+  "tabs": {
+    "profile": "Profil",
+    "security": "Sicherheit",
+    "appearance": "Erscheinungsbild",
+    "localization": "Lokalisierung"
+  },
+  "profile": {
+    "title": "Profilinformationen",
+    "description": "Deine persönlichen Kontodaten.",
+    "memberSince": "Mitglied seit {date}",
+    "dangerZone": "Gefahrenzone",
+    "dangerDescription": "Lösche dein Konto und alle zugehörigen Daten dauerhaft. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "deleteAccount": "Konto löschen",
+    "deleteDialogTitle": "Konto löschen",
+    "deleteDialogDescription": "Diese Aktion ist dauerhaft und kann nicht rückgängig gemacht werden. Alle deine Daten werden gelöscht. Gib deine E-Mail-Adresse zur Bestätigung ein.",
+    "deleting": "Wird gelöscht..."
+  },
+  "security": {
+    "changePassword": "Passwort ändern",
+    "changePasswordDescription": "Wähle ein sicheres Passwort, das du auf keiner anderen Seite verwendest.",
+    "currentPassword": "Aktuelles Passwort",
+    "newPassword": "Neues Passwort",
+    "confirmNewPassword": "Neues Passwort bestätigen",
+    "updatePassword": "Passwort aktualisieren",
+    "activeSessions": "Aktive Sitzungen",
+    "activeSessionsDescription": "Geräte, auf denen du derzeit angemeldet bist.",
+    "noSessions": "Keine aktiven Sitzungen.",
+    "unknownDevice": "Unbekanntes Gerät",
+    "unknownIP": "Unbekannte IP",
+    "current": "Aktuell",
+    "revoke": "Widerrufen",
+    "signOutAll": "Alle anderen Sitzungen beenden",
+    "failedLoadSessions": "Sitzungen konnten nicht geladen werden",
+    "failedRevokeSession": "Sitzung konnte nicht widerrufen werden",
+    "failedSignOutAll": "Andere Sitzungen konnten nicht beendet werden"
+  },
+  "appearance": {
+    "theme": "Design",
+    "themeDescription": "Wähle, wie b-cal für dich aussieht.",
+    "themes": {
+      "light": "Hell",
+      "dark": "Dunkel",
+      "system": "System"
+    },
+    "accentColor": "Akzentfarbe",
+    "accentColorDescription": "Wird für die Hervorhebung des aktuellen Tages, aktive Auswahlen und Schaltflächen verwendet.",
+    "colors": {
+      "blue": "Blau",
+      "indigo": "Indigo",
+      "violet": "Violett",
+      "rose": "Rosa",
+      "emerald": "Smaragd",
+      "amber": "Bernstein",
+      "slate": "Schiefer"
+    },
+    "calendarDisplay": "Kalenderanzeige",
+    "calendarDisplayDescription": "Passe an, wie das Kalenderraster dargestellt wird.",
+    "weekStartsOn": "Woche beginnt am",
+    "weekDays": {
+      "monday": "Montag",
+      "sunday": "Sonntag",
+      "saturday": "Samstag"
+    },
+    "density": "Dichte",
+    "densities": {
+      "compact": "Kompakt",
+      "compactDescription": "Kleinerer Text, engere Abstände",
+      "default": "Standard",
+      "defaultDescription": "Ausgewogene Lesbarkeit",
+      "comfortable": "Komfortabel",
+      "comfortableDescription": "Größerer Text, mehr Abstand"
+    },
+    "preview": "Vorschau",
+    "previewDescription": "Eine Live-Vorschau deiner aktuellen Auswahl.",
+    "previewMonth": "März 2026",
+    "previewEvent": "Besprechung",
+    "saved": "Erscheinungsbild-Einstellungen gespeichert",
+    "saveFailed": "Erscheinungsbild-Einstellungen konnten nicht gespeichert werden"
+  },
+  "localization": {
+    "language": "Sprache",
+    "languageDescription": "Steuert die Anzeigesprache der Benutzeroberfläche.",
+    "timezone": "Zeitzone",
+    "timezoneDescription": "Deine Kalendereinträge werden relativ zu dieser Zeitzone angezeigt. Dies betrifft auch Erinnerungen und Benachrichtigungen.",
+    "searchTimezones": "Zeitzonen suchen...",
+    "noTimezones": "Keine Zeitzonen gefunden.",
+    "currentTime": "Aktuelle Uhrzeit in {timezone}: {time}",
+    "saved": "Einstellungen gespeichert",
+    "saveFailed": "Einstellungen konnten nicht gespeichert werden"
+  }
+}

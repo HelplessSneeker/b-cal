@@ -1,0 +1,51 @@
+{
+  "title": "Kalender",
+  "today": "Heute",
+  "newEntry": "Neuer Eintrag",
+  "views": {
+    "day": "Tag",
+    "week": "Woche",
+    "month": "Monat"
+  },
+  "calendarWeekShort": "KW {week}",
+  "nav": {
+    "previous": "Zurück",
+    "next": "Weiter",
+    "openMenu": "Menü öffnen",
+    "goToToday": "Zu heute springen"
+  },
+  "userMenu": {
+    "settings": "Einstellungen",
+    "logout": "Abmelden"
+  },
+  "entry": {
+    "editTitle": "Eintrag bearbeiten",
+    "newTitle": "Neuer Eintrag",
+    "titleLabel": "Titel",
+    "titlePlaceholder": "Titel des Eintrags",
+    "allDay": "Ganztägig",
+    "start": "Beginn",
+    "end": "Ende",
+    "description": "Beschreibung",
+    "descriptionPlaceholder": "Optionale Beschreibung",
+    "save": "Speichern",
+    "create": "Erstellen"
+  },
+  "validation": {
+    "titleRequired": "Titel ist erforderlich",
+    "startDateRequired": "Startdatum ist erforderlich",
+    "endDateRequired": "Enddatum ist erforderlich",
+    "endDateAfterStart": "Enddatum muss gleich oder nach dem Startdatum liegen"
+  },
+  "more": "+{count} weitere",
+  "moreEntries": "{count} weitere Einträge",
+  "weekdays": {
+    "mo": "Mo",
+    "tu": "Di",
+    "we": "Mi",
+    "th": "Do",
+    "fr": "Fr",
+    "sa": "Sa",
+    "su": "So"
+  }
+}

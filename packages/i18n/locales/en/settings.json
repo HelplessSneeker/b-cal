@@ -1,0 +1,100 @@
+{
+  "title": "Settings",
+  "nav": {
+    "openSidebar": "Open sidebar",
+    "closeSidebar": "Close sidebar",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "backToCalendar": "Back to calendar"
+  },
+  "tabs": {
+    "profile": "Profile",
+    "security": "Security",
+    "appearance": "Appearance",
+    "localization": "Localization"
+  },
+  "profile": {
+    "title": "Profile Information",
+    "description": "Your personal account details.",
+    "memberSince": "Member since {date}",
+    "dangerZone": "Danger Zone",
+    "dangerDescription": "Permanently delete your account and all associated data. This action cannot be undone.",
+    "deleteAccount": "Delete Account",
+    "deleteDialogTitle": "Delete Account",
+    "deleteDialogDescription": "This action is permanent and cannot be undone. All your data will be deleted. Type your email address to confirm.",
+    "deleting": "Deleting..."
+  },
+  "security": {
+    "changePassword": "Change Password",
+    "changePasswordDescription": "Choose a strong password that you don't use on other sites.",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "updatePassword": "Update Password",
+    "activeSessions": "Active Sessions",
+    "activeSessionsDescription": "Devices where you're currently signed in.",
+    "noSessions": "No active sessions.",
+    "unknownDevice": "Unknown device",
+    "unknownIP": "Unknown IP",
+    "current": "Current",
+    "revoke": "Revoke",
+    "signOutAll": "Sign Out All Other Sessions",
+    "failedLoadSessions": "Failed to load sessions",
+    "failedRevokeSession": "Failed to revoke session",
+    "failedSignOutAll": "Failed to sign out other sessions"
+  },
+  "appearance": {
+    "theme": "Theme",
+    "themeDescription": "Choose how b-cal looks to you.",
+    "themes": {
+      "light": "light",
+      "dark": "dark",
+      "system": "system"
+    },
+    "accentColor": "Accent Color",
+    "accentColorDescription": "Used for the current day highlight, active selections, and buttons.",
+    "colors": {
+      "blue": "Blue",
+      "indigo": "Indigo",
+      "violet": "Violet",
+      "rose": "Rose",
+      "emerald": "Emerald",
+      "amber": "Amber",
+      "slate": "Slate"
+    },
+    "calendarDisplay": "Calendar Display",
+    "calendarDisplayDescription": "Adjust how the calendar grid is displayed.",
+    "weekStartsOn": "Week starts on",
+    "weekDays": {
+      "monday": "Monday",
+      "sunday": "Sunday",
+      "saturday": "Saturday"
+    },
+    "density": "Density",
+    "densities": {
+      "compact": "Compact",
+      "compactDescription": "Smaller text, tighter spacing",
+      "default": "Default",
+      "defaultDescription": "Balanced readability",
+      "comfortable": "Comfortable",
+      "comfortableDescription": "Larger text, more spacing"
+    },
+    "preview": "Preview",
+    "previewDescription": "A live preview of your current selections.",
+    "previewMonth": "March 2026",
+    "previewEvent": "Meeting",
+    "saved": "Appearance settings saved",
+    "saveFailed": "Failed to save appearance settings"
+  },
+  "localization": {
+    "language": "Language",
+    "languageDescription": "Controls the display language of the interface.",
+    "timezone": "Timezone",
+    "timezoneDescription": "Your calendar events will be displayed relative to this timezone. This also affects reminders and notifications.",
+    "searchTimezones": "Search timezones...",
+    "noTimezones": "No timezones found.",
+    "currentTime": "Current time in {timezone}: {time}",
+    "saved": "Preferences saved",
+    "saveFailed": "Failed to save preferences"
+  }
+}

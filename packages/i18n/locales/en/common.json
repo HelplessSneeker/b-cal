@@ -1,0 +1,22 @@
+{
+  "save": "Save Changes",
+  "saving": "Saving...",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "retry": "Retry",
+  "backToLogin": "Back to login",
+  "serviceUnavailable": {
+    "title": "Service Unavailable",
+    "description": "Unable to connect to the server. Please check your connection and try again."
+  },
+  "notFound": {
+    "title": "404",
+    "description": "The page you're looking for doesn't exist.",
+    "goHome": "Go home"
+  },
+  "genericError": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again.",
+    "tryAgain": "Try again"
+  }
+}

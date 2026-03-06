@@ -1,0 +1,16 @@
+{
+  "name": "@b-cal/i18n",
+  "version": "1.0.0",
+  "private": true,
+  "exports": {
+    "./locales/*": "./locales/*",
+    "./config": {
+      "import": "./src/config.ts",
+      "types": "./src/config.ts"
+    }
+  },
+  "files": [
+    "locales",
+    "src"
+  ]
+}
