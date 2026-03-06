@@ -149,7 +149,7 @@ describe('CalendarService', () => {
         NotFoundException,
       );
       await expect(service.findOne('user-1', 'nonexistent')).rejects.toThrow(
-        'Calendar entry with id nonexistent not found',
+        'error.calendarEntryNotFound',
       );
     });
   });
@@ -196,7 +196,7 @@ describe('CalendarService', () => {
           startDate: '2026-01-20',
           endDate: '2026-01-10',
         }),
-      ).rejects.toThrow('startDate must be before or equal to endDate');
+      ).rejects.toThrow('error.startDateBeforeEndDate');
     });
 
     it('should validate dates using existing entry values when partial update', async () => {

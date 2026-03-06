@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma, User, UserPreferences } from 'generated/prisma/client';
 import * as bcrypt from 'bcrypt';
+import { t } from 'src/common/utils/i18n';
 
 @Injectable()
 export class UserService {
@@ -63,7 +64,7 @@ export class UserService {
       this.logger.error(
         `Email validation failed: invalid token for user ${user?.id ?? 'unknown'}`,
       );
-      throw new BadRequestException('Invalid or expired token');
+      throw new BadRequestException(t('error.invalidOrExpiredToken'));
     }
 
     await this.prisma.user.update({
@@ -98,7 +99,7 @@ export class UserService {
       this.logger.error(
         `Password change failed: user not found or no reset token for ${email}`,
       );
-      throw new BadRequestException('User not found');
+      throw new BadRequestException(t('error.userNotFound'));
     }
 
     await client.user.update({

@@ -1,2 +1,15 @@
 {
+  "emailAlreadyRegistered": "E-Mail-Adresse bereits registriert",
+  "accessDenied": "Zugriff verweigert",
+  "userNotFound": "Benutzer nicht gefunden",
+  "emailAlreadyVerified": "E-Mail bereits verifiziert",
+  "invalidOrExpiredToken": "Ungültiges oder abgelaufenes Token",
+  "currentPasswordIncorrect": "Aktuelles Passwort ist falsch",
+  "sessionNotFound": "Sitzung nicht gefunden",
+  "calendarEntryNotFound": "Kalendereintrag nicht gefunden",
+  "startDateBeforeEndDate": "Startdatum muss vor oder gleich dem Enddatum sein",
+  "preferencesRequired": "Sowohl Sprache als auch Zeitzone sind beim Erstellen der Einstellungen erforderlich",
+  "loginFailed": "Anmeldung fehlgeschlagen",
+  "emailNotVerified": "E-Mail nicht verifiziert",
+  "invalidCsrfToken": "Ungültiges CSRF-Token"
 }

@@ -77,7 +77,7 @@ describe('AuthController', () => {
         res as Response,
       );
 
-      expect(result).toEqual({ message: 'Login successful' });
+      expect(result).toEqual({ message: 'success.loginSuccessful' });
       expect(mockAuthService.login).toHaveBeenCalledWith(
         user,
         'Mozilla/5.0 Test',
@@ -100,7 +100,7 @@ describe('AuthController', () => {
         res as Response,
       );
 
-      expect(result).toEqual({ message: 'Signup successful' });
+      expect(result).toEqual({ message: 'success.signupSuccessful' });
       expect(mockAuthService.signup).toHaveBeenCalledWith(
         dto,
         'Mozilla/5.0 Test',
@@ -126,7 +126,7 @@ describe('AuthController', () => {
 
       const result = await controller.refresh(user, res as Response);
 
-      expect(result).toEqual({ message: 'Tokens refreshed' });
+      expect(result).toEqual({ message: 'success.tokensRefreshed' });
       expect(mockAuthService.refreshTokens).toHaveBeenCalledWith(
         'user-1',
         'rt',
@@ -150,7 +150,7 @@ describe('AuthController', () => {
 
       const result = await controller.logout(user, res as Response);
 
-      expect(result).toEqual({ message: 'Logout successful' });
+      expect(result).toEqual({ message: 'success.logoutSuccessful' });
       expect(mockAuthService.logout).toHaveBeenCalledWith('session-1');
       expect(res.clearCookie).toHaveBeenCalledTimes(3);
     });
@@ -194,7 +194,7 @@ describe('AuthController', () => {
         user,
       );
 
-      expect(result).toEqual({ message: 'Password updated successfully' });
+      expect(result).toEqual({ message: 'success.passwordUpdated' });
       expect(mockAuthService.updatePassword).toHaveBeenCalledWith(
         'user-1',
         'oldpass',
@@ -210,7 +210,7 @@ describe('AuthController', () => {
 
       const result = await controller.resendVerification('user-1');
 
-      expect(result).toEqual({ message: 'Verification email sent' });
+      expect(result).toEqual({ message: 'success.verificationEmailSent' });
       expect(mockAuthService.resendVerificationEmail).toHaveBeenCalledWith(
         'user-1',
       );

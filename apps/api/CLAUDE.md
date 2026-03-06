@@ -19,7 +19,7 @@ pnpm run prisma:generate                      # Regenerate Prisma client
 
 ## Architecture
 
-**Modules:** AppModule imports ConfigModule, LoggerModule (nestjs-pino), ThrottlerModule, SentryModule, PrismaModule (global), AuthModule, UserModule, CalendarModule, MailModule, HealthModule.
+**Modules:** AppModule imports ConfigModule, LoggerModule (nestjs-pino), I18nModule (nestjs-i18n), ThrottlerModule, SentryModule, PrismaModule (global), AuthModule, UserModule, CalendarModule, MailModule, HealthModule.
 
 ### File Structure
 
@@ -29,7 +29,7 @@ src/
 ├── calendar/       # CalendarController, CalendarService, DTOs, validators
 ├── common/filters/ # GlobalExceptionFilter (Sentry-integrated, includes request ID in responses)
 ├── common/logging/ # Custom pino serializers (redact sensitive headers/query params)
-├── common/utils/   # strip-html-tags utility
+├── common/utils/   # strip-html-tags, i18n helper (t() function)
 ├── config/         # env.validation.ts (runtime env var validation via class-validator)
 ├── csrf/           # CSRF protection config (double-submit cookie via csrf-csrf)
 ├── health/         # HealthController, HealthModule (@nestjs/terminus)
@@ -92,7 +92,7 @@ Auth uses a `Session` model instead of storing a single refresh token on the Use
 
 ### i18n
 
-Uses `nestjs-i18n` for backend internationalization.
+Uses `nestjs-i18n` with translations from the shared `@b-cal/i18n` package. `I18nModule` is configured in `AppModule` with `AcceptLanguageResolver` for locale detection (fallback: `en`). Namespaces: `error`, `success`. All user-facing strings (exception messages, response messages) use the `t()` helper from `src/common/utils/i18n.ts`, which calls `I18nContext.current()?.translate()` and falls back to the key when no context is available (e.g., unit tests).
 
 ### Rate Limiting
 

@@ -16,6 +16,7 @@ import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { EmailVerifiedGuard } from 'src/auth/guard/email-verified.guard';
 import { User } from 'src/auth/decorators/user.decorator';
 import { GetCalendarEntriesDto } from './dto/get-calendar-entries.dto';
+import { t } from 'src/common/utils/i18n';
 
 @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
 @Controller('calendar')
@@ -29,7 +30,7 @@ export class CalendarController {
   ) {
     const entry = await this.calendarService.create(userId, createCalendarDto);
 
-    return { message: `Calendar entry created`, data: entry };
+    return { message: t('success.calendarEntryCreated'), data: entry };
   }
 
   @Get()
@@ -65,7 +66,7 @@ export class CalendarController {
     );
 
     return {
-      message: `Calendar entry has been updated`,
+      message: t('success.calendarEntryUpdated'),
       data: entry,
     };
   }
@@ -74,6 +75,6 @@ export class CalendarController {
   async remove(@User('id') userId: string, @Param('id') id: string) {
     await this.calendarService.remove(userId, id);
 
-    return { message: `Deleted calendar entry` };
+    return { message: t('success.calendarEntryDeleted') };
   }
 }

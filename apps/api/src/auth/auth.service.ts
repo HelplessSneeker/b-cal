@@ -17,6 +17,7 @@ import { MailService } from 'src/mail/mail.service';
 import { ChangePasswordDTO } from './dto/change-password.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SessionService } from './session.service';
+import { t } from 'src/common/utils/i18n';
 
 @Injectable()
 export class AuthService {
@@ -108,7 +109,7 @@ export class AuthService {
     const existingUser = await this.userService.findOne(email);
 
     if (existingUser) {
-      throw new ConflictException('Email already registered');
+      throw new ConflictException(t('error.emailAlreadyRegistered'));
     }
 
     const verificationToken = await this.jwtService.signAsync(
@@ -169,23 +170,23 @@ export class AuthService {
   ): Promise<AccessTokenResponse> {
     const session = await this.sessionService.findById(sessionId);
     if (!session || session.userId !== userId) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException(t('error.accessDenied'));
     }
 
     if (session.expiresAt < new Date()) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException(t('error.accessDenied'));
     }
 
     const isMatch = await bcrypt.compare(refreshToken, session.refreshToken);
     if (!isMatch) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException(t('error.accessDenied'));
     }
 
     await this.sessionService.touchSession(sessionId);
 
     const user = await this.userService.findById(userId);
     if (!user) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException(t('error.accessDenied'));
     }
 
     const access_token = await this.generateAccessToken(user, sessionId);
@@ -195,11 +196,11 @@ export class AuthService {
   async resendVerificationEmail(userId: string) {
     const user = await this.userService.findById(userId);
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException(t('error.userNotFound'));
     }
 
     if (user.emailVerified) {
-      throw new BadRequestException('Email already verified');
+      throw new BadRequestException(t('error.emailAlreadyVerified'));
     }
 
     const verificationToken = await this.jwtService.signAsync(
@@ -233,7 +234,7 @@ export class AuthService {
       });
     } catch {
       this.logger.error('Email verification failed: invalid or expired token');
-      throw new BadRequestException('Invalid or expired token');
+      throw new BadRequestException(t('error.invalidOrExpiredToken'));
     }
 
     const userId = await this.userService.validateEmail(payload.email, token);
@@ -272,7 +273,7 @@ export class AuthService {
       });
     } catch {
       this.logger.error('Password change failed: invalid or expired token');
-      throw new BadRequestException('Invalid or expired token');
+      throw new BadRequestException(t('error.invalidOrExpiredToken'));
     }
 
     const user = await this.userService.findOne(payload.email);
@@ -284,7 +285,7 @@ export class AuthService {
       this.logger.error(
         `Password change failed: token mismatch for user ${user?.id ?? 'unknown'}`,
       );
-      throw new BadRequestException('Invalid or expired token');
+      throw new BadRequestException(t('error.invalidOrExpiredToken'));
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -308,12 +309,12 @@ export class AuthService {
   ) {
     const user = await this.userService.findById(userId);
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException(t('error.userNotFound'));
     }
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
-      throw new BadRequestException('Current password is incorrect');
+      throw new BadRequestException(t('error.currentPasswordIncorrect'));
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
@@ -335,7 +336,7 @@ export class AuthService {
   async getProfile(userId: string) {
     const user = await this.userService.findByIdWithPreferences(userId);
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException(t('error.userNotFound'));
     }
     return {
       id: user.id,
@@ -370,7 +371,7 @@ export class AuthService {
       userId,
     );
     if (count === 0) {
-      throw new NotFoundException('Session not found');
+      throw new NotFoundException(t('error.sessionNotFound'));
     }
   }
 

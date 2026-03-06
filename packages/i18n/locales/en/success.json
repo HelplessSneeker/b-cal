@@ -1,0 +1,19 @@
+{
+  "loginSuccessful": "Login successful",
+  "signupSuccessful": "Signup successful",
+  "tokensRefreshed": "Tokens refreshed",
+  "logoutSuccessful": "Logout successful",
+  "verificationEmailSent": "Verification email sent",
+  "emailVerified": "Email verified",
+  "passwordResetSent": "If that email exists, we sent a reset link",
+  "passwordChanged": "Password changed successfully",
+  "passwordUpdated": "Password updated successfully",
+  "useLogoutForCurrentSession": "Use logout to end your current session",
+  "sessionRevoked": "Session revoked",
+  "allSessionsRevoked": "All sessions revoked",
+  "userDeleted": "Successfully deleted user",
+  "preferencesUpdated": "Preferences updated",
+  "calendarEntryCreated": "Calendar entry created",
+  "calendarEntryUpdated": "Calendar entry has been updated",
+  "calendarEntryDeleted": "Deleted calendar entry"
+}

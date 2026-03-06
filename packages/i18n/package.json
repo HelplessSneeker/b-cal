@@ -5,8 +5,9 @@
   "exports": {
     "./locales/*": "./locales/*",
     "./config": {
+      "types": "./src/config.ts",
       "import": "./src/config.ts",
-      "types": "./src/config.ts"
+      "require": "./src/config.ts"
     }
   },
   "files": [

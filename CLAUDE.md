@@ -70,7 +70,7 @@ Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerf
 
 **Settings Page**: `/settings` with tabs: Profile, Security (password change, session management), Appearance (theme, accent color, week start, density — UI-only, not yet persisted), Localization (language, timezone).
 
-**i18n**: Shared `@b-cal/i18n` package with EN/DE locales. Frontend uses `next-intl`, API uses `nestjs-i18n`.
+**i18n**: Shared `@b-cal/i18n` package with EN/DE locales and namespaces (common, auth, calendar, settings, error, success). Frontend uses `next-intl`, API uses `nestjs-i18n` with `AcceptLanguageResolver`. All API user-facing strings use the `t()` helper (`src/common/utils/i18n.ts`).
 
 **CSRF Protection**: Double-submit cookie pattern via `csrf-csrf`. The API sets an httpOnly CSRF cookie (`__Secure-csrf-token` in production with a cookie domain, `__Host-csrf-token` without a domain, `csrf-token` in development) and validates the `x-csrf-token` header on state-changing requests. The frontend fetches a CSRF token on mount via `GET /auth/csrf-token` and auto-retries on CSRF failures.
 

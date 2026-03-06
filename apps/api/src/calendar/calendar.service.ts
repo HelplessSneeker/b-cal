@@ -8,6 +8,7 @@ import { CreateCalendarDto } from './dto/create-calendar.dto';
 import { UpdateCalendarDto } from './dto/update-calendar.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetCalendarEntriesDto } from './dto/get-calendar-entries.dto';
+import { t } from 'src/common/utils/i18n';
 
 @Injectable()
 export class CalendarService {
@@ -48,7 +49,7 @@ export class CalendarService {
 
     if (!entry) {
       this.logger.error(`Calendar entry not found: ${id} for user ${userId}`);
-      throw new NotFoundException(`Calendar entry with id ${id} not found`);
+      throw new NotFoundException(t('error.calendarEntryNotFound'));
     }
 
     return entry;
@@ -72,9 +73,7 @@ export class CalendarService {
       this.logger.error(
         `Calendar entry update failed: invalid date range for ${id}`,
       );
-      throw new BadRequestException(
-        'startDate must be before or equal to endDate',
-      );
+      throw new BadRequestException(t('error.startDateBeforeEndDate'));
     }
 
     const entry = await this.prismaService.calendarEntry.update({

@@ -45,6 +45,8 @@
     "csrf-csrf": "^4.0.3",
     "dotenv": "^17.2.3",
     "helmet": "^8.1.0",
+    "@b-cal/i18n": "workspace:*",
+    "nestjs-i18n": "^10.6.0",
     "nestjs-pino": "^4.5.0",
     "nodemailer": "^8.0.0",
     "passport": "^0.7.0",

@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import * as path from 'path';
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
@@ -17,6 +18,8 @@ import {
   reqSerializer,
   resSerializer,
 } from './common/logging/pino-serializers';
+import { AcceptLanguageResolver, I18nModule } from 'nestjs-i18n';
+import { defaultLocale } from '@b-cal/i18n/config';
 
 const REQUEST_ID_HEADER = 'X-Request-Id';
 
@@ -60,6 +63,17 @@ const REQUEST_ID_HEADER = 'X-Request-Id';
               }
             : undefined,
       },
+    }),
+    I18nModule.forRoot({
+      fallbackLanguage: defaultLocale,
+      loaderOptions: {
+        path: path.join(
+          path.dirname(require.resolve('@b-cal/i18n/locales/en/error.json')),
+          '..',
+        ),
+        watch: process.env.NODE_ENV !== 'production',
+      },
+      resolvers: [AcceptLanguageResolver],
     }),
     ThrottlerModule.forRoot({
       throttlers: [

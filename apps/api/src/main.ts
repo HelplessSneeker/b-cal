@@ -13,6 +13,7 @@ import {
   doubleCsrfProtection,
   invalidCsrfTokenError,
 } from './csrf/csrf.config';
+import { t } from './common/utils/i18n';
 
 process.on('unhandledRejection', (reason: unknown) => {
   Sentry.captureException(reason);
@@ -76,7 +77,7 @@ async function bootstrap() {
   app.use((req: Request, res: Response, next: NextFunction) => {
     doubleCsrfProtection(req, res, (err?: unknown) => {
       if (err === invalidCsrfTokenError) {
-        res.status(403).json({ message: 'Invalid CSRF token' });
+        res.status(403).json({ message: t('error.invalidCsrfToken') });
         return;
       }
       next(err as Error);

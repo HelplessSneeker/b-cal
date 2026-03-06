@@ -1,0 +1,19 @@
+{
+  "loginSuccessful": "Anmeldung erfolgreich",
+  "signupSuccessful": "Registrierung erfolgreich",
+  "tokensRefreshed": "Token aktualisiert",
+  "logoutSuccessful": "Abmeldung erfolgreich",
+  "verificationEmailSent": "Bestätigungs-E-Mail gesendet",
+  "emailVerified": "E-Mail verifiziert",
+  "passwordResetSent": "Falls diese E-Mail existiert, haben wir einen Link zum Zurücksetzen gesendet",
+  "passwordChanged": "Passwort erfolgreich geändert",
+  "passwordUpdated": "Passwort erfolgreich aktualisiert",
+  "useLogoutForCurrentSession": "Verwenden Sie die Abmeldung, um Ihre aktuelle Sitzung zu beenden",
+  "sessionRevoked": "Sitzung widerrufen",
+  "allSessionsRevoked": "Alle Sitzungen widerrufen",
+  "userDeleted": "Benutzer erfolgreich gelöscht",
+  "preferencesUpdated": "Einstellungen aktualisiert",
+  "calendarEntryCreated": "Kalendereintrag erstellt",
+  "calendarEntryUpdated": "Kalendereintrag wurde aktualisiert",
+  "calendarEntryDeleted": "Kalendereintrag gelöscht"
+}

@@ -32,6 +32,7 @@ import { User } from './decorators/user.decorator';
 import { RequestPasswordResetDTO } from './dto/request-password-reset.dto';
 import { ChangePasswordDTO } from './dto/change-password.dto';
 import { UpdatePasswordDTO } from './dto/update-password.dto';
+import { t } from 'src/common/utils/i18n';
 
 @Controller('auth')
 export class AuthController {
@@ -88,7 +89,7 @@ export class AuthController {
       req.ip,
     );
     this.setTokenCookies(res, tokens.access_token, tokens.refresh_token);
-    return { message: 'Login successful' };
+    return { message: t('success.loginSuccessful') };
   }
 
   @Throttle({
@@ -107,7 +108,7 @@ export class AuthController {
       req.ip,
     );
     this.setTokenCookies(res, tokens.access_token, tokens.refresh_token);
-    return { message: 'Signup successful' };
+    return { message: t('success.signupSuccessful') };
   }
 
   @UseGuards(JwtRefreshAuthGuard)
@@ -125,7 +126,7 @@ export class AuthController {
       ...cookieConfig.accessToken.options,
       maxAge: cookieConfig.accessToken.maxAge,
     });
-    return { message: 'Tokens refreshed' };
+    return { message: t('success.tokensRefreshed') };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -138,7 +139,7 @@ export class AuthController {
       await this.authService.logout(user.sessionId);
     }
     this.clearTokenCookies(res);
-    return { message: 'Logout successful' };
+    return { message: t('success.logoutSuccessful') };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -156,7 +157,7 @@ export class AuthController {
   @Post('resend-verification')
   async resendVerification(@User('id') userId: string) {
     await this.authService.resendVerificationEmail(userId);
-    return { message: 'Verification email sent' };
+    return { message: t('success.verificationEmailSent') };
   }
 
   @Throttle({ default: { ttl: 60000, limit: 5 } })
@@ -164,7 +165,7 @@ export class AuthController {
   async verifyEmail(@Query() query: VerifyEmailDto) {
     await this.authService.validateEmail(query.token);
 
-    return { message: 'Email verified' };
+    return { message: t('success.emailVerified') };
   }
 
   @Throttle({
@@ -178,7 +179,7 @@ export class AuthController {
   ) {
     await this.authService.requestPasswordReset(requestPasswordResetDTO.email);
 
-    return { message: 'If that email exists, we sent a reset link' };
+    return { message: t('success.passwordResetSent') };
   }
 
   @Throttle({ default: { ttl: 60000, limit: 5 } })
@@ -186,7 +187,7 @@ export class AuthController {
   @Post('reset-password')
   async resetPassword(@Body() changePasswordDTO: ChangePasswordDTO) {
     await this.authService.changePassword(changePasswordDTO);
-    return { message: 'Password changed successfully' };
+    return { message: t('success.passwordChanged') };
   }
 
   @Throttle({ default: { ttl: 60000, limit: 5 } })
@@ -199,7 +200,7 @@ export class AuthController {
       dto.newPassword,
       user.sessionId,
     );
-    return { message: 'Password updated successfully' };
+    return { message: t('success.passwordUpdated') };
   }
 
   @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
@@ -216,10 +217,10 @@ export class AuthController {
   @Delete('sessions/:id')
   async revokeSession(@Param('id') sessionId: string, @User() user: JwtUser) {
     if (sessionId === user.sessionId) {
-      return { message: 'Use logout to end your current session' };
+      return { message: t('success.useLogoutForCurrentSession') };
     }
     await this.authService.revokeSession(sessionId, user.id);
-    return { message: 'Session revoked' };
+    return { message: t('success.sessionRevoked') };
   }
 
   @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
@@ -230,6 +231,6 @@ export class AuthController {
   ) {
     await this.authService.revokeAllSessions(user.id);
     this.clearTokenCookies(res);
-    return { message: 'All sessions revoked' };
+    return { message: t('success.allSessionsRevoked') };
   }
 }

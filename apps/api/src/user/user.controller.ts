@@ -16,6 +16,7 @@ import { csrfCookieName, csrfCookieOptions } from 'src/csrf/csrf.config';
 import { UserService } from './user.service';
 import { User } from 'src/auth/decorators/user.decorator';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
+import { t } from 'src/common/utils/i18n';
 
 @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
 @Controller('user')
@@ -39,7 +40,7 @@ export class UserController {
     );
     res.clearCookie(csrfCookieName, csrfCookieOptions);
 
-    return { message: 'Successfully deleted user' };
+    return { message: t('success.userDeleted') };
   }
 
   @Get('preferences')
@@ -57,9 +58,7 @@ export class UserController {
 
     if (!existing) {
       if (!dto.language || !dto.timezone) {
-        throw new BadRequestException(
-          'Both language and timezone are required when creating preferences',
-        );
+        throw new BadRequestException(t('error.preferencesRequired'));
       }
     }
 
@@ -69,6 +68,6 @@ export class UserController {
     };
 
     const preferences = await this.userService.upsertPreferences(userId, data);
-    return { message: 'Preferences updated', data: preferences };
+    return { message: t('success.preferencesUpdated'), data: preferences };
   }
 }

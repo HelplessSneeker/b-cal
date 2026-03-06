@@ -1,2 +1,15 @@
 {
+  "emailAlreadyRegistered": "Email already registered",
+  "accessDenied": "Access denied",
+  "userNotFound": "User not found",
+  "emailAlreadyVerified": "Email already verified",
+  "invalidOrExpiredToken": "Invalid or expired token",
+  "currentPasswordIncorrect": "Current password is incorrect",
+  "sessionNotFound": "Session not found",
+  "calendarEntryNotFound": "Calendar entry not found",
+  "startDateBeforeEndDate": "startDate must be before or equal to endDate",
+  "preferencesRequired": "Both language and timezone are required when creating preferences",
+  "loginFailed": "Login failed",
+  "emailNotVerified": "Email not verified",
+  "invalidCsrfToken": "Invalid CSRF token"
 }

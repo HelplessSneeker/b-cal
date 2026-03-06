@@ -41,7 +41,7 @@ describe('UserController', () => {
         mockRes as express.Response,
       );
 
-      expect(result).toEqual({ message: 'Successfully deleted user' });
+      expect(result).toEqual({ message: 'success.userDeleted' });
       expect(mockUserService.deleteUser).toHaveBeenCalledWith('user-1');
       expect(mockRes.clearCookie).toHaveBeenCalledTimes(3);
     });
@@ -81,7 +81,7 @@ describe('UserController', () => {
       const result = await controller.updatePreferences('user-1', dto);
 
       expect(result).toEqual({
-        message: 'Preferences updated',
+        message: 'success.preferencesUpdated',
         data: created,
       });
       expect(mockUserService.upsertPreferences).toHaveBeenCalledWith(
@@ -95,7 +95,7 @@ describe('UserController', () => {
 
       await expect(
         controller.updatePreferences('user-1', { language: 'en-US' }),
-      ).rejects.toThrow('Both language and timezone are required');
+      ).rejects.toThrow('error.preferencesRequired');
     });
 
     it('should update existing preferences with partial data', async () => {
@@ -113,7 +113,7 @@ describe('UserController', () => {
       });
 
       expect(result).toEqual({
-        message: 'Preferences updated',
+        message: 'success.preferencesUpdated',
         data: updated,
       });
       expect(mockUserService.upsertPreferences).toHaveBeenCalledWith('user-1', {
