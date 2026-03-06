@@ -1,22 +1,8 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## Monorepo Structure
-
-This is the **web frontend** (`apps/web`) within a Turborepo monorepo:
-
-```
-b-cal/
-  apps/
-    web/     # This package - Next.js frontend
-    api/     # NestJS backend
-  turbo.json # Turborepo configuration
-```
+This is the **web frontend** (`apps/web`) within the b-cal Turborepo monorepo.
 
 ## Commands
-
-Run from this directory (`apps/web`):
 
 ```bash
 pnpm dev      # Start development server (http://localhost:8080)
@@ -25,185 +11,74 @@ pnpm lint     # Run ESLint
 pnpm test     # Run integration tests (Vitest)
 ```
 
-Or from the monorepo root:
-
-```bash
-pnpm dev --filter=web      # Start web dev server
-pnpm build --filter=web    # Build web only
-```
-
-## Docker
-
-Multi-stage Dockerfile using Node 24 Alpine with Next.js standalone output. Requires `NEXT_PUBLIC_BACKEND_URL` as a build arg. Exposes port 8080. Includes a healthcheck on `/health`.
-
 ## Architecture
 
-This is a Next.js 16 application using the App Router with React 19 and TypeScript.
+Next.js 16 application using the App Router with React 19 and TypeScript.
 
 ### Key Directories
 
-- `app/` - Next.js App Router pages and layouts
-  - `app/login/` - Login page
-  - `app/signup/` - Signup page
-  - `app/check-email/` - Post-signup page prompting user to verify email (resend with 60s cooldown)
-  - `app/verify-email/` - Email verification callback (`?token=...`), validates token and redirects to `/`
-  - `app/forgot-password/` - Password reset request form (enter email)
-  - `app/reset-password/` - Password reset form (`?token=...`), enter new password
-  - `app/error.tsx` - Error boundary with retry button
-  - `app/global-error.tsx` - Root error boundary (catches layout-level errors)
-  - `app/not-found.tsx` - Custom 404 page
-  - `app/health/route.ts` - Health check endpoint (returns `{ status: 'ok' }`)
-  - `app/page.tsx` - Main calendar page (protected by AuthProvider)
-- `components/` - React components
-  - `components/ui/` - shadcn/ui primitives (avatar, button, calendar, card, checkbox, dialog, dropdown-menu, field, input, label, loading, password-input, popover, scroll-area, separator, sheet, sonner, spinner, textarea)
-  - `components/AuthProvider.tsx` - Wraps protected routes; redirects unauthenticated users to `/login` and unverified users to `/check-email`
-  - `components/login-form.tsx` - Shared form for login/signup pages with "Forgot your password?" link
-  - `components/verify-email-content.tsx` - Client component handling email verification API call and redirect
-  - `components/reset-password-form.tsx` - Client component with password/confirm fields and client-side validation
-  - `components/ConnectionGuard.tsx` - Full-screen overlay when backend is unreachable; polls backend `/health` every 10s and reloads on recovery
-  - `components/entry-modal.tsx` - Modal dialog for creating/editing/deleting calendar entries
-  - `components/calendar/` - Calendar-specific components
-    - `calendar-header.tsx` - Top navigation with view selector, date navigation, and user menu
-    - `calendar-sidebar.tsx` - Left sidebar with "New Entry" button and mini calendar
-    - `sidebar-calendar.tsx` - Mini calendar using react-day-picker with view-aware selection
-    - `time-grid.tsx` - Scrollable time grid wrapper, auto-scrolls to 8am on mount
-    - `day-column.tsx` - Single day column with time slots and entry blocks
-    - `time-column.tsx` - Hour labels column (00:00-23:00)
-    - `time-slot.tsx` - 30-minute clickable time slot
-    - `entry-block.tsx` - Positioned calendar entry block with title and time range
-    - `entry-preview.tsx` - Entry preview component for month view
-    - `current-time-indicator.tsx` - Red line showing current time (updates every minute)
-    - `all-day-section.tsx` - All-day entries section for day view
-    - `week-all-day-row.tsx` - All-day entries row spanning week columns
-    - `date-cell.tsx` - Date cell for month view grid
-    - `month-week-row.tsx` - Single week row within month view grid
-    - `more-indicator.tsx` - "+N more" indicator for overflow entries
-    - `overflow-pill.tsx` - Overflow pill for truncated entries
-    - `swipe-container.tsx` - Swipe gesture support for mobile navigation
-    - `views/` - View-specific components
-      - `day-view.tsx` - Day view container
-      - `week-view.tsx` - Week view with 7-day grid
-      - `month-view.tsx` - Month view calendar grid
-- `lib/` - Utilities and services
-  - `lib/utils/utils.ts` - `cn()` class merging helper
-  - `lib/utils/password.ts` - `validatePassword()` client-side password validation (8+ chars, number, symbol)
-  - `lib/api/` - API layer
-    - `api.ts` - Typed `api<T>()` function with error/success toast handling, silent token refresh on 401, CSRF token management, and `X-Request-Id` header generation
-    - `auth.ts` - Authentication API functions (login, signup, logout, getMe, forgotPassword, resetPassword, verifyEmail, resendVerification, refreshToken, deleteUser)
-    - `calendar.ts` - Calendar entry CRUD operations (getEntries, createEntry, updateEntry, deleteEntry)
-  - `lib/calendar/` - Calendar utilities
-    - `date-utils.ts` - Date manipulation (getStartOfWeek, getEndOfWeek, getStartOfMonth, getEndOfMonth, getMonthGridDates)
-    - `calendar-constants.ts` - Layout constants (HOUR_HEIGHT=60, SLOT_HEIGHT=30, TIME_COLUMN_WIDTH, START_HOUR, END_HOUR)
-    - `time-utils.ts` - Time position calculations (getEventTopPosition, getEventHeight, formatHour, getTimeFromPosition)
-    - `overlap-utils.ts` - Overlap detection and layout for concurrent entries
-    - `spanning-utils.ts` - Multi-day spanning entry calculations
-  - `lib/hooks/` - Custom React hooks
-    - `useCalendarData.ts` - Fetches calendar entries for a 3-month window around the current date, with smart caching to avoid redundant requests
-  - `lib/stores/` - Zustand stores for client state
-    - `userStore.ts` - Current authenticated user (id, email, emailVerified)
-    - `calendarStore.ts` - Calendar view state, entries, and modal state. Uses an `entryMap` (Map by ID) for deduplication, with `loadedRanges` to track fetched date windows and avoid re-fetching. View and current date are persisted to `localStorage` (keys `b-cal:view`, `b-cal:currentDate`).
-    - `connectionStore.ts` - Backend connectivity state. Tracks consecutive failures and marks backend as down after 2 failures. Used by `ConnectionGuard`.
-- `proxy.ts` - Next.js 16 proxy (replaces `middleware.ts`). Handles route protection (auth routes, open routes, protected routes) and generates a per-request CSP nonce. Sets a strict `Content-Security-Policy` header (script-src with nonce + strict-dynamic, `frame-ancestors 'none'`, `object-src 'none'`; adds `upgrade-insecure-requests` in production). Exports a `proxy()` function and matcher config.
-- `src/config/env.ts` - Environment variable validation (validates `NEXT_PUBLIC_BACKEND_URL` at build time via `next.config.ts` and at server startup via `instrumentation.ts`)
-- `instrumentation.ts` - Sentry SDK initialization for the Next.js server runtime
-- `instrumentation-client.ts` - Client-side Sentry initialization (replay, tracing, PII scrubbing via `beforeSend`)
-- `sentry.before-send.ts` - PII scrubbing for Sentry events (emails, tokens, cookies, auth headers)
-- `sentry.edge.config.ts` - Sentry configuration for the Edge runtime
-- `sentry.server.config.ts` - Sentry configuration for the Node.js server runtime
+- `app/` — Next.js App Router pages and layouts (login, signup, check-email, verify-email, forgot-password, reset-password, settings, health, error/not-found pages)
+- `components/` — React components
+  - `components/ui/` — shadcn/ui primitives
+  - `components/calendar/` — Calendar-specific components (header, sidebar, time grid, day/week/month views, entry blocks)
+  - `components/settings/` — Settings page tabs (profile, security, appearance, localization)
+  - `components/AuthProvider.tsx` — Wraps protected routes; redirects unauthenticated users to `/login` and unverified users to `/check-email`
+  - `components/ConnectionGuard.tsx` — Full-screen overlay when backend is unreachable; polls `/health` every 10s
+- `lib/api/` — Typed API layer with silent token refresh, CSRF handling, and `X-Request-Id` generation
+- `lib/stores/` — Zustand stores (userStore, calendarStore, connectionStore)
+- `lib/calendar/` — Calendar utilities (date, time, overlap, spanning calculations)
+- `lib/hooks/` — Custom React hooks (useCalendarData)
+- `proxy.ts` — Next.js 16 proxy (route protection, CSP nonce generation)
+- `src/config/env.ts` — Environment variable validation
 
 ### Authentication
 
-- Cookie-based auth with a NestJS backend (configured via `NEXT_PUBLIC_BACKEND_URL`)
-- `AuthProvider` component wraps protected routes, redirects unauthenticated users to `/login` and unverified users to `/check-email`, fetches CSRF token on mount
-- User state managed via Zustand store (`useUserStore`) — includes `emailVerified` field
-- `proxy.ts` handles route-level auth (Next.js 16 proxy, replaces `middleware.ts`):
+- Cookie-based auth with the NestJS backend (configured via `NEXT_PUBLIC_BACKEND_URL`)
+- `AuthProvider` wraps protected routes, fetches CSRF token on mount
+- `proxy.ts` handles route-level auth:
   - **Auth routes** (`/login`, `/signup`, `/forgot-password`, `/reset-password`): redirect authenticated users to `/`
   - **Open routes** (`/verify-email`, `/check-email`, `/health`): accessible regardless of auth state
   - **All other routes**: redirect unauthenticated users to `/login?from={pathname}`
-
-### Auth Flows
-
-**Signup**: submit form → API creates user + sends verification email → redirect to `/check-email` → user clicks email link → `/verify-email?token=...` validates → `refreshToken()` updates JWT → redirect to `/`
-
-**Login**: submit form → API sets cookies → if `emailVerified` is false redirect to `/check-email`, otherwise redirect to `/`
-
-**Password Reset**: click "Forgot password?" → enter email at `/forgot-password` → API sends reset email → click link → `/reset-password?token=...` → enter new password (client-side validated) → redirect to `/login`
-
-**Email Verification Resend**: at `/check-email` → click "Resend verification email" (60s cooldown) → API sends new email
+- Silent token refresh on 401 with promise deduplication
+- CSRF token auto-fetched via `GET /auth/csrf-token`, auto-retried on 403
 
 ### State Management
 
-- Zustand for client-side state (`lib/stores/`)
-- `useUserStore` - Current authenticated user (id, email, emailVerified)
-- `useCalendarStore` - Calendar view state (Day/Week/Month, default: Month), current date, entries, and entry modal state
-  - `CalendarEntry` interface: id, startDate, endDate, title, wholeDay, content?
-  - Smart caching: `entryMap` (Map by ID) for deduplication, `loadedRanges` to track fetched windows, `mergeEntries` to incrementally add data
-  - Modal actions: openEntryModal, closeEntryModal
-  - Entry actions: addEntry, updateEntry, deleteEntry, mergeEntries, clearCache
-- `useConnectionStore` - Backend health tracking (consecutive failures, isBackendDown, isRetrying)
+- `useUserStore` — Current user (id, email, emailVerified, createdAt, preferences)
+- `useCalendarStore` — Calendar view state (Day/Week/Month, default: Month), current date, entries (deduplicated via `entryMap`), loaded date ranges, entry modal state. View and current date persisted to `localStorage` (keys `b-cal:view`, `b-cal:currentDate`).
+- `useConnectionStore` — Backend health tracking (consecutive failures, isBackendDown)
+
+### i18n
+
+Uses `next-intl` with translations from the shared `@b-cal/i18n` package. Supports EN and DE locales. Namespaces: common, auth, calendar, settings, error.
+
+### Settings Page
+
+`/settings` with tabs:
+- **Profile** — Account info, delete account
+- **Security** — Change password, session management (list/revoke sessions)
+- **Appearance** — Theme (light/dark/system), accent color, week start day, density (UI-only, not yet persisted to backend)
+- **Localization** — Language and timezone preferences (persisted via `PATCH /user/preferences`)
 
 ### Calendar Views
 
-The calendar supports Day/Week/Month views (all implemented):
-
-- **Day View**: Displays 24-hour grid with 30-minute slots
-  - Entries positioned absolutely based on start time and duration
-  - All-day entries shown in dedicated section above time grid
-  - Current time indicator shows red line on today's view
-- **Week View**: Displays 7-day grid with time columns
-  - All-day entries shown in row spanning week columns
-  - Day headers with weekday and date number
-- **Month View**: Displays calendar grid with date cells
-  - Entry previews with "+N more" overflow indicator
-  - Click to navigate to day view or open entry modal
-
-### Entry Modal
-
-- `EntryModal` component provides create/edit/delete functionality
-- Supports timed entries and all-day events
-- Form fields: title, start/end dates, all-day toggle, description
-- Integrates with backend API via `lib/api/calendar.ts`
-
-### API Layer
-
-- `lib/api/api.ts` provides a typed `api<T>()` function for backend requests
-- `lib/api/auth.ts` provides authentication operations (login, signup, logout, getMe, forgotPassword, resetPassword, verifyEmail, resendVerification, refreshToken, deleteUser)
-- `lib/api/calendar.ts` provides calendar entry CRUD operations
-- Automatic toast notifications for success/error responses
-- All requests include credentials for cookie-based auth
-- Every request includes an `X-Request-Id` header (`crypto.randomUUID()`) for traceability
-- **Silent token refresh**: On 401 responses (except `/auth/refresh` and `/auth/login`), automatically attempts a token refresh and retries the original request. Uses promise deduplication to prevent concurrent refresh calls. Redirects to `/login` if refresh also fails.
-- **CSRF handling**: Fetches a CSRF token via `GET /auth/csrf-token` on app mount. Sends the token in the `x-csrf-token` header on state-changing requests (POST, PATCH, DELETE). On CSRF 403 errors, automatically re-fetches the token and retries.
-
-### Security Headers
-
-`next.config.ts` (wrapped with `withSentryConfig`) sets the following headers on all routes:
-
-- `X-Content-Type-Options: nosniff` — prevents MIME sniffing
-- `Referrer-Policy: strict-origin-when-cross-origin` — controls referrer information
-- `Permissions-Policy: camera=(), microphone=(), geolocation=()` — disables browser features
-- `poweredByHeader: false` — hides the `X-Powered-By: Next.js` header
-
-Clickjacking protection is handled via CSP `frame-ancestors 'none'` set in `proxy.ts` (not as a separate `X-Frame-Options` header).
-
-### Error Monitoring
-
-Sentry integration via `@sentry/nextjs`. Config files: `instrumentation.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`. Uses a `/monitoring` tunnel route to circumvent ad-blockers. Source maps are uploaded in CI.
+Day (24h grid with 30min slots, all-day section, current time indicator), Week (7-day grid with all-day row), Month (date cells with entry previews and "+N more" overflow). Swipe gesture support for mobile navigation.
 
 ### Styling
 
 - Tailwind CSS v4 with CSS variables for theming (defined in `app/globals.css`)
-- shadcn/ui configured with "new-york" style and lucide icons (`components.json`)
-- Dark mode CSS variables defined via `.dark` class in `globals.css` (`next-themes` is installed but no `ThemeProvider` is configured — dark mode is not currently active)
+- shadcn/ui configured with "new-york" style and lucide icons
+- Dark mode CSS variables defined via `.dark` class (theme switching UI exists in appearance settings but `ThemeProvider` is not yet configured)
 - Use `cn()` from `@/lib/utils/utils` for conditional class merging
 
 ### Testing
 
-- Vitest with jsdom environment, React Testing Library, and `@testing-library/user-event`
-- Config: `vitest.config.mts`, setup: `vitest.setup.ts`
-- Tests in `__tests__/` directory (components, pages)
-- Shared test utilities in `__tests__/test-utils.ts`
-- Run: `pnpm test` (or `pnpm test` from monorepo root via Turborepo)
+- Vitest with jsdom, React Testing Library, `@testing-library/user-event`
+- Tests in `__tests__/` directory, shared utilities in `__tests__/test-utils.ts`
+
+### Error Monitoring
+
+Sentry integration via `@sentry/nextjs`. Uses a `/monitoring` tunnel route to circumvent ad-blockers.
 
 ### Path Aliases
 

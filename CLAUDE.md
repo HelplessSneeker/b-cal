@@ -8,6 +8,7 @@ b-cal is a calendar application built as a Turborepo monorepo with pnpm workspac
 
 - **apps/web** (`@b-cal/web`) - Next.js 16 frontend with React 19
 - **apps/api** (`@b-cal/api`) - NestJS 11 REST API with Prisma/PostgreSQL
+- **packages/i18n** (`@b-cal/i18n`) - Shared i18n package with EN/DE locales
 
 Node 24+ required (`engines` in root `package.json`).
 
@@ -59,11 +60,21 @@ Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerf
 
 ## Architecture
 
-**Authentication**: Cookie-based JWT auth (httpOnly cookies, not Bearer headers). Access tokens expire in 1h, refresh tokens in 7d. Email verification is required after signup — unverified users are redirected to `/check-email`. Password reset is supported via email with 1h token expiry. Both refresh tokens and reset tokens are bcrypt-hashed before storage. The frontend implements silent token refresh — on 401 responses, the client automatically attempts a token refresh and retries the original request, with deduplication to prevent concurrent refresh calls.
+**Authentication**: Cookie-based JWT auth (httpOnly cookies, not Bearer headers). Access tokens expire in 1h, refresh tokens in 30d. Email verification is required after signup — unverified users are redirected to `/check-email`. Password reset is supported via email with 1h token expiry. Refresh tokens and reset tokens are bcrypt-hashed before storage. The frontend implements silent token refresh — on 401 responses, the client automatically attempts a token refresh and retries the original request, with deduplication to prevent concurrent refresh calls.
+
+**Session Management**: Auth uses a `Session` model (not a single token on the User). Each login creates a session with device name (parsed via `ua-parser-js`), IP address, and user agent. Max 5 sessions per user — oldest sessions are evicted. Refresh only issues a new access token (does not rotate the refresh token). Endpoints: `GET /auth/sessions`, `DELETE /auth/sessions/:id`, `DELETE /auth/sessions`.
+
+**Password Management**: `POST /auth/update-password` allows changing password while logged in (requires current password). Invalidates all other sessions on password change.
+
+**User Preferences**: `GET /user/preferences`, `PATCH /user/preferences` — stores language and timezone per user.
+
+**Settings Page**: `/settings` with tabs: Profile, Security (password change, session management), Appearance (theme, accent color, week start, density — UI-only, not yet persisted), Localization (language, timezone).
+
+**i18n**: Shared `@b-cal/i18n` package with EN/DE locales. Frontend uses `next-intl`, API uses `nestjs-i18n`.
 
 **CSRF Protection**: Double-submit cookie pattern via `csrf-csrf`. The API sets an httpOnly CSRF cookie (`__Secure-csrf-token` in production with a cookie domain, `__Host-csrf-token` without a domain, `csrf-token` in development) and validates the `x-csrf-token` header on state-changing requests. The frontend fetches a CSRF token on mount via `GET /auth/csrf-token` and auto-retries on CSRF failures.
 
-**Frontend State**: Zustand stores for user state, calendar state (view mode, entries, modals), and connection state (backend health monitoring). Calendar view and current date are persisted to `localStorage`.
+**Frontend State**: Zustand stores for user state (id, email, emailVerified, createdAt, preferences), calendar state (view mode, entries, modals), and connection state (backend health monitoring). Calendar view and current date are persisted to `localStorage`.
 
 **API Structure**: NestJS modules (AuthModule, UserModule, CalendarModule, PrismaModule, MailModule, HealthModule). Swagger docs at `/api` (development only — disabled in production).
 
@@ -77,7 +88,7 @@ Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerf
 
 **Pre-commit Hooks**: Husky runs lint-staged (ESLint + Prettier) and tests on commit.
 
-**Rate Limiting**: Global throttling via `@nestjs/throttler` with two throttlers: default (60 requests per 60 seconds) and mail (300 requests per 5 minutes). Auth endpoints (login, signup, forgot-password, reset-password, resend-verification) have stricter default limits of 5 requests per 60 seconds. Mail-sending endpoints (signup, forgot-password, resend-verification) additionally apply the mail throttler at 3 requests per 5 minutes.
+**Rate Limiting**: Global throttling via `@nestjs/throttler` with two throttlers: default (60 requests per 60 seconds) and mail (300 requests per 5 minutes). Auth endpoints (login, signup, forgot-password, reset-password, resend-verification, update-password) have stricter default limits of 5 requests per 60 seconds. Mail-sending endpoints (signup, forgot-password, resend-verification) additionally apply the mail throttler at 3 requests per 5 minutes.
 
 **Environment Validation**: Runtime validation of all required environment variables on startup via class-validator. Mail settings are only required in production.
 
@@ -85,7 +96,7 @@ Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerf
 
 **Input Validation**: Global payload limit of 1MB (JSON + URL-encoded). DTO string fields have max length constraints (title: 100, content: 5000, email: 254, password: 128). Calendar entry title and content fields are sanitized via `stripHtmlTags` transform.
 
-**Database**: PostgreSQL via Prisma. Models: User (with emailVerified, verificationToken, resetToken, createdAt, updatedAt fields), CalendarEntry (with createdAt, updatedAt). User.email has a unique constraint (implicit unique index). CalendarEntry has indexes on userId, startDate, endDate, and a composite (endDate, startDate) index.
+**Database**: PostgreSQL via Prisma. Models: `User` (email, password, emailVerified, verificationToken, resetToken; relations to CalendarEntry, UserPreferences, Session), `Session` (userId, refreshToken, deviceName, ipAddress, userAgent, lastUsedAt, expiresAt), `CalendarEntry` (title, startDate, endDate, content, wholeDay, userId), `UserPreferences` (userId, language, timezone). User.email has a unique constraint. CalendarEntry has indexes on userId, startDate, endDate, and a composite (endDate, startDate) index. Session has indexes on userId and expiresAt.
 
 **Email**: Nodemailer-based mail service. Uses Ethereal test accounts in development (preview URLs logged to console). Production requires SMTP configuration.
 
@@ -107,7 +118,7 @@ GitHub Actions workflows (`.github/workflows/`):
 - **lint.yml** — Runs linting on PRs to main
 - **test.yml** — Runs unit tests and e2e tests (spins up PostgreSQL 16) on PRs to main
 - **security.yml** — `pnpm audit` + Trivy filesystem scan on PRs and weekly schedule
-- **release.yml** — Triggered by `v*` tags. Builds Docker images, runs Trivy vulnerability scans, creates GitHub Release, and deploys via Coolify webhook
+- **release.yml** — Triggered by `v*` tags. Creates GitHub Release and deploys via Coolify webhook
 
 ## Sensitive Data Handling
 
@@ -115,5 +126,5 @@ Both apps scrub PII before sending to Sentry (`sentry-before-send.ts`) — email
 
 ## Test Users (after seeding)
 
-- `alice@example.com` / `password123!` (email verified)
-- `bob@example.com` / `password123!` (email verified)
+- `alice@example.com` / `password123!` (email verified, preferences: en-US, America/New_York)
+- `bob@example.com` / `password123!` (email verified, preferences: de-DE, Europe/Berlin)
