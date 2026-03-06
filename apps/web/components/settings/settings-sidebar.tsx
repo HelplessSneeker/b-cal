@@ -2,7 +2,6 @@
 
 import {
   GlobeIcon,
-  MenuIcon,
   PaletteIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
