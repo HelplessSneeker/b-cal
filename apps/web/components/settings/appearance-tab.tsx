@@ -277,8 +277,6 @@ export function AppearanceTab() {
                 )}
                 style={{
                   backgroundColor: c.color,
-                  ringColor: accentColor === c.key ? c.color : undefined,
-                  // Use outline ring for the selected color
                   ...(accentColor === c.key
                     ? {
                         boxShadow: `0 0 0 2px var(--background), 0 0 0 4px ${c.color}`,
