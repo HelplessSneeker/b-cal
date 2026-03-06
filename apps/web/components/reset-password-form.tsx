@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { resetPassword } from '@/lib/api/auth';
 import { validatePassword } from '@/lib/utils/password';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,9 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Spinner } from '@/components/ui/spinner';
 
 export function ResetPasswordForm() {
+  const t = useTranslations('auth.resetPassword');
+  const tAuth = useTranslations('auth');
+  const tValidation = useTranslations('auth.validation');
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -34,17 +38,15 @@ export function ResetPasswordForm() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Invalid reset link</CardTitle>
-          <CardDescription>
-            This password reset link is invalid or has expired.
-          </CardDescription>
+          <CardTitle>{t('invalidTitle')}</CardTitle>
+          <CardDescription>{t('invalidDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <a
             href="/forgot-password"
             className="text-sm underline-offset-4 hover:underline"
           >
-            Request a new reset link
+            {t('requestNew')}
           </a>
         </CardContent>
       </Card>
@@ -55,12 +57,12 @@ export function ResetPasswordForm() {
     e.preventDefault();
 
     const newErrors: Record<string, string> = {};
-    const passwordError = validatePassword(password);
+    const passwordError = validatePassword(password, tAuth);
     if (passwordError) {
       newErrors.password = passwordError;
     }
     if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = tValidation('passwordsDoNotMatch');
     }
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
@@ -79,14 +81,14 @@ export function ResetPasswordForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Set new password</CardTitle>
-        <CardDescription>Enter your new password below.</CardDescription>
+        <CardTitle>{t('title')}</CardTitle>
+        <CardDescription>{t('description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit}>
           <FieldGroup>
             <Field data-invalid={!!errors.password || undefined}>
-              <FieldLabel htmlFor="password">New password</FieldLabel>
+              <FieldLabel htmlFor="password">{t('newPassword')}</FieldLabel>
               <PasswordInput
                 id="password"
                 required
@@ -101,7 +103,7 @@ export function ResetPasswordForm() {
             </Field>
             <Field data-invalid={!!errors.confirmPassword || undefined}>
               <FieldLabel htmlFor="confirm-password">
-                Confirm password
+                {t('confirmPassword')}
               </FieldLabel>
               <PasswordInput
                 id="confirm-password"
@@ -117,7 +119,7 @@ export function ResetPasswordForm() {
             </Field>
             <Field>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? <Spinner /> : 'Reset password'}
+                {isLoading ? <Spinner /> : t('submit')}
               </Button>
             </Field>
           </FieldGroup>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { verifyEmail, refreshToken } from '@/lib/api/auth';
 import {
   Card,
@@ -13,6 +14,8 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 
 export function VerifyEmailContent() {
+  const t = useTranslations('auth.verifyEmail');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -31,7 +34,7 @@ export function VerifyEmailContent() {
         router.push('/');
       } else {
         setStatus('error');
-        setErrorMessage(result.error || 'Verification failed');
+        setErrorMessage(result.error || '');
       }
     });
   }, [token, router]);
@@ -40,8 +43,8 @@ export function VerifyEmailContent() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Verifying your email</CardTitle>
-          <CardDescription>Please wait...</CardDescription>
+          <CardTitle>{t('verifyingTitle')}</CardTitle>
+          <CardDescription>{t('verifyingDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center">
           <Spinner />
@@ -54,10 +57,8 @@ export function VerifyEmailContent() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Email verified</CardTitle>
-          <CardDescription>
-            Your email has been verified. Redirecting...
-          </CardDescription>
+          <CardTitle>{t('successTitle')}</CardTitle>
+          <CardDescription>{t('successDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center">
           <Spinner />
@@ -69,17 +70,14 @@ export function VerifyEmailContent() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Verification failed</CardTitle>
+        <CardTitle>{t('failedTitle')}</CardTitle>
         <CardDescription>
-          {token
-            ? errorMessage ||
-              'This verification link is invalid or has expired.'
-            : 'No verification token provided.'}
+          {token ? errorMessage || t('failedDescription') : t('noToken')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <a href="/login" className="text-sm underline-offset-4 hover:underline">
-          Back to login
+          {tCommon('backToLogin')}
         </a>
       </CardContent>
     </Card>

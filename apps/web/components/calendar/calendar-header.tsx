@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import type { TranslateFn } from '@b-cal/i18n/config';
 import {
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -45,6 +47,7 @@ function formatDateDisplay(
   date: Date,
   view: CalendarView,
   locale: string,
+  t: TranslateFn,
 ): string {
   switch (view) {
     case CalendarView.Day:
@@ -54,7 +57,7 @@ function formatDateDisplay(
         year: 'numeric',
       });
     case CalendarView.Week:
-      return `CW ${getWeekNumber(date)}`;
+      return t('calendarWeekShort', { week: getWeekNumber(date) });
     case CalendarView.Month:
       return date.toLocaleDateString(locale, {
         month: 'long',
@@ -67,6 +70,7 @@ function formatDateDisplayShort(
   date: Date,
   view: CalendarView,
   locale: string,
+  t: TranslateFn,
 ): string {
   switch (view) {
     case CalendarView.Day:
@@ -76,7 +80,7 @@ function formatDateDisplayShort(
         year: 'numeric',
       });
     case CalendarView.Week:
-      return `CW ${getWeekNumber(date)}`;
+      return t('calendarWeekShort', { week: getWeekNumber(date) });
     case CalendarView.Month:
       return date.toLocaleDateString(locale, {
         month: 'short',
@@ -86,6 +90,7 @@ function formatDateDisplayShort(
 }
 
 export function CalendarHeader() {
+  const t = useTranslations('calendar');
   const router = useRouter();
   const { user, clearUser } = useUserStore();
   const { language } = useLocale();
@@ -119,9 +124,9 @@ export function CalendarHeader() {
         data-testid="desktop-header"
       >
         <div className="flex w-64 items-center justify-between pl-4">
-          <h1 className="text-2xl font-bold">Calendar</h1>
+          <h1 className="text-2xl font-bold">{t('title')}</h1>
           <Button variant="outline" size="sm" onClick={handleTodayClick}>
-            Today
+            {t('today')}
           </Button>
         </div>
 
@@ -130,7 +135,7 @@ export function CalendarHeader() {
             <ChevronLeftIcon className="size-4" />
           </Button>
           <span className="min-w-48 text-center text-muted-foreground">
-            {formatDateDisplay(currentDate, view, language)}
+            {formatDateDisplay(currentDate, view, language, t)}
           </span>
           <Button variant="ghost" size="icon" onClick={() => navigate(1)}>
             <ChevronRightIcon className="size-4" />
@@ -141,7 +146,7 @@ export function CalendarHeader() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
-                {view}
+                {t(`views.${view.toLowerCase()}`)}
                 <ChevronDownIcon className="ml-1 size-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -149,17 +154,17 @@ export function CalendarHeader() {
               <DropdownMenuItem
                 onClick={() => handleViewChange(CalendarView.Day)}
               >
-                Day
+                {t('views.day')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleViewChange(CalendarView.Week)}
               >
-                Week
+                {t('views.week')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleViewChange(CalendarView.Month)}
               >
-                Month
+                {t('views.month')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -176,9 +181,11 @@ export function CalendarHeader() {
               <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => router.push('/settings')}>
-                Settings
+                {t('userMenu.settings')}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
+                {t('userMenu.logout')}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -194,7 +201,7 @@ export function CalendarHeader() {
             variant="ghost"
             size="icon"
             onClick={() => setDrawerOpen(true)}
-            aria-label="Open menu"
+            aria-label={t('nav.openMenu')}
           >
             <MenuIcon className="size-5" />
           </Button>
@@ -202,9 +209,9 @@ export function CalendarHeader() {
             variant="outline"
             size="xs"
             onClick={handleTodayClick}
-            aria-label="Go to today"
+            aria-label={t('nav.goToToday')}
           >
-            Today
+            {t('today')}
           </Button>
         </div>
 
@@ -213,18 +220,18 @@ export function CalendarHeader() {
             variant="ghost"
             size="icon-sm"
             onClick={() => navigate(-1)}
-            aria-label="Previous"
+            aria-label={t('nav.previous')}
           >
             <ChevronLeftIcon className="size-4" />
           </Button>
           <span className="text-muted-foreground text-sm font-medium">
-            {formatDateDisplayShort(currentDate, view, language)}
+            {formatDateDisplayShort(currentDate, view, language, t)}
           </span>
           <Button
             variant="ghost"
             size="icon-sm"
             onClick={() => navigate(1)}
-            aria-label="Next"
+            aria-label={t('nav.next')}
           >
             <ChevronRightIcon className="size-4" />
           </Button>
@@ -234,7 +241,7 @@ export function CalendarHeader() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="xs">
-                {view}
+                {t(`views.${view.toLowerCase()}`)}
                 <ChevronDownIcon className="ml-0.5 size-3" />
               </Button>
             </DropdownMenuTrigger>
@@ -242,17 +249,17 @@ export function CalendarHeader() {
               <DropdownMenuItem
                 onClick={() => handleViewChange(CalendarView.Day)}
               >
-                Day
+                {t('views.day')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleViewChange(CalendarView.Week)}
               >
-                Week
+                {t('views.week')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleViewChange(CalendarView.Month)}
               >
-                Month
+                {t('views.month')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -263,7 +270,7 @@ export function CalendarHeader() {
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
         <SheetContent side="left" className="w-72" aria-describedby={undefined}>
           <SheetHeader>
-            <SheetTitle>Calendar</SheetTitle>
+            <SheetTitle>{t('title')}</SheetTitle>
           </SheetHeader>
           <div className="flex flex-1 flex-col overflow-y-auto px-4">
             <SidebarCalendar />
@@ -282,7 +289,7 @@ export function CalendarHeader() {
                 }}
               >
                 <SettingsIcon className="mr-2 size-4" />
-                Settings
+                {t('userMenu.settings')}
               </Button>
               <Button
                 variant="ghost"
@@ -291,7 +298,7 @@ export function CalendarHeader() {
                 onClick={handleLogout}
               >
                 <LogOutIcon className="mr-2 size-4" />
-                Logout
+                {t('userMenu.logout')}
               </Button>
             </div>
           </div>

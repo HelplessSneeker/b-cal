@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { CheckIcon, CircleIcon } from 'lucide-react';
 import { cn } from '@/lib/utils/utils';
 
@@ -8,10 +9,10 @@ interface PasswordStrengthIndicatorProps {
 }
 
 const CHECKS = [
-  { label: 'At least 8 characters', test: (p: string) => p.length >= 8 },
-  { label: 'Contains a number', test: (p: string) => /\d/.test(p) },
+  { key: 'minLength', test: (p: string) => p.length >= 8 },
+  { key: 'hasNumber', test: (p: string) => /\d/.test(p) },
   {
-    label: 'Contains a symbol',
+    key: 'hasSymbol',
     test: (p: string) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(p),
   },
 ] as const;
@@ -22,11 +23,13 @@ function getScore(password: string): number {
   return score;
 }
 
-const LEVELS = [
-  { label: 'Weak', color: 'bg-red-500', segments: 1 },
-  { label: 'Fair', color: 'bg-orange-500', segments: 2 },
-  { label: 'Good', color: 'bg-blue-500', segments: 4 },
-  { label: 'Strong', color: 'bg-green-500', segments: 5 },
+const LEVEL_KEYS = ['weak', 'fair', 'good', 'strong'] as const;
+
+const LEVEL_META = [
+  { color: 'bg-red-500', segments: 1, textColor: 'text-red-500' },
+  { color: 'bg-orange-500', segments: 2, textColor: 'text-orange-500' },
+  { color: 'bg-blue-500', segments: 4, textColor: 'text-blue-500' },
+  { color: 'bg-green-500', segments: 5, textColor: 'text-green-500' },
 ] as const;
 
 const TOTAL_SEGMENTS = 5;
@@ -34,10 +37,15 @@ const TOTAL_SEGMENTS = 5;
 export function PasswordStrengthIndicator({
   password,
 }: PasswordStrengthIndicatorProps) {
+  const tChecks = useTranslations('auth.passwordStrength.checks');
+  const tLevels = useTranslations('auth.passwordStrength.levels');
+
   if (!password) return null;
 
   const score = getScore(password);
-  const level = score === 0 ? null : LEVELS[score - 1];
+  const levelIndex = score === 0 ? null : score - 1;
+  const level = levelIndex !== null ? LEVEL_META[levelIndex] : null;
+  const levelKey = levelIndex !== null ? LEVEL_KEYS[levelIndex] : null;
 
   return (
     <div className="space-y-2">
@@ -53,17 +61,9 @@ export function PasswordStrengthIndicator({
             />
           ))}
         </div>
-        {level && (
-          <span
-            className={cn(
-              'text-xs font-medium',
-              score === 1 && 'text-red-500',
-              score === 2 && 'text-orange-500',
-              score === 3 && 'text-blue-500',
-              score === 4 && 'text-green-500',
-            )}
-          >
-            {level.label}
+        {level && levelKey && (
+          <span className={cn('text-xs font-medium', level.textColor)}>
+            {tLevels(levelKey)}
           </span>
         )}
       </div>
@@ -71,7 +71,7 @@ export function PasswordStrengthIndicator({
         {CHECKS.map((check) => {
           const passed = check.test(password);
           return (
-            <li key={check.label} className="flex items-center gap-2 text-xs">
+            <li key={check.key} className="flex items-center gap-2 text-xs">
               {passed ? (
                 <CheckIcon className="size-3.5 text-green-500" />
               ) : (
@@ -82,7 +82,7 @@ export function PasswordStrengthIndicator({
                   passed ? 'text-foreground' : 'text-muted-foreground',
                 )}
               >
-                {check.label}
+                {tChecks(check.key)}
               </span>
             </li>
           );

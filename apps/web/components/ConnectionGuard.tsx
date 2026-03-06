@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useConnectionStore } from '@/lib/stores/connectionStore';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -20,6 +21,8 @@ export async function checkHealth(): Promise<boolean> {
 }
 
 export function ConnectionGuard() {
+  const t = useTranslations('common.serviceUnavailable');
+  const tCommon = useTranslations('common');
   const { isBackendDown, isRetrying, recordSuccess, setRetrying } =
     useConnectionStore();
   const wasDown = useRef(false);
@@ -63,13 +66,10 @@ export function ConnectionGuard() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-4 px-4 text-center">
-        <h1 className="text-4xl font-bold">Service Unavailable</h1>
-        <p className="text-muted-foreground">
-          Unable to connect to the server. Please check your connection and try
-          again.
-        </p>
+        <h1 className="text-4xl font-bold">{t('title')}</h1>
+        <p className="text-muted-foreground">{t('description')}</p>
         <Button onClick={handleRetry} disabled={isRetrying} className="mt-2">
-          {isRetrying ? <Spinner /> : 'Retry'}
+          {isRetrying ? <Spinner /> : tCommon('retry')}
         </Button>
       </div>
     </div>

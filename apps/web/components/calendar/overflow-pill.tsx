@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { type CalendarEntry } from '@/lib/stores/calendarStore';
 import { useLocale } from '@/lib/hooks/useLocale';
 import { type OverflowGroup } from '@/lib/calendar/overlap-utils';
@@ -26,6 +27,7 @@ function formatTimeRange(start: Date, end: Date, timezone: string): string {
 }
 
 export function OverflowPill({ group, onEntryClick }: OverflowPillProps) {
+  const t = useTranslations('calendar');
   const { timezone } = useLocale();
   return (
     <Popover>
@@ -39,12 +41,12 @@ export function OverflowPill({ group, onEntryClick }: OverflowPillProps) {
             width: `calc(${group.width}% - ${OVERLAP_GAP_PX * 2}px)`,
           }}
         >
-          +{group.hiddenCount} weitere
+          {t('more', { count: group.hiddenCount })}
         </button>
       </PopoverTrigger>
       <PopoverContent className="max-h-64 w-64 overflow-y-auto p-2">
         <p className="mb-2 px-1 text-xs font-semibold text-muted-foreground">
-          {group.hiddenCount} weitere Einträge
+          {t('moreEntries', { count: group.hiddenCount })}
         </p>
         <ul className="space-y-1">
           {group.hiddenEntries.map((entry) => (

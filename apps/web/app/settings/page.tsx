@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { ArrowLeftIcon, MenuIcon } from 'lucide-react';
 import { AuthProvider } from '@/components/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import { SecurityTab } from '@/components/settings/security-tab';
 import { AppearanceTab } from '@/components/settings/appearance-tab';
 
 function SettingsContent() {
+  const t = useTranslations('settings');
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -28,7 +30,7 @@ function SettingsContent() {
           size="icon"
           className="md:hidden"
           onClick={() => setMobileOpen(true)}
-          aria-label="Open sidebar"
+          aria-label={t('nav.openSidebar')}
         >
           <MenuIcon className="size-5" />
         </Button>
@@ -36,11 +38,11 @@ function SettingsContent() {
           variant="ghost"
           size="icon"
           onClick={() => router.push('/')}
-          aria-label="Back to calendar"
+          aria-label={t('nav.backToCalendar')}
         >
           <ArrowLeftIcon className="size-5" />
         </Button>
-        <h1 className="text-2xl font-bold">Settings</h1>
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
       </header>
 
       <div className="flex min-h-0 flex-1">

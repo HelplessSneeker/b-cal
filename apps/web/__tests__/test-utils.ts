@@ -1,10 +1,39 @@
 import { vi } from 'vitest';
+import { createElement, type ReactElement } from 'react';
+import {
+  render as rtlRender,
+  screen,
+  waitFor,
+  within,
+  act,
+  type RenderOptions,
+} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { NextIntlClientProvider } from 'next-intl';
 import { useUserStore } from '@/lib/stores/userStore';
 import { useCalendarStore, CalendarView } from '@/lib/stores/calendarStore';
 import { useConnectionStore } from '@/lib/stores/connectionStore';
+import common from '@b-cal/i18n/locales/en/common.json';
+import auth from '@b-cal/i18n/locales/en/auth.json';
+import settings from '@b-cal/i18n/locales/en/settings.json';
+import calendar from '@b-cal/i18n/locales/en/calendar.json';
+import error from '@b-cal/i18n/locales/en/error.json';
 
-export { render, screen, waitFor, within, act } from '@testing-library/react';
-export { default as userEvent } from '@testing-library/user-event';
+const messages = { common, auth, settings, calendar, error };
+
+function IntlWrapper({ children }: { children: React.ReactNode }) {
+  return createElement(
+    NextIntlClientProvider,
+    { locale: 'en', messages },
+    children,
+  );
+}
+
+function render(ui: ReactElement, options?: Omit<RenderOptions, 'wrapper'>) {
+  return rtlRender(ui, { wrapper: IntlWrapper, ...options });
+}
+
+export { render, screen, waitFor, within, act, userEvent };
 
 export function mockRouter() {
   return {

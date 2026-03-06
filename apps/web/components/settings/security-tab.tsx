@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { GlobeIcon, MonitorIcon, SmartphoneIcon } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
@@ -46,6 +47,9 @@ function getDeviceIcon(deviceName: string | null) {
 }
 
 export function SecurityTab() {
+  const t = useTranslations('settings.security');
+  const tAuth = useTranslations('auth');
+  const tValidation = useTranslations('auth.validation');
   const router = useRouter();
 
   // Change password state
@@ -66,17 +70,17 @@ export function SecurityTab() {
       const data = await getSessions();
       setSessions(data);
     } catch {
-      toast.error('Failed to load sessions');
+      toast.error(t('failedLoadSessions'));
     } finally {
       setIsLoadingSessions(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchSessions();
   }, [fetchSessions]);
 
-  const passwordValid = validatePassword(newPassword) === null;
+  const passwordValid = validatePassword(newPassword, tAuth) === null;
   const passwordsMatch = newPassword === confirmPassword;
   const canSubmit =
     currentPassword.length > 0 &&
@@ -100,7 +104,7 @@ export function SecurityTab() {
       setConfirmPassword('');
       fetchSessions();
     } else {
-      setPasswordError(result.error ?? 'Failed to update password');
+      setPasswordError(result.error ?? '');
     }
 
     setIsUpdating(false);
@@ -112,7 +116,7 @@ export function SecurityTab() {
       await revokeSession(sessionId);
       setSessions((prev) => prev.filter((s) => s.id !== sessionId));
     } catch {
-      toast.error('Failed to revoke session');
+      toast.error(t('failedRevokeSession'));
     } finally {
       setRevokingId(null);
     }
@@ -124,7 +128,7 @@ export function SecurityTab() {
       await revokeAllOtherSessions();
       router.push('/login');
     } catch {
-      toast.error('Failed to sign out other sessions');
+      toast.error(t('failedSignOutAll'));
       setIsRevokingAll(false);
     }
   };
@@ -136,16 +140,14 @@ export function SecurityTab() {
       {/* Change Password */}
       <Card>
         <CardHeader>
-          <CardTitle>Change Password</CardTitle>
-          <CardDescription>
-            Choose a strong password that you don&apos;t use on other sites.
-          </CardDescription>
+          <CardTitle>{t('changePassword')}</CardTitle>
+          <CardDescription>{t('changePasswordDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleUpdatePassword} className="flex flex-col gap-4">
             <Field>
               <FieldLabel htmlFor="current-password">
-                Current Password
+                {t('currentPassword')}
               </FieldLabel>
               <PasswordInput
                 id="current-password"
@@ -162,7 +164,7 @@ export function SecurityTab() {
             <Separator />
 
             <Field>
-              <FieldLabel htmlFor="new-password">New Password</FieldLabel>
+              <FieldLabel htmlFor="new-password">{t('newPassword')}</FieldLabel>
               <PasswordInput
                 id="new-password"
                 required
@@ -177,7 +179,7 @@ export function SecurityTab() {
 
             <Field>
               <FieldLabel htmlFor="confirm-new-password">
-                Confirm New Password
+                {t('confirmNewPassword')}
               </FieldLabel>
               <PasswordInput
                 id="confirm-new-password"
@@ -188,7 +190,7 @@ export function SecurityTab() {
               />
               {confirmPassword && !passwordsMatch && (
                 <p className="text-destructive text-sm">
-                  Passwords do not match
+                  {tValidation('passwordsDoNotMatch')}
                 </p>
               )}
             </Field>
@@ -199,7 +201,7 @@ export function SecurityTab() {
 
             <div>
               <Button type="submit" disabled={!canSubmit || isUpdating}>
-                {isUpdating ? <Spinner /> : 'Update Password'}
+                {isUpdating ? <Spinner /> : t('updatePassword')}
               </Button>
             </div>
           </form>
@@ -209,10 +211,8 @@ export function SecurityTab() {
       {/* Active Sessions */}
       <Card>
         <CardHeader>
-          <CardTitle>Active Sessions</CardTitle>
-          <CardDescription>
-            Devices where you&apos;re currently signed in.
-          </CardDescription>
+          <CardTitle>{t('activeSessions')}</CardTitle>
+          <CardDescription>{t('activeSessionsDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {isLoadingSessions ? (
@@ -220,7 +220,7 @@ export function SecurityTab() {
               <Spinner />
             </div>
           ) : sessions.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No active sessions.</p>
+            <p className="text-muted-foreground text-sm">{t('noSessions')}</p>
           ) : (
             <>
               {sessions.map((session) => {
@@ -233,10 +233,10 @@ export function SecurityTab() {
                     <Icon className="text-muted-foreground size-5 shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">
-                        {session.deviceName ?? 'Unknown device'}
+                        {session.deviceName ?? t('unknownDevice')}
                       </p>
                       <p className="text-muted-foreground text-xs">
-                        {session.ipAddress ?? 'Unknown IP'}
+                        {session.ipAddress ?? t('unknownIP')}
                         {' \u00b7 '}
                         {formatDistanceToNow(new Date(session.lastUsedAt), {
                           addSuffix: true,
@@ -245,7 +245,7 @@ export function SecurityTab() {
                     </div>
                     {session.isCurrent ? (
                       <span className="shrink-0 rounded-full bg-green-500/15 px-2.5 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
-                        Current
+                        {t('current')}
                       </span>
                     ) : (
                       <Button
@@ -255,7 +255,7 @@ export function SecurityTab() {
                         disabled={revokingId === session.id}
                         onClick={() => handleRevokeSession(session.id)}
                       >
-                        {revokingId === session.id ? <Spinner /> : 'Revoke'}
+                        {revokingId === session.id ? <Spinner /> : t('revoke')}
                       </Button>
                     )}
                   </div>
@@ -270,11 +270,7 @@ export function SecurityTab() {
                     disabled={isRevokingAll}
                     onClick={handleRevokeAll}
                   >
-                    {isRevokingAll ? (
-                      <Spinner />
-                    ) : (
-                      'Sign Out All Other Sessions'
-                    )}
+                    {isRevokingAll ? <Spinner /> : t('signOutAll')}
                   </Button>
                 </div>
               )}

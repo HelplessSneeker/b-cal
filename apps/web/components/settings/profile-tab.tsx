@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { deleteUser } from '@/lib/api/auth';
 import { useUserStore } from '@/lib/stores/userStore';
 import { useCalendarStore } from '@/lib/stores/calendarStore';
@@ -34,6 +35,9 @@ function getAvatarInitials(email: string): string {
 }
 
 export function ProfileTab() {
+  const t = useTranslations('settings.profile');
+  const tFields = useTranslations('auth.fields');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const { user, clearUser } = useUserStore();
   const { language } = useLocale();
@@ -66,8 +70,8 @@ export function ProfileTab() {
       <div className="flex flex-col gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Profile Information</CardTitle>
-            <CardDescription>Your personal account details.</CardDescription>
+            <CardTitle>{t('title')}</CardTitle>
+            <CardDescription>{t('description')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
@@ -77,7 +81,7 @@ export function ProfileTab() {
               <div>
                 <p className="text-lg font-medium">{user?.email ?? '-'}</p>
                 <p className="text-muted-foreground text-sm">
-                  Member since {memberSince}
+                  {t('memberSince', { date: memberSince })}
                 </p>
               </div>
             </div>
@@ -86,18 +90,15 @@ export function ProfileTab() {
 
         <Card className="border-destructive">
           <CardHeader>
-            <CardTitle>Danger Zone</CardTitle>
-            <CardDescription>
-              Permanently delete your account and all associated data. This
-              action cannot be undone.
-            </CardDescription>
+            <CardTitle>{t('dangerZone')}</CardTitle>
+            <CardDescription>{t('dangerDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button
               variant="destructive"
               onClick={() => setDeleteDialogOpen(true)}
             >
-              Delete Account
+              {t('deleteAccount')}
             </Button>
           </CardContent>
         </Card>
@@ -112,14 +113,13 @@ export function ProfileTab() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Account</DialogTitle>
+            <DialogTitle>{t('deleteDialogTitle')}</DialogTitle>
             <DialogDescription>
-              This action is permanent and cannot be undone. All your data will
-              be deleted. Type your email address to confirm.
+              {t('deleteDialogDescription')}
             </DialogDescription>
           </DialogHeader>
           <Field>
-            <FieldLabel>Email</FieldLabel>
+            <FieldLabel>{tFields('email')}</FieldLabel>
             <Input
               placeholder={user?.email}
               value={confirmEmail}
@@ -131,14 +131,14 @@ export function ProfileTab() {
               variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
             >
-              Cancel
+              {tCommon('cancel')}
             </Button>
             <Button
               variant="destructive"
               disabled={confirmEmail !== user?.email || isDeleting}
               onClick={handleDelete}
             >
-              {isDeleting ? 'Deleting...' : 'Delete Account'}
+              {isDeleting ? t('deleting') : t('deleteAccount')}
             </Button>
           </DialogFooter>
         </DialogContent>

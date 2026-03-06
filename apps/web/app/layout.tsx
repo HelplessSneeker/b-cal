@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { headers } from 'next/headers';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages } from 'next-intl/server';
 import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
 import { ConnectionGuard } from '@/components/ConnectionGuard';
@@ -34,14 +36,19 @@ export default async function RootLayout({
   // Reading x-nonce forces dynamic rendering so each request gets a fresh CSP nonce
   await headers();
 
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
-        <ConnectionGuard />
-        <Toaster />
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          {children}
+          <ConnectionGuard />
+          <Toaster />
+        </NextIntlClientProvider>
       </body>
     </html>
   );

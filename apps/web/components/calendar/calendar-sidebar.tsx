@@ -1,11 +1,13 @@
 'use client';
 
 import { PlusIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { SidebarCalendar } from '@/components/calendar/sidebar-calendar';
 import { useCalendarStore } from '@/lib/stores/calendarStore';
 
 export function CalendarSidebar() {
+  const t = useTranslations('calendar');
   const { openEntryModal } = useCalendarStore();
 
   const handleNewEntry = () => {
@@ -16,7 +18,7 @@ export function CalendarSidebar() {
     <aside className="hidden w-64 flex-col items-center gap-4 border-r p-4 md:flex">
       <Button onClick={handleNewEntry} className="w-full self-stretch">
         <PlusIcon className="mr-2 size-4" />
-        New Entry
+        {t('newEntry')}
       </Button>
       <SidebarCalendar />
     </aside>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { getMe, logout, resendVerification } from '@/lib/api/auth';
 import { ApiError } from '@/lib/api/api';
 import { useUserStore } from '@/lib/stores/userStore';
@@ -21,6 +22,7 @@ import { Loading } from '@/components/ui/loading';
 const RESEND_COOLDOWN_MS = 60_000;
 
 export default function CheckEmailPage() {
+  const t = useTranslations('auth.checkEmail');
   const router = useRouter();
   const { user, setUser, clearUser } = useUserStore();
   const { clearCache } = useCalendarStore();
@@ -103,11 +105,15 @@ export default function CheckEmailPage() {
       <div className="w-full max-w-sm">
         <Card>
           <CardHeader>
-            <CardTitle>Check your inbox</CardTitle>
+            <CardTitle>{t('title')}</CardTitle>
             <CardDescription>
-              We sent a verification link to{' '}
-              <span className="font-medium text-foreground">{user?.email}</span>
-              . Please click the link to verify your account.
+              {t.rich('description', {
+                email: () => (
+                  <span className="font-medium text-foreground">
+                    {user?.email}
+                  </span>
+                ),
+              })}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
@@ -117,16 +123,16 @@ export default function CheckEmailPage() {
               onClick={handleResend}
             >
               {resendLoading
-                ? 'Sending...'
+                ? t('sending')
                 : cooldownRemaining > 0
-                  ? `Resend in ${cooldownRemaining}s`
-                  : 'Resend verification email'}
+                  ? t('resendIn', { seconds: cooldownRemaining })
+                  : t('resend')}
             </Button>
             <button
               onClick={handleLogout}
               className="text-center text-sm underline-offset-4 hover:underline"
             >
-              Log out
+              {t('logout')}
             </button>
           </CardContent>
         </Card>

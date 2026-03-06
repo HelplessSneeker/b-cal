@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   useCalendarStore,
   CalendarView,
@@ -11,9 +12,10 @@ import { entryOverlapsDay } from '@/lib/calendar/spanning-utils';
 import { MonthWeekRow } from '@/components/calendar/month-week-row';
 import { cn } from '@/lib/utils/utils';
 
-const WEEKDAY_NAMES = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+const WEEKDAY_KEYS = ['mo', 'tu', 'we', 'th', 'fr', 'sa', 'su'] as const;
 
 export function MonthView({ date }: { date?: Date }) {
+  const t = useTranslations('calendar.weekdays');
   const storeDate = useCalendarStore((s) => s.currentDate);
   const entries = useCalendarStore((s) => s.entries);
   const setView = useCalendarStore((s) => s.setView);
@@ -57,15 +59,15 @@ export function MonthView({ date }: { date?: Date }) {
     <div className="flex h-full flex-col">
       {/* Weekday headers */}
       <div className="grid grid-cols-7 border-y">
-        {WEEKDAY_NAMES.map((day, index) => (
+        {WEEKDAY_KEYS.map((key, index) => (
           <div
-            key={day}
+            key={key}
             className={cn(
               'border-l py-2 text-center text-xs font-medium uppercase text-muted-foreground',
               index === 6 && 'border-r',
             )}
           >
-            {day}
+            {t(key)}
           </div>
         ))}
       </div>

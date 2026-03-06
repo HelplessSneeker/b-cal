@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { AuthProvider } from '@/components/AuthProvider';
 import { CalendarHeader } from '@/components/calendar/calendar-header';
 import { CalendarSidebar } from '@/components/calendar/calendar-sidebar';
@@ -15,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { PlusIcon } from 'lucide-react';
 
 function CalendarPage() {
+  const t = useTranslations('calendar');
   const view = useCalendarStore((s) => s.view);
   const openEntryModal = useCalendarStore((s) => s.openEntryModal);
 
@@ -44,7 +46,7 @@ function CalendarPage() {
       <Button
         className="fixed bottom-6 right-6 z-40 size-14 rounded-full shadow-lg md:hidden"
         onClick={() => openEntryModal()}
-        aria-label="New entry"
+        aria-label={t('newEntry')}
       >
         <PlusIcon className="size-6" />
       </Button>

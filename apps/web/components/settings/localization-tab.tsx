@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { CheckIcon, ChevronDownIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { updatePreferences } from '@/lib/api/auth';
 import { useUserStore } from '@/lib/stores/userStore';
+import { setLocaleCookie, resolveLocale } from '@/src/i18n/locale-cookie';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -63,6 +65,8 @@ function formatTime(tz: string): string {
 }
 
 export function LocalizationTab() {
+  const t = useTranslations('settings.localization');
+  const tCommon = useTranslations('common');
   const { user, setUser } = useUserStore();
   const storedLang = user?.preferences?.language ?? '';
   const storedTz = user?.preferences?.timezone ?? '';
@@ -128,9 +132,17 @@ export function LocalizationTab() {
       if (user && updated) {
         setUser({ ...user, preferences: updated });
       }
-      toast.success('Preferences saved');
+      const languageChanged =
+        resolveLocale(selectedLanguage) !==
+        resolveLocale(storedLang || 'en-US');
+      if (languageChanged) {
+        setLocaleCookie(selectedLanguage);
+        window.location.reload();
+        return;
+      }
+      toast.success(t('saved'));
     } catch {
-      toast.error('Failed to save preferences');
+      toast.error(t('saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -141,10 +153,8 @@ export function LocalizationTab() {
       {/* Language Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Language</CardTitle>
-          <CardDescription>
-            Controls the display language of the interface.
-          </CardDescription>
+          <CardTitle>{t('language')}</CardTitle>
+          <CardDescription>{t('languageDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Popover open={langOpen} onOpenChange={setLangOpen}>
@@ -190,11 +200,8 @@ export function LocalizationTab() {
       {/* Timezone Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Timezone</CardTitle>
-          <CardDescription>
-            Your calendar events will be displayed relative to this timezone.
-            This also affects reminders and notifications.
-          </CardDescription>
+          <CardTitle>{t('timezone')}</CardTitle>
+          <CardDescription>{t('timezoneDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <Popover open={tzOpen} onOpenChange={setTzOpen}>
@@ -211,7 +218,7 @@ export function LocalizationTab() {
               <div className="p-2">
                 <Input
                   ref={tzSearchInputRef}
-                  placeholder="Search timezones..."
+                  placeholder={t('searchTimezones')}
                   value={tzSearch}
                   onChange={(e) => setTzSearch(e.target.value)}
                 />
@@ -220,7 +227,7 @@ export function LocalizationTab() {
                 <div className="p-1">
                   {filteredTimezones.length === 0 ? (
                     <p className="text-muted-foreground px-2 py-4 text-center text-sm">
-                      No timezones found.
+                      {t('noTimezones')}
                     </p>
                   ) : (
                     filteredTimezones.map((tz) => (
@@ -253,14 +260,17 @@ export function LocalizationTab() {
           </Popover>
 
           <div className="bg-muted/50 text-muted-foreground rounded-md px-3 py-2 text-sm">
-            Current time in {selectedTimezone}: {currentTime}
+            {t('currentTime', {
+              timezone: selectedTimezone,
+              time: currentTime,
+            })}
           </div>
         </CardContent>
       </Card>
 
       <div>
         <Button disabled={!hasChanges || isSaving} onClick={handleSave}>
-          {isSaving ? 'Saving...' : 'Save Changes'}
+          {isSaving ? tCommon('saving') : tCommon('save')}
         </Button>
       </div>
     </div>

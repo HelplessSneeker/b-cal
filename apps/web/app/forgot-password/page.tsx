@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { forgotPassword } from '@/lib/api/auth';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,6 +16,9 @@ import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 
 export default function ForgotPasswordPage() {
+  const t = useTranslations('auth.forgotPassword');
+  const tFields = useTranslations('auth.fields');
+  const tCommon = useTranslations('common');
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -32,11 +36,9 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-sm">
         <Card>
           <CardHeader>
-            <CardTitle>Reset your password</CardTitle>
+            <CardTitle>{t('title')}</CardTitle>
             <CardDescription>
-              {submitted
-                ? 'If that email exists, we sent a reset link.'
-                : 'Enter your email to receive a password reset link.'}
+              {submitted ? t('descriptionSubmitted') : t('description')}
             </CardDescription>
           </CardHeader>
           {!submitted && (
@@ -44,7 +46,7 @@ export default function ForgotPasswordPage() {
               <form onSubmit={handleSubmit}>
                 <FieldGroup>
                   <Field>
-                    <FieldLabel htmlFor="email">Email</FieldLabel>
+                    <FieldLabel htmlFor="email">{tFields('email')}</FieldLabel>
                     <Input
                       id="email"
                       type="email"
@@ -57,7 +59,7 @@ export default function ForgotPasswordPage() {
                   </Field>
                   <Field>
                     <Button type="submit" disabled={isLoading}>
-                      {isLoading ? <Spinner /> : 'Send reset link'}
+                      {isLoading ? <Spinner /> : t('submit')}
                     </Button>
                   </Field>
                 </FieldGroup>
@@ -67,7 +69,7 @@ export default function ForgotPasswordPage() {
           <CardContent>
             <div className="text-center text-sm">
               <a href="/login" className="underline-offset-4 hover:underline">
-                Back to login
+                {tCommon('backToLogin')}
               </a>
             </div>
           </CardContent>

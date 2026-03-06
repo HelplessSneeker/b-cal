@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -50,6 +51,9 @@ function EntryForm({
   onDelete,
   isSubmitting,
 }: EntryFormProps) {
+  const t = useTranslations('calendar.entry');
+  const tValidation = useTranslations('calendar.validation');
+  const tCommon = useTranslations('common');
   const { timezone } = useLocale();
   const initialValues = useMemo(() => {
     if (editingEntry) {
@@ -99,19 +103,19 @@ function EntryForm({
 
     const newErrors: Record<string, string> = {};
     if (!title.trim()) {
-      newErrors.title = 'Title is required';
+      newErrors.title = tValidation('titleRequired');
     }
     if (!startDate) {
-      newErrors.startDate = 'Start date is required';
+      newErrors.startDate = tValidation('startDateRequired');
     }
     if (!endDate) {
-      newErrors.endDate = 'End date is required';
+      newErrors.endDate = tValidation('endDateRequired');
     }
     if (startDate && endDate) {
       const start = parseDateTimeLocal(startDate, timezone);
       const end = parseDateTimeLocal(endDate, timezone);
       if (start > end) {
-        newErrors.endDate = 'End date must be on or after start date';
+        newErrors.endDate = tValidation('endDateAfterStart');
       }
     }
     setErrors(newErrors);
@@ -135,7 +139,7 @@ function EntryForm({
     <form onSubmit={handleSubmit}>
       <FieldGroup className="gap-4">
         <Field data-invalid={!!errors.title || undefined}>
-          <FieldLabel htmlFor="title">Title</FieldLabel>
+          <FieldLabel htmlFor="title">{t('titleLabel')}</FieldLabel>
           <Input
             id="title"
             value={title}
@@ -143,7 +147,7 @@ function EntryForm({
               setTitle(e.target.value);
               setErrors((prev) => ({ ...prev, title: '' }));
             }}
-            placeholder="Entry title"
+            placeholder={t('titlePlaceholder')}
             maxLength={100}
             required
           />
@@ -158,13 +162,13 @@ function EntryForm({
             disabled={isMultiDay}
           />
           <FieldLabel htmlFor="wholeDay" className="cursor-pointer">
-            All day
+            {t('allDay')}
           </FieldLabel>
         </Field>
 
         <div className="grid grid-cols-2 gap-4">
           <Field data-invalid={!!errors.startDate || undefined}>
-            <FieldLabel htmlFor="startDate">Start</FieldLabel>
+            <FieldLabel htmlFor="startDate">{t('start')}</FieldLabel>
             <Input
               id="startDate"
               type="datetime-local"
@@ -182,7 +186,7 @@ function EntryForm({
             <FieldError>{errors.startDate}</FieldError>
           </Field>
           <Field data-invalid={!!errors.endDate || undefined}>
-            <FieldLabel htmlFor="endDate">End</FieldLabel>
+            <FieldLabel htmlFor="endDate">{t('end')}</FieldLabel>
             <Input
               id="endDate"
               type="datetime-local"
@@ -202,12 +206,12 @@ function EntryForm({
         </div>
 
         <Field>
-          <FieldLabel htmlFor="content">Description</FieldLabel>
+          <FieldLabel htmlFor="content">{t('description')}</FieldLabel>
           <Textarea
             id="content"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Optional description"
+            placeholder={t('descriptionPlaceholder')}
             maxLength={5000}
             rows={3}
           />
@@ -223,7 +227,7 @@ function EntryForm({
             disabled={isSubmitting}
             className="mr-auto"
           >
-            Delete
+            {tCommon('delete')}
           </Button>
         )}
         <Button
@@ -232,10 +236,10 @@ function EntryForm({
           onClick={onCancel}
           disabled={isSubmitting}
         >
-          Cancel
+          {tCommon('cancel')}
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {editingEntry ? 'Save' : 'Create'}
+          {editingEntry ? t('save') : t('create')}
         </Button>
       </DialogFooter>
     </form>
@@ -243,6 +247,7 @@ function EntryForm({
 }
 
 export function EntryModal() {
+  const t = useTranslations('calendar.entry');
   const {
     isEntryModalOpen,
     editingEntry,
@@ -305,7 +310,9 @@ export function EntryModal() {
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{editingEntry ? 'Edit Entry' : 'New Entry'}</DialogTitle>
+          <DialogTitle>
+            {editingEntry ? t('editTitle') : t('newTitle')}
+          </DialogTitle>
         </DialogHeader>
         {isEntryModalOpen && (
           <EntryForm

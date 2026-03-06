@@ -9,17 +9,18 @@ import {
   UserIcon,
   XIcon,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils/utils';
 
-export const settingsTabs = [
-  { key: 'profile', label: 'Profile', icon: UserIcon },
-  { key: 'security', label: 'Security', icon: ShieldIcon },
-  { key: 'appearance', label: 'Appearance', icon: PaletteIcon },
-  { key: 'localization', label: 'Localization', icon: GlobeIcon },
+const settingsTabKeys = [
+  { key: 'profile', icon: UserIcon },
+  { key: 'security', icon: ShieldIcon },
+  { key: 'appearance', icon: PaletteIcon },
+  { key: 'localization', icon: GlobeIcon },
 ] as const;
 
-export type SettingsTab = (typeof settingsTabs)[number]['key'];
+export type SettingsTab = (typeof settingsTabKeys)[number]['key'];
 
 interface SettingsSidebarProps {
   activeTab: SettingsTab;
@@ -38,6 +39,8 @@ export function SettingsSidebar({
   mobileOpen,
   onMobileOpenChange,
 }: SettingsSidebarProps) {
+  const t = useTranslations('settings');
+
   return (
     <>
       {/* Mobile overlay */}
@@ -60,11 +63,11 @@ export function SettingsSidebar({
           size="icon"
           className="mb-1 self-end"
           onClick={() => onMobileOpenChange(false)}
-          aria-label="Close sidebar"
+          aria-label={t('nav.closeSidebar')}
         >
           <XIcon className="size-4" />
         </Button>
-        {settingsTabs.map((tab) => (
+        {settingsTabKeys.map((tab) => (
           <Button
             key={tab.key}
             variant={activeTab === tab.key ? 'secondary' : 'ghost'}
@@ -75,7 +78,7 @@ export function SettingsSidebar({
             }}
           >
             <tab.icon className="mr-2 size-4" />
-            {tab.label}
+            {t(`tabs.${tab.key}`)}
           </Button>
         ))}
       </nav>
@@ -92,7 +95,9 @@ export function SettingsSidebar({
           size="icon"
           className="mb-1 self-end"
           onClick={() => onCollapsedChange(!collapsed)}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={
+            collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')
+          }
         >
           {collapsed ? (
             <PanelLeftOpenIcon className="size-4" />
@@ -100,16 +105,16 @@ export function SettingsSidebar({
             <PanelLeftCloseIcon className="size-4" />
           )}
         </Button>
-        {settingsTabs.map((tab) => (
+        {settingsTabKeys.map((tab) => (
           <Button
             key={tab.key}
             variant={activeTab === tab.key ? 'secondary' : 'ghost'}
             className={cn('justify-start', collapsed && 'justify-center px-0')}
             onClick={() => onTabChange(tab.key)}
-            title={collapsed ? tab.label : undefined}
+            title={collapsed ? t(`tabs.${tab.key}`) : undefined}
           >
             <tab.icon className={cn('size-4', !collapsed && 'mr-2')} />
-            {!collapsed && tab.label}
+            {!collapsed && t(`tabs.${tab.key}`)}
           </Button>
         ))}
       </nav>

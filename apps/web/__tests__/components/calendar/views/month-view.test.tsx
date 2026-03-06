@@ -42,12 +42,12 @@ describe('MonthView', () => {
     render(<MonthView />);
 
     expect(screen.getByText('Mo')).toBeInTheDocument();
-    expect(screen.getByText('Di')).toBeInTheDocument();
-    expect(screen.getByText('Mi')).toBeInTheDocument();
-    expect(screen.getByText('Do')).toBeInTheDocument();
+    expect(screen.getByText('Tu')).toBeInTheDocument();
+    expect(screen.getByText('We')).toBeInTheDocument();
+    expect(screen.getByText('Th')).toBeInTheDocument();
     expect(screen.getByText('Fr')).toBeInTheDocument();
     expect(screen.getByText('Sa')).toBeInTheDocument();
-    expect(screen.getByText('So')).toBeInTheDocument();
+    expect(screen.getByText('Su')).toBeInTheDocument();
   });
 
   it('renders 6 week rows', () => {
@@ -80,7 +80,7 @@ describe('MonthView', () => {
     useCalendarStore.setState({ currentDate, entries });
     render(<MonthView />);
 
-    expect(screen.getByText('+2 weitere')).toBeInTheDocument();
+    expect(screen.getByText('+2 more')).toBeInTheDocument();
   });
 
   it('clicking "+more" switches to Day view for that date', async () => {
@@ -88,7 +88,7 @@ describe('MonthView', () => {
     useCalendarStore.setState({ currentDate, entries });
     render(<MonthView />);
 
-    screen.getByText('+2 weitere').click();
+    screen.getByText('+2 more').click();
 
     const state = useCalendarStore.getState();
     expect(state.view).toBe(CalendarView.Day);

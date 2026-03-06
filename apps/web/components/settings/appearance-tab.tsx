@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { CheckIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -25,35 +26,19 @@ type AccentColor =
 type WeekStart = 'monday' | 'sunday' | 'saturday';
 type Density = 'compact' | 'default' | 'comfortable';
 
-const ACCENT_COLORS: { key: AccentColor; label: string; color: string }[] = [
-  { key: 'blue', label: 'Blue', color: '#3b82f6' },
-  { key: 'indigo', label: 'Indigo', color: '#6366f1' },
-  { key: 'violet', label: 'Violet', color: '#8b5cf6' },
-  { key: 'rose', label: 'Rose', color: '#f43f5e' },
-  { key: 'emerald', label: 'Emerald', color: '#10b981' },
-  { key: 'amber', label: 'Amber', color: '#f59e0b' },
-  { key: 'slate', label: 'Slate', color: '#64748b' },
+const ACCENT_COLOR_KEYS: { key: AccentColor; color: string }[] = [
+  { key: 'blue', color: '#3b82f6' },
+  { key: 'indigo', color: '#6366f1' },
+  { key: 'violet', color: '#8b5cf6' },
+  { key: 'rose', color: '#f43f5e' },
+  { key: 'emerald', color: '#10b981' },
+  { key: 'amber', color: '#f59e0b' },
+  { key: 'slate', color: '#64748b' },
 ];
 
-const WEEK_STARTS: { key: WeekStart; label: string }[] = [
-  { key: 'monday', label: 'Monday' },
-  { key: 'sunday', label: 'Sunday' },
-  { key: 'saturday', label: 'Saturday' },
-];
+const WEEK_START_KEYS: WeekStart[] = ['monday', 'sunday', 'saturday'];
 
-const DENSITIES: { key: Density; label: string; description: string }[] = [
-  {
-    key: 'compact',
-    label: 'Compact',
-    description: 'Smaller text, tighter spacing',
-  },
-  { key: 'default', label: 'Default', description: 'Balanced readability' },
-  {
-    key: 'comfortable',
-    label: 'Comfortable',
-    description: 'Larger text, more spacing',
-  },
-];
+const DENSITY_KEYS: Density[] = ['compact', 'default', 'comfortable'];
 
 const INITIAL_THEME: Theme = 'system';
 const INITIAL_ACCENT: AccentColor = 'blue';
@@ -102,9 +87,13 @@ function ThemePreview({ theme }: { theme: Theme }) {
 function MiniCalendarPreview({
   accentColor,
   theme,
+  monthLabel,
+  eventLabel,
 }: {
   accentColor: string;
   theme: Theme;
+  monthLabel: string;
+  eventLabel: string;
 }) {
   const isDark = theme === 'dark';
   const bgColor = isDark ? '#1e293b' : '#ffffff';
@@ -129,7 +118,7 @@ function MiniCalendarPreview({
         className="px-3 py-2 text-center text-sm font-semibold"
         style={{ backgroundColor: headerBg, color: textColor }}
       >
-        March 2026
+        {monthLabel}
       </div>
 
       {/* Day headers */}
@@ -185,7 +174,7 @@ function MiniCalendarPreview({
               gridColumn: `${eventStartCol + 1} / ${eventEndCol + 2}`,
             }}
           >
-            Meeting
+            {eventLabel}
           </div>
         </div>
       </div>
@@ -194,6 +183,8 @@ function MiniCalendarPreview({
 }
 
 export function AppearanceTab() {
+  const t = useTranslations('settings.appearance');
+  const tCommon = useTranslations('common');
   const [theme, setTheme] = useState<Theme>(INITIAL_THEME);
   const [accentColor, setAccentColor] = useState<AccentColor>(INITIAL_ACCENT);
   const [weekStart, setWeekStart] = useState<WeekStart>(INITIAL_WEEK_START);
@@ -201,8 +192,8 @@ export function AppearanceTab() {
   const [isSaving, setIsSaving] = useState(false);
 
   const selectedAccent =
-    ACCENT_COLORS.find((c) => c.key === accentColor)?.color ??
-    ACCENT_COLORS[0].color;
+    ACCENT_COLOR_KEYS.find((c) => c.key === accentColor)?.color ??
+    ACCENT_COLOR_KEYS[0].color;
 
   const hasChanges =
     theme !== INITIAL_THEME ||
@@ -215,9 +206,9 @@ export function AppearanceTab() {
     try {
       // TODO: persist to backend once appearance preferences API is implemented
       await new Promise((resolve) => setTimeout(resolve, 300));
-      toast.success('Appearance settings saved');
+      toast.success(t('saved'));
     } catch {
-      toast.error('Failed to save appearance settings');
+      toast.error(t('saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -228,25 +219,27 @@ export function AppearanceTab() {
       {/* Theme Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Theme</CardTitle>
-          <CardDescription>Choose how b-cal looks to you.</CardDescription>
+          <CardTitle>{t('theme')}</CardTitle>
+          <CardDescription>{t('themeDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-3">
-            {(['light', 'dark', 'system'] as const).map((t) => (
+            {(['light', 'dark', 'system'] as const).map((themeKey) => (
               <button
-                key={t}
+                key={themeKey}
                 type="button"
-                onClick={() => setTheme(t)}
+                onClick={() => setTheme(themeKey)}
                 className={cn(
                   'flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 p-3 transition-all',
-                  theme === t
+                  theme === themeKey
                     ? 'ring-ring/20 border-primary shadow-sm ring-2'
                     : 'border-border hover:border-muted-foreground/30',
                 )}
               >
-                <ThemePreview theme={t} />
-                <span className="text-sm font-medium capitalize">{t}</span>
+                <ThemePreview theme={themeKey} />
+                <span className="text-sm font-medium capitalize">
+                  {t(`themes.${themeKey}`)}
+                </span>
               </button>
             ))}
           </div>
@@ -256,18 +249,16 @@ export function AppearanceTab() {
       {/* Accent Color Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Accent Color</CardTitle>
-          <CardDescription>
-            Used for the current day highlight, active selections, and buttons.
-          </CardDescription>
+          <CardTitle>{t('accentColor')}</CardTitle>
+          <CardDescription>{t('accentColorDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3">
-            {ACCENT_COLORS.map((c) => (
+            {ACCENT_COLOR_KEYS.map((c) => (
               <button
                 key={c.key}
                 type="button"
-                title={c.label}
+                title={t(`colors.${c.key}`)}
                 onClick={() => setAccentColor(c.key)}
                 className={cn(
                   'flex size-9 cursor-pointer items-center justify-center rounded-full transition-all',
@@ -296,29 +287,27 @@ export function AppearanceTab() {
       {/* Calendar Display Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Calendar Display</CardTitle>
-          <CardDescription>
-            Adjust how the calendar grid is displayed.
-          </CardDescription>
+          <CardTitle>{t('calendarDisplay')}</CardTitle>
+          <CardDescription>{t('calendarDisplayDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
           {/* Week starts on */}
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium">Week starts on</span>
+            <span className="text-sm font-medium">{t('weekStartsOn')}</span>
             <div className="flex gap-1">
-              {WEEK_STARTS.map((ws) => (
+              {WEEK_START_KEYS.map((ws) => (
                 <button
-                  key={ws.key}
+                  key={ws}
                   type="button"
-                  onClick={() => setWeekStart(ws.key)}
+                  onClick={() => setWeekStart(ws)}
                   className={cn(
                     'cursor-pointer rounded-full px-4 py-1.5 text-sm font-medium transition-all',
-                    weekStart === ws.key
+                    weekStart === ws
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted text-muted-foreground hover:bg-muted/80',
                   )}
                 >
-                  {ws.label}
+                  {t(`weekDays.${ws}`)}
                 </button>
               ))}
             </div>
@@ -326,16 +315,16 @@ export function AppearanceTab() {
 
           {/* Density */}
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium">Density</span>
+            <span className="text-sm font-medium">{t('density')}</span>
             <div className="flex flex-col gap-2">
-              {DENSITIES.map((d) => (
+              {DENSITY_KEYS.map((d) => (
                 <button
-                  key={d.key}
+                  key={d}
                   type="button"
-                  onClick={() => setDensity(d.key)}
+                  onClick={() => setDensity(d)}
                   className={cn(
                     'flex cursor-pointer items-start gap-3 rounded-lg border-2 px-4 py-3 text-left transition-all',
-                    density === d.key
+                    density === d
                       ? 'bg-accent/50 border-primary'
                       : 'border-border hover:border-muted-foreground/30',
                   )}
@@ -343,19 +332,21 @@ export function AppearanceTab() {
                   <div
                     className={cn(
                       'mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
-                      density === d.key
+                      density === d
                         ? 'border-primary'
                         : 'border-muted-foreground/40',
                     )}
                   >
-                    {density === d.key && (
+                    {density === d && (
                       <div className="bg-primary size-2 rounded-full" />
                     )}
                   </div>
                   <div>
-                    <div className="text-sm font-medium">{d.label}</div>
+                    <div className="text-sm font-medium">
+                      {t(`densities.${d}`)}
+                    </div>
                     <div className="text-muted-foreground text-sm">
-                      {d.description}
+                      {t(`densities.${d}Description`)}
                     </div>
                   </div>
                 </button>
@@ -368,19 +359,22 @@ export function AppearanceTab() {
       {/* Preview Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Preview</CardTitle>
-          <CardDescription>
-            A live preview of your current selections.
-          </CardDescription>
+          <CardTitle>{t('preview')}</CardTitle>
+          <CardDescription>{t('previewDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <MiniCalendarPreview accentColor={selectedAccent} theme={theme} />
+          <MiniCalendarPreview
+            accentColor={selectedAccent}
+            theme={theme}
+            monthLabel={t('previewMonth')}
+            eventLabel={t('previewEvent')}
+          />
         </CardContent>
       </Card>
 
       <div>
         <Button disabled={!hasChanges || isSaving} onClick={handleSave}>
-          {isSaving ? 'Saving...' : 'Save Changes'}
+          {isSaving ? tCommon('saving') : tCommon('save')}
         </Button>
       </div>
     </div>

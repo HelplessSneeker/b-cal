@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils/utils';
 import { validatePassword } from '@/lib/utils/password';
 import { login, signup } from '@/lib/api/auth';
@@ -34,6 +35,7 @@ export function LoginForm({
   isSignup = false,
   ...props
 }: LoginFormProps) {
+  const t = useTranslations('auth');
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -47,13 +49,13 @@ export function LoginForm({
 
     if (isSignup) {
       const newErrors: Record<string, string> = {};
-      const passwordError = validatePassword(password);
+      const passwordError = validatePassword(password, t);
       if (passwordError) {
         newErrors.password = passwordError;
       }
 
       if (password !== confirmPassword) {
-        newErrors.confirmPassword = 'Passwords do not match';
+        newErrors.confirmPassword = t('validation.passwordsDoNotMatch');
       }
 
       setErrors(newErrors);
@@ -88,19 +90,17 @@ export function LoginForm({
       <Card>
         <CardHeader>
           <CardTitle>
-            {isSignup ? 'Create an account' : 'Login to your account'}
+            {isSignup ? t('signup.title') : t('login.title')}
           </CardTitle>
           <CardDescription>
-            {isSignup
-              ? 'Enter your details below to create your account'
-              : 'Enter your email below to login to your account'}
+            {isSignup ? t('signup.description') : t('login.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <FieldLabel htmlFor="email">{t('fields.email')}</FieldLabel>
                 <Input
                   id="email"
                   type="email"
@@ -114,17 +114,21 @@ export function LoginForm({
               <Field>
                 {!isSignup && (
                   <div className="flex items-center">
-                    <FieldLabel htmlFor="password">Password</FieldLabel>
+                    <FieldLabel htmlFor="password">
+                      {t('fields.password')}
+                    </FieldLabel>
                     <a
                       href="/forgot-password"
                       className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                     >
-                      Forgot your password?
+                      {t('login.forgotPassword')}
                     </a>
                   </div>
                 )}
                 {isSignup && (
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
+                  <FieldLabel htmlFor="password">
+                    {t('fields.password')}
+                  </FieldLabel>
                 )}
                 <PasswordInput
                   id="password"
@@ -144,7 +148,7 @@ export function LoginForm({
               {isSignup && (
                 <Field data-invalid={!!errors.confirmPassword || undefined}>
                   <FieldLabel htmlFor="confirm-password">
-                    Confirm Password
+                    {t('signup.confirmPassword')}
                   </FieldLabel>
                   <PasswordInput
                     id="confirm-password"
@@ -161,18 +165,22 @@ export function LoginForm({
               )}
               <Field>
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? <Spinner /> : isSignup ? 'Sign Up' : 'Login'}
+                  {isLoading ? (
+                    <Spinner />
+                  ) : isSignup ? (
+                    t('signup.submit')
+                  ) : (
+                    t('login.submit')
+                  )}
                 </Button>
                 <FieldDescription className="text-center">
-                  {isSignup ? (
-                    <>
-                      Already have an account? <a href="/login">Login</a>
-                    </>
-                  ) : (
-                    <>
-                      Don&apos;t have an account? <a href="/signup">Sign up</a>
-                    </>
-                  )}
+                  {isSignup
+                    ? t.rich('signup.hasAccount', {
+                        login: (chunks) => <a href="/login">{chunks}</a>,
+                      })
+                    : t.rich('login.noAccount', {
+                        signup: (chunks) => <a href="/signup">{chunks}</a>,
+                      })}
                 </FieldDescription>
               </Field>
             </FieldGroup>

@@ -8,6 +8,7 @@ import { useUserStore } from '@/lib/stores/userStore';
 import { useConnectionStore } from '@/lib/stores/connectionStore';
 import { checkHealth } from '@/components/ConnectionGuard';
 import { Loading } from '@/components/ui/loading';
+import { setLocaleCookie } from '@/src/i18n/locale-cookie';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -36,6 +37,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
           setUser(userData);
 
+          if (userData.preferences?.language) {
+            setLocaleCookie(userData.preferences.language);
+          }
+
           if (!userData.preferences) {
             const language = navigator.language || 'en-US';
             const timezone =
@@ -47,6 +52,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   useUserStore
                     .getState()
                     .setUser({ ...userData, preferences: prefs });
+                  if (prefs.language) {
+                    setLocaleCookie(prefs.language);
+                  }
                 }
               })
               .catch(() => {
