@@ -8,7 +8,7 @@
     "./config": {
       "types": "./src/config.d.ts",
       "import": "./src/config.js",
-      "require": "./src/config.js"
+      "require": "./src/config.cjs"
     }
   },
   "files": [
