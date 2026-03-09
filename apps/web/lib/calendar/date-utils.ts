@@ -1,21 +1,36 @@
 /**
- * Get the start of the week containing the given date (Monday-based)
+ * Convert a weekStart preference string to a JS day number (0=Sun … 6=Sat).
  */
-export function getStartOfWeek(date: Date): Date {
+export function weekStartToDay(weekStart: string): number {
+  switch (weekStart) {
+    case 'sunday':
+      return 0;
+    case 'saturday':
+      return 6;
+    default:
+      return 1; // monday
+  }
+}
+
+/**
+ * Get the start of the week containing the given date.
+ * @param weekStartDay JS day number (0=Sun, 1=Mon, 6=Sat). Defaults to 1 (Monday).
+ */
+export function getStartOfWeek(date: Date, weekStartDay: number = 1): Date {
   const result = new Date(date);
   const day = result.getDay();
-  // Adjust for Monday start (0 = Sunday, so Monday = 1)
-  const diff = day === 0 ? -6 : 1 - day;
-  result.setDate(result.getDate() + diff);
+  const diff = (day - weekStartDay + 7) % 7;
+  result.setDate(result.getDate() - diff);
   result.setHours(0, 0, 0, 0);
   return result;
 }
 
 /**
- * Get the end of the week containing the given date (Sunday)
+ * Get the end of the week containing the given date.
+ * @param weekStartDay JS day number (0=Sun, 1=Mon, 6=Sat). Defaults to 1 (Monday).
  */
-export function getEndOfWeek(date: Date): Date {
-  const start = getStartOfWeek(date);
+export function getEndOfWeek(date: Date, weekStartDay: number = 1): Date {
+  const start = getStartOfWeek(date, weekStartDay);
   const result = new Date(start);
   result.setDate(result.getDate() + 6);
   result.setHours(23, 59, 59, 999);
@@ -53,12 +68,16 @@ export function getWeekNumber(date: Date): number {
 
 /**
  * Get all 42 dates (6 rows x 7 days) for the month grid view.
- * The grid always starts on Monday and includes days from
+ * The grid starts on the configured week start day and includes days from
  * previous/next months to fill the complete 6-week grid.
+ * @param weekStartDay JS day number (0=Sun, 1=Mon, 6=Sat). Defaults to 1 (Monday).
  */
-export function getMonthGridDates(date: Date): Date[] {
+export function getMonthGridDates(
+  date: Date,
+  weekStartDay: number = 1,
+): Date[] {
   const firstOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-  const gridStart = getStartOfWeek(firstOfMonth);
+  const gridStart = getStartOfWeek(firstOfMonth, weekStartDay);
   return Array.from({ length: 42 }, (_, i) => {
     const day = new Date(gridStart);
     day.setDate(gridStart.getDate() + i);

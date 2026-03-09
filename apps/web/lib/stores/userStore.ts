@@ -6,7 +6,6 @@ export interface UserPreferences {
   theme: string;
   accentColor: string;
   weekStart: string;
-  density: string;
 }
 
 export interface User {

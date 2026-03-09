@@ -100,7 +100,6 @@ async function main() {
       theme: 'system',
       accentColor: 'blue',
       weekStart: 'monday',
-      density: 'default',
     },
   });
   await prisma.userPreferences.create({
@@ -111,7 +110,6 @@ async function main() {
       theme: 'dark',
       accentColor: 'indigo',
       weekStart: 'monday',
-      density: 'comfortable',
     },
   });
 

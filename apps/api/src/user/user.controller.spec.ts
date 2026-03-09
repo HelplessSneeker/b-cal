@@ -56,7 +56,6 @@ describe('UserController', () => {
         theme: 'system',
         accentColor: 'blue',
         weekStart: 'monday',
-        density: 'default',
       };
       mockUserService.findPreferences.mockResolvedValue(preferences);
 
@@ -83,7 +82,6 @@ describe('UserController', () => {
         theme: 'system',
         accentColor: 'blue',
         weekStart: 'monday',
-        density: 'default',
       };
       const created = { userId: 'user-1', ...expectedData };
       mockUserService.findPreferences.mockResolvedValue(null);
@@ -117,7 +115,6 @@ describe('UserController', () => {
         theme: 'system',
         accentColor: 'blue',
         weekStart: 'monday',
-        density: 'default',
       };
       const updated = { ...existing, language: 'de-DE' };
       mockUserService.findPreferences.mockResolvedValue(existing);
@@ -137,7 +134,6 @@ describe('UserController', () => {
         theme: 'system',
         accentColor: 'blue',
         weekStart: 'monday',
-        density: 'default',
       });
     });
   });

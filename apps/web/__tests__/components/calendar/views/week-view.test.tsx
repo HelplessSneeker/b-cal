@@ -55,7 +55,13 @@ describe('WeekView', () => {
         email: 'test@example.com',
         emailVerified: true,
         createdAt: '',
-        preferences: { language: 'de-DE', timezone: 'Europe/Vienna' },
+        preferences: {
+          language: 'de-DE',
+          timezone: 'Europe/Vienna',
+          theme: 'system',
+          accentColor: 'blue',
+          weekStart: 'monday',
+        },
       },
     });
     useCalendarStore.setState({ currentDate, entries: [] });
@@ -68,6 +74,35 @@ describe('WeekView', () => {
         screen.getByText((content) => content.startsWith(day)),
       ).toBeInTheDocument();
     }
+  });
+
+  it('renders week starting from Sunday when weekStart is sunday', () => {
+    useUserStore.setState({
+      user: {
+        id: '1',
+        email: 'test@example.com',
+        emailVerified: true,
+        createdAt: '',
+        preferences: {
+          language: 'en-US',
+          timezone: 'America/New_York',
+          theme: 'system',
+          accentColor: 'blue',
+          weekStart: 'sunday',
+        },
+      },
+    });
+    // June 18, 2025 is a Wednesday — week starting Sunday = June 15
+    useCalendarStore.setState({ currentDate, entries: [] });
+    render(<WeekView />);
+
+    const headers = document.querySelectorAll(
+      '.text-xs.uppercase.text-muted-foreground',
+    );
+    // First header should be Sun
+    expect(headers[0].textContent).toMatch(/^Sun/);
+    // Last header should be Sat
+    expect(headers[6].textContent).toMatch(/^Sat/);
   });
 
   it('shows timed entries in correct day column', () => {

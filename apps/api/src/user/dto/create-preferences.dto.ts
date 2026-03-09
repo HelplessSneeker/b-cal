@@ -25,8 +25,4 @@ export class CreatePreferencesDto {
   @IsString()
   @IsIn(['monday', 'sunday', 'saturday'])
   weekStart: string;
-
-  @IsString()
-  @IsIn(['compact', 'default', 'comfortable'])
-  density: string;
 }

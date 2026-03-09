@@ -147,7 +147,6 @@ export class UserService {
       theme: string;
       accentColor: string;
       weekStart: string;
-      density: string;
     },
   ): Promise<UserPreferences> {
     return this.prisma.userPreferences.upsert({

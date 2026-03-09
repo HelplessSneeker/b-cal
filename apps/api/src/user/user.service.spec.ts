@@ -21,7 +21,6 @@ const mockPreferences = {
   theme: 'system',
   accentColor: 'blue',
   weekStart: 'monday',
-  density: 'default',
   createdAt: new Date(),
   updatedAt: null,
 };
@@ -160,7 +159,6 @@ describe('UserService', () => {
         theme: 'dark',
         accentColor: 'indigo',
         weekStart: 'sunday',
-        density: 'compact',
       };
       mockPrisma.userPreferences.upsert.mockResolvedValue({
         userId: 'user-1',

@@ -10,9 +10,18 @@ import {
 import { getMonthGridDates } from '@/lib/calendar/date-utils';
 import { entryOverlapsDay } from '@/lib/calendar/spanning-utils';
 import { MonthWeekRow } from '@/components/calendar/month-week-row';
+import { useLocale } from '@/lib/hooks/useLocale';
 import { cn } from '@/lib/utils/utils';
 
-const WEEKDAY_KEYS = ['mo', 'tu', 'we', 'th', 'fr', 'sa', 'su'] as const;
+// All weekday keys in JS day order (0=Sun … 6=Sat)
+const ALL_WEEKDAY_KEYS = ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa'] as const;
+
+function getOrderedWeekdayKeys(weekStartDay: number) {
+  return Array.from(
+    { length: 7 },
+    (_, i) => ALL_WEEKDAY_KEYS[(weekStartDay + i) % 7],
+  );
+}
 
 export function MonthView({ date }: { date?: Date }) {
   const t = useTranslations('calendar.weekdays');
@@ -21,9 +30,14 @@ export function MonthView({ date }: { date?: Date }) {
   const setView = useCalendarStore((s) => s.setView);
   const setCurrentDate = useCalendarStore((s) => s.setCurrentDate);
   const openEntryModal = useCalendarStore((s) => s.openEntryModal);
+  const { weekStartDay } = useLocale();
   const currentDate = date ?? storeDate;
 
-  const gridDates = getMonthGridDates(currentDate);
+  const weekdayKeys = useMemo(
+    () => getOrderedWeekdayKeys(weekStartDay),
+    [weekStartDay],
+  );
+  const gridDates = getMonthGridDates(currentDate, weekStartDay);
   const currentMonth = currentDate.getMonth();
 
   const weekRows = useMemo(() => {
@@ -59,7 +73,7 @@ export function MonthView({ date }: { date?: Date }) {
     <div className="flex h-full flex-col">
       {/* Weekday headers */}
       <div className="grid grid-cols-7 border-y">
-        {WEEKDAY_KEYS.map((key, index) => (
+        {weekdayKeys.map((key, index) => (
           <div
             key={key}
             className={cn(

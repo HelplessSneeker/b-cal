@@ -6,6 +6,7 @@ import {
   CalendarView,
   type CalendarEntry,
 } from '@/lib/stores/calendarStore';
+import { useUserStore } from '@/lib/stores/userStore';
 
 beforeEach(() => {
   resetStores();
@@ -113,6 +114,32 @@ describe('MonthView', () => {
     expect(openSpy).toHaveBeenCalledWith(undefined, expect.any(Date));
     const passedDate = openSpy.mock.calls[0][1] as Date;
     expect(passedDate.getHours()).toBe(9);
+  });
+
+  it('renders weekday headers starting from Sunday when weekStart is sunday', () => {
+    useUserStore.setState({
+      user: {
+        id: '1',
+        email: 'test@example.com',
+        emailVerified: true,
+        createdAt: '',
+        preferences: {
+          language: 'en-US',
+          timezone: 'America/New_York',
+          theme: 'system',
+          accentColor: 'blue',
+          weekStart: 'sunday',
+        },
+      },
+    });
+    useCalendarStore.setState({ currentDate, entries: [] });
+    render(<MonthView />);
+
+    const headers = document.querySelectorAll(
+      '.text-xs.font-medium.uppercase.text-muted-foreground',
+    );
+    expect(headers[0].textContent).toBe('Su');
+    expect(headers[6].textContent).toBe('Sa');
   });
 
   it('renders whole-day entries as spanning bars', () => {

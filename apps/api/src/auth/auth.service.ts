@@ -350,7 +350,6 @@ export class AuthService {
             theme: user.preferences.theme,
             accentColor: user.preferences.accentColor,
             weekStart: user.preferences.weekStart,
-            density: user.preferences.density,
           }
         : null,
     };

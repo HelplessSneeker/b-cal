@@ -79,7 +79,6 @@ model UserPreferences {
   theme       String @default("system")
   accentColor String @default("blue")
   weekStart   String @default("monday")
-  density     String @default("default")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

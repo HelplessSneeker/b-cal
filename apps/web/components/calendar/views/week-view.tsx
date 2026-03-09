@@ -44,7 +44,7 @@ export function WeekView({ date }: { date?: Date }) {
   const storeDate = useCalendarStore((s) => s.currentDate);
   const entries = useCalendarStore((s) => s.entries);
   const openEntryModal = useCalendarStore((s) => s.openEntryModal);
-  const { language } = useLocale();
+  const { language, weekStartDay } = useLocale();
   const currentDate = date ?? storeDate;
   const isMobile = useMediaQuery('(max-width: 767px)');
 
@@ -52,7 +52,7 @@ export function WeekView({ date }: { date?: Date }) {
     ? MOBILE_TIME_COLUMN_WIDTH
     : TIME_COLUMN_WIDTH;
 
-  const startOfWeek = getStartOfWeek(currentDate);
+  const startOfWeek = getStartOfWeek(currentDate, weekStartDay);
   const weekDays = getWeekDays(startOfWeek);
 
   const allDayEntries = useMemo(() => {
