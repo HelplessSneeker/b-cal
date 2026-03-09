@@ -1,8 +1,11 @@
+import * as path from 'path';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
+import { AcceptLanguageResolver, I18nModule } from 'nestjs-i18n';
+import { defaultLocale } from '@b-cal/i18n/config';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AuthModule } from 'src/auth/auth.module';
@@ -31,6 +34,16 @@ class TestMailService {
       pinoHttp: {
         level: 'silent',
       },
+    }),
+    I18nModule.forRoot({
+      fallbackLanguage: defaultLocale,
+      loaderOptions: {
+        path: path.join(
+          path.dirname(require.resolve('@b-cal/i18n/locales/en/error.json')),
+          '..',
+        ),
+      },
+      resolvers: [AcceptLanguageResolver],
     }),
     ThrottlerModule.forRoot({
       throttlers: [{ ttl: 60000, limit: 100000 }],
