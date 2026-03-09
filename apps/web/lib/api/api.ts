@@ -113,7 +113,7 @@ export async function api<T = unknown>(
 
     if (response.status === 403 && isStateChanging) {
       const json = await response.json().catch(() => ({}));
-      if (json.message && json.message.includes('CSRF')) {
+      if (json.message && json.message.toLowerCase().includes('csrf')) {
         csrfToken = null;
         await fetchCsrfToken();
         if (csrfToken) {
