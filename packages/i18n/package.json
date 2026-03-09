@@ -2,12 +2,13 @@
   "name": "@b-cal/i18n",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "exports": {
     "./locales/*": "./locales/*",
     "./config": {
-      "types": "./src/config.ts",
-      "import": "./src/config.ts",
-      "require": "./src/config.ts"
+      "types": "./src/config.d.ts",
+      "import": "./src/config.js",
+      "require": "./src/config.js"
     }
   },
   "files": [
