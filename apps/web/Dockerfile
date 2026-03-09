@@ -8,12 +8,14 @@ FROM base AS deps
 WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/web/package.json apps/web/
+COPY packages/i18n/package.json packages/i18n/
 RUN pnpm install --frozen-lockfile
 
 # ---- Build ----
 FROM deps AS build
 ARG NEXT_PUBLIC_BACKEND_URL
 ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
+COPY packages/i18n/ packages/i18n/
 COPY apps/web/ apps/web/
 WORKDIR /app/apps/web
 RUN pnpm build

@@ -10,10 +10,12 @@ WORKDIR /app
 RUN apk add --no-cache python3 make g++
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/api/package.json apps/api/
+COPY packages/i18n/package.json packages/i18n/
 RUN pnpm install --frozen-lockfile
 
 # ---- Build ----
 FROM deps AS build
+COPY packages/i18n/ packages/i18n/
 COPY apps/api/ apps/api/
 WORKDIR /app/apps/api
 RUN pnpm prisma:generate && pnpm build
