@@ -13,6 +13,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils/utils';
+import { useUserStore } from '@/lib/stores/userStore';
+import { updatePreferences } from '@/lib/api/auth';
 
 type Theme = 'light' | 'dark' | 'system';
 type AccentColor =
@@ -185,10 +187,20 @@ function MiniCalendarPreview({
 export function AppearanceTab() {
   const t = useTranslations('settings.appearance');
   const tCommon = useTranslations('common');
-  const [theme, setTheme] = useState<Theme>(INITIAL_THEME);
-  const [accentColor, setAccentColor] = useState<AccentColor>(INITIAL_ACCENT);
-  const [weekStart, setWeekStart] = useState<WeekStart>(INITIAL_WEEK_START);
-  const [density, setDensity] = useState<Density>(INITIAL_DENSITY);
+  const { user, setUser } = useUserStore();
+
+  const storedTheme = (user?.preferences?.theme as Theme) ?? INITIAL_THEME;
+  const storedAccent =
+    (user?.preferences?.accentColor as AccentColor) ?? INITIAL_ACCENT;
+  const storedWeekStart =
+    (user?.preferences?.weekStart as WeekStart) ?? INITIAL_WEEK_START;
+  const storedDensity =
+    (user?.preferences?.density as Density) ?? INITIAL_DENSITY;
+
+  const [theme, setTheme] = useState<Theme>(storedTheme);
+  const [accentColor, setAccentColor] = useState<AccentColor>(storedAccent);
+  const [weekStart, setWeekStart] = useState<WeekStart>(storedWeekStart);
+  const [density, setDensity] = useState<Density>(storedDensity);
   const [isSaving, setIsSaving] = useState(false);
 
   const selectedAccent =
@@ -196,16 +208,23 @@ export function AppearanceTab() {
     ACCENT_COLOR_KEYS[0].color;
 
   const hasChanges =
-    theme !== INITIAL_THEME ||
-    accentColor !== INITIAL_ACCENT ||
-    weekStart !== INITIAL_WEEK_START ||
-    density !== INITIAL_DENSITY;
+    theme !== storedTheme ||
+    accentColor !== storedAccent ||
+    weekStart !== storedWeekStart ||
+    density !== storedDensity;
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // TODO: persist to backend once appearance preferences API is implemented
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      const updated = await updatePreferences({
+        theme,
+        accentColor,
+        weekStart,
+        density,
+      });
+      if (user && updated) {
+        setUser({ ...user, preferences: updated });
+      }
       toast.success(t('saved'));
     } catch {
       toast.error(t('saveFailed'));

@@ -1,4 +1,4 @@
-import { IsString, Matches, MaxLength } from 'class-validator';
+import { IsIn, IsString, Matches, MaxLength } from 'class-validator';
 import { IsValidTimezone } from '../validators/timezone.validator';
 
 export class CreatePreferencesDto {
@@ -13,4 +13,20 @@ export class CreatePreferencesDto {
   @MaxLength(50)
   @IsValidTimezone()
   timezone: string;
+
+  @IsString()
+  @IsIn(['light', 'dark', 'system'])
+  theme: string;
+
+  @IsString()
+  @IsIn(['blue', 'indigo', 'violet', 'rose', 'emerald', 'amber', 'slate'])
+  accentColor: string;
+
+  @IsString()
+  @IsIn(['monday', 'sunday', 'saturday'])
+  weekStart: string;
+
+  @IsString()
+  @IsIn(['compact', 'default', 'comfortable'])
+  density: string;
 }

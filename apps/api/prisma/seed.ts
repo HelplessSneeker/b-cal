@@ -97,6 +97,10 @@ async function main() {
       userId: user1.id,
       language: 'en-US',
       timezone: 'America/New_York',
+      theme: 'system',
+      accentColor: 'blue',
+      weekStart: 'monday',
+      density: 'default',
     },
   });
   await prisma.userPreferences.create({
@@ -104,6 +108,10 @@ async function main() {
       userId: user2.id,
       language: 'de-DE',
       timezone: 'Europe/Berlin',
+      theme: 'dark',
+      accentColor: 'indigo',
+      weekStart: 'monday',
+      density: 'comfortable',
     },
   });
 

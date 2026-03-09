@@ -59,8 +59,8 @@ src/
 ### User Endpoints (require JwtAuthGuard + EmailVerifiedGuard)
 
 - `DELETE /user` — delete user account, clears auth cookies
-- `GET /user/preferences` — get user preferences (language, timezone)
-- `PATCH /user/preferences` — update user preferences
+- `GET /user/preferences` — get user preferences (language, timezone, theme, accentColor, weekStart, density)
+- `PATCH /user/preferences` — update user preferences (all fields optional on update)
 
 ### Calendar Endpoints (require JwtAuthGuard + EmailVerifiedGuard)
 
@@ -88,7 +88,7 @@ Auth uses a `Session` model instead of storing a single refresh token on the Use
 
 ### Prisma Schema
 
-`User` (id, email, password, emailVerified, verificationToken, resetToken; relations to CalendarEntry, UserPreferences, Session), `Session` (id, userId, refreshToken, deviceName, ipAddress, userAgent, lastUsedAt, expiresAt, createdAt), `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId), `UserPreferences` (userId, language, timezone).
+`User` (id, email, password, emailVerified, verificationToken, resetToken; relations to CalendarEntry, UserPreferences, Session), `Session` (id, userId, refreshToken, deviceName, ipAddress, userAgent, lastUsedAt, expiresAt, createdAt), `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId), `UserPreferences` (userId, language, timezone, theme, accentColor, weekStart, density).
 
 ### i18n
 

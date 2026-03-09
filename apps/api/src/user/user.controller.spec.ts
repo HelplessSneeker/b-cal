@@ -53,6 +53,10 @@ describe('UserController', () => {
         userId: 'user-1',
         language: 'en-US',
         timezone: 'America/New_York',
+        theme: 'system',
+        accentColor: 'blue',
+        weekStart: 'monday',
+        density: 'default',
       };
       mockUserService.findPreferences.mockResolvedValue(preferences);
 
@@ -74,7 +78,14 @@ describe('UserController', () => {
   describe('updatePreferences', () => {
     it('should create preferences when none exist and both fields provided', async () => {
       const dto = { language: 'en-US', timezone: 'America/New_York' };
-      const created = { userId: 'user-1', ...dto };
+      const expectedData = {
+        ...dto,
+        theme: 'system',
+        accentColor: 'blue',
+        weekStart: 'monday',
+        density: 'default',
+      };
+      const created = { userId: 'user-1', ...expectedData };
       mockUserService.findPreferences.mockResolvedValue(null);
       mockUserService.upsertPreferences.mockResolvedValue(created);
 
@@ -86,7 +97,7 @@ describe('UserController', () => {
       });
       expect(mockUserService.upsertPreferences).toHaveBeenCalledWith(
         'user-1',
-        dto,
+        expectedData,
       );
     });
 
@@ -103,6 +114,10 @@ describe('UserController', () => {
         userId: 'user-1',
         language: 'en-US',
         timezone: 'America/New_York',
+        theme: 'system',
+        accentColor: 'blue',
+        weekStart: 'monday',
+        density: 'default',
       };
       const updated = { ...existing, language: 'de-DE' };
       mockUserService.findPreferences.mockResolvedValue(existing);
@@ -119,6 +134,10 @@ describe('UserController', () => {
       expect(mockUserService.upsertPreferences).toHaveBeenCalledWith('user-1', {
         language: 'de-DE',
         timezone: 'America/New_York',
+        theme: 'system',
+        accentColor: 'blue',
+        weekStart: 'monday',
+        density: 'default',
       });
     });
   });

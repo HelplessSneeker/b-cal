@@ -65,6 +65,10 @@ export class UserController {
     const data = {
       language: dto.language ?? existing!.language,
       timezone: dto.timezone ?? existing!.timezone,
+      theme: dto.theme ?? existing?.theme ?? 'system',
+      accentColor: dto.accentColor ?? existing?.accentColor ?? 'blue',
+      weekStart: dto.weekStart ?? existing?.weekStart ?? 'monday',
+      density: dto.density ?? existing?.density ?? 'default',
     };
 
     const preferences = await this.userService.upsertPreferences(userId, data);

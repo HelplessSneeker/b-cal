@@ -57,7 +57,7 @@ Uses `next-intl` with translations from the shared `@b-cal/i18n` package. Suppor
 `/settings` with tabs:
 - **Profile** — Account info, delete account
 - **Security** — Change password, session management (list/revoke sessions)
-- **Appearance** — Theme (light/dark/system), accent color, week start day, density (UI-only, not yet persisted to backend)
+- **Appearance** — Theme (light/dark/system), accent color, week start day, density (persisted via `PATCH /user/preferences`)
 - **Localization** — Language and timezone preferences (persisted via `PATCH /user/preferences`)
 
 ### Calendar Views

@@ -18,6 +18,10 @@ const mockPreferences = {
   userId: 'user-1',
   language: 'en-US',
   timezone: 'America/New_York',
+  theme: 'system',
+  accentColor: 'blue',
+  weekStart: 'monday',
+  density: 'default',
   createdAt: new Date(),
   updatedAt: null,
 };
@@ -150,7 +154,14 @@ describe('UserService', () => {
 
   describe('upsertPreferences', () => {
     it('should upsert preferences for a user', async () => {
-      const data = { language: 'de-DE', timezone: 'Europe/Berlin' };
+      const data = {
+        language: 'de-DE',
+        timezone: 'Europe/Berlin',
+        theme: 'dark',
+        accentColor: 'indigo',
+        weekStart: 'sunday',
+        density: 'compact',
+      };
       mockPrisma.userPreferences.upsert.mockResolvedValue({
         userId: 'user-1',
         ...data,

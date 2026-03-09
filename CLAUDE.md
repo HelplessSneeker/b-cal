@@ -68,7 +68,7 @@ Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerf
 
 **User Preferences**: `GET /user/preferences`, `PATCH /user/preferences` — stores language and timezone per user.
 
-**Settings Page**: `/settings` with tabs: Profile, Security (password change, session management), Appearance (theme, accent color, week start, density — UI-only, not yet persisted), Localization (language, timezone).
+**Settings Page**: `/settings` with tabs: Profile, Security (password change, session management), Appearance (theme, accent color, week start, density — persisted via `PATCH /user/preferences`), Localization (language, timezone).
 
 **i18n**: Shared `@b-cal/i18n` package with EN/DE locales and namespaces (common, auth, calendar, settings, error, success). Frontend uses `next-intl`, API uses `nestjs-i18n` with `AcceptLanguageResolver`. All API user-facing strings use the `t()` helper (`src/common/utils/i18n.ts`).
 
@@ -96,7 +96,7 @@ Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerf
 
 **Input Validation**: Global payload limit of 1MB (JSON + URL-encoded). DTO string fields have max length constraints (title: 100, content: 5000, email: 254, password: 128). Calendar entry title and content fields are sanitized via `stripHtmlTags` transform.
 
-**Database**: PostgreSQL via Prisma. Models: `User` (email, password, emailVerified, verificationToken, resetToken; relations to CalendarEntry, UserPreferences, Session), `Session` (userId, refreshToken, deviceName, ipAddress, userAgent, lastUsedAt, expiresAt), `CalendarEntry` (title, startDate, endDate, content, wholeDay, userId), `UserPreferences` (userId, language, timezone). User.email has a unique constraint. CalendarEntry has indexes on userId, startDate, endDate, and a composite (endDate, startDate) index. Session has indexes on userId and expiresAt.
+**Database**: PostgreSQL via Prisma. Models: `User` (email, password, emailVerified, verificationToken, resetToken; relations to CalendarEntry, UserPreferences, Session), `Session` (userId, refreshToken, deviceName, ipAddress, userAgent, lastUsedAt, expiresAt), `CalendarEntry` (title, startDate, endDate, content, wholeDay, userId), `UserPreferences` (userId, language, timezone, theme, accentColor, weekStart, density). User.email has a unique constraint. CalendarEntry has indexes on userId, startDate, endDate, and a composite (endDate, startDate) index. Session has indexes on userId and expiresAt.
 
 **Email**: Nodemailer-based mail service. Uses Ethereal test accounts in development (preview URLs logged to console). Production requires SMTP configuration.
 

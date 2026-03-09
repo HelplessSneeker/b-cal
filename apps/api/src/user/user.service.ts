@@ -141,7 +141,14 @@ export class UserService {
 
   async upsertPreferences(
     userId: string,
-    data: { language: string; timezone: string },
+    data: {
+      language: string;
+      timezone: string;
+      theme: string;
+      accentColor: string;
+      weekStart: string;
+      density: string;
+    },
   ): Promise<UserPreferences> {
     return this.prisma.userPreferences.upsert({
       where: { userId },

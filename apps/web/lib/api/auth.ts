@@ -3,6 +3,10 @@ import { api, ApiError, getCsrfToken, clearCsrfToken } from './api';
 export interface UserPreferences {
   language: string;
   timezone: string;
+  theme: string;
+  accentColor: string;
+  weekStart: string;
+  density: string;
 }
 
 export interface User {
