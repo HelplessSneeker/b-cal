@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useTheme } from 'next-themes';
 import { CheckIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -197,6 +198,7 @@ export function AppearanceTab() {
   const storedDensity =
     (user?.preferences?.density as Density) ?? INITIAL_DENSITY;
 
+  const { setTheme: setNextTheme } = useTheme();
   const [theme, setTheme] = useState<Theme>(storedTheme);
   const [accentColor, setAccentColor] = useState<AccentColor>(storedAccent);
   const [weekStart, setWeekStart] = useState<WeekStart>(storedWeekStart);
@@ -247,7 +249,10 @@ export function AppearanceTab() {
               <button
                 key={themeKey}
                 type="button"
-                onClick={() => setTheme(themeKey)}
+                onClick={() => {
+                  setTheme(themeKey);
+                  setNextTheme(themeKey);
+                }}
                 className={cn(
                   'flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 p-3 transition-all',
                   theme === themeKey

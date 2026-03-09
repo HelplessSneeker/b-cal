@@ -9,6 +9,7 @@ import { useConnectionStore } from '@/lib/stores/connectionStore';
 import { checkHealth } from '@/components/ConnectionGuard';
 import { Loading } from '@/components/ui/loading';
 import { setLocaleCookie } from '@/src/i18n/locale-cookie';
+import { useTheme } from 'next-themes';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter();
   const { user, setUser } = useUserStore();
+  const { setTheme } = useTheme();
   const [hasChecked, setHasChecked] = useState(false);
 
   useEffect(() => {
@@ -39,6 +41,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
           if (userData.preferences?.language) {
             setLocaleCookie(userData.preferences.language);
+          }
+
+          if (userData.preferences?.theme) {
+            setTheme(userData.preferences.theme);
           }
 
           if (!userData.preferences) {
@@ -88,7 +94,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => {
       cancelled = true;
     };
-  }, [user, hasChecked, setUser, router]);
+  }, [user, hasChecked, setUser, setTheme, router]);
 
   if (user) {
     return <>{children}</>;
