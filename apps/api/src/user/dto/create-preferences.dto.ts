@@ -19,7 +19,7 @@ export class CreatePreferencesDto {
   theme: string;
 
   @IsString()
-  @IsIn(['blue', 'indigo', 'violet', 'rose', 'emerald', 'amber', 'slate'])
+  @IsIn(['blue', 'indigo', 'violet', 'emerald', 'amber', 'slate'])
   accentColor: string;
 
   @IsString()

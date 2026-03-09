@@ -10,6 +10,7 @@ import { checkHealth } from '@/components/ConnectionGuard';
 import { Loading } from '@/components/ui/loading';
 import { setLocaleCookie } from '@/src/i18n/locale-cookie';
 import { useTheme } from 'next-themes';
+import { applyAccentColor } from '@/lib/utils/accent-color';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -45,6 +46,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
           if (userData.preferences?.theme) {
             setTheme(userData.preferences.theme);
+          }
+
+          if (userData.preferences?.accentColor) {
+            applyAccentColor(userData.preferences.accentColor);
           }
 
           if (!userData.preferences) {

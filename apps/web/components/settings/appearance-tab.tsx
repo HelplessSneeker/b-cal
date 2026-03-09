@@ -16,23 +16,16 @@ import {
 import { cn } from '@/lib/utils/utils';
 import { useUserStore } from '@/lib/stores/userStore';
 import { updatePreferences } from '@/lib/api/auth';
+import { applyAccentColor } from '@/lib/utils/accent-color';
 
 type Theme = 'light' | 'dark' | 'system';
-type AccentColor =
-  | 'blue'
-  | 'indigo'
-  | 'violet'
-  | 'rose'
-  | 'emerald'
-  | 'amber'
-  | 'slate';
+type AccentColor = 'blue' | 'indigo' | 'violet' | 'emerald' | 'amber' | 'slate';
 type WeekStart = 'monday' | 'sunday' | 'saturday';
 
 const ACCENT_COLOR_KEYS: { key: AccentColor; color: string }[] = [
   { key: 'blue', color: '#3b82f6' },
   { key: 'indigo', color: '#6366f1' },
   { key: 'violet', color: '#8b5cf6' },
-  { key: 'rose', color: '#f43f5e' },
   { key: 'emerald', color: '#10b981' },
   { key: 'amber', color: '#f59e0b' },
   { key: 'slate', color: '#64748b' },
@@ -173,7 +166,10 @@ export function AppearanceTab() {
                 key={c.key}
                 type="button"
                 title={t(`colors.${c.key}`)}
-                onClick={() => setAccentColor(c.key)}
+                onClick={() => {
+                  setAccentColor(c.key);
+                  applyAccentColor(c.key);
+                }}
                 className={cn(
                   'flex size-9 cursor-pointer items-center justify-center rounded-full transition-all',
                   accentColor === c.key
