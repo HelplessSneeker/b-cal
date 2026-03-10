@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { AuthProvider } from '@/components/AuthProvider';
+import { AppShell } from '@/components/app-shell';
 import { CalendarHeader } from '@/components/calendar/calendar-header';
 import { CalendarSidebar } from '@/components/calendar/calendar-sidebar';
 import { SwipeContainer } from '@/components/calendar/swipe-container';
@@ -34,17 +34,17 @@ function CalendarPage() {
   );
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-full flex-col">
       <CalendarHeader />
       <div className="flex flex-1 overflow-hidden">
         <CalendarSidebar />
-        <main className="min-w-0 flex-1 overflow-hidden">
+        <div className="min-w-0 flex-1 overflow-hidden">
           <SwipeContainer renderView={renderView} />
-        </main>
+        </div>
       </div>
       <EntryModal />
       <Button
-        className="fixed bottom-6 right-6 z-40 size-14 rounded-full shadow-lg md:hidden"
+        className="fixed bottom-20 right-6 z-40 size-14 rounded-full shadow-lg md:bottom-6 md:hidden"
         onClick={() => openEntryModal()}
         aria-label={t('newEntry')}
       >
@@ -56,8 +56,8 @@ function CalendarPage() {
 
 export default function Home() {
   return (
-    <AuthProvider>
+    <AppShell>
       <CalendarPage />
-    </AuthProvider>
+    </AppShell>
   );
 }

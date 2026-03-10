@@ -21,13 +21,9 @@ vi.mock('@/lib/api/auth', () => ({
   logout: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { logout } from '@/lib/api/auth';
-const logoutMock = vi.mocked(logout);
-
 beforeEach(() => {
   resetStores();
   mockPush.mockClear();
-  logoutMock.mockClear();
   useUserStore.setState({
     user: {
       id: '1',
@@ -52,11 +48,6 @@ function getMobileHeader() {
 }
 
 describe('CalendarHeader', () => {
-  it('displays user avatar initials from email', () => {
-    render(<CalendarHeader />);
-    expect(screen.getByText('AE')).toBeInTheDocument();
-  });
-
   it('today button resets date', async () => {
     useCalendarStore.setState({ currentDate: new Date(2020, 0, 1) });
     const user = userEvent.setup();
@@ -140,24 +131,6 @@ describe('CalendarHeader', () => {
 
     await user.click(screen.getByRole('menuitem', { name: 'Week' }));
     expect(useCalendarStore.getState().view).toBe(CalendarView.Week);
-  });
-
-  it('logout clears user and redirects to /login', async () => {
-    logoutMock.mockResolvedValue(undefined);
-    const user = userEvent.setup();
-    render(<CalendarHeader />);
-
-    // Open user dropdown (avatar button)
-    const avatarButton = screen.getByText('AE').closest('button')!;
-    await user.click(avatarButton);
-
-    await user.click(screen.getByRole('menuitem', { name: 'Logout' }));
-
-    await waitFor(() => {
-      expect(logoutMock).toHaveBeenCalled();
-      expect(mockPush).toHaveBeenCalledWith('/login');
-      expect(useUserStore.getState().user).toBeNull();
-    });
   });
 
   describe('mobile header', () => {

@@ -5,6 +5,11 @@
   "delete": "Löschen",
   "retry": "Erneut versuchen",
   "backToLogin": "Zurück zum Login",
+  "nav": {
+    "calendar": "Kalender",
+    "settings": "Einstellungen",
+    "logout": "Abmelden"
+  },
   "serviceUnavailable": {
     "title": "Dienst nicht verfügbar",
     "description": "Verbindung zum Server konnte nicht hergestellt werden. Bitte überprüfe deine Verbindung und versuche es erneut."

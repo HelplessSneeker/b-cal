@@ -5,6 +5,11 @@
   "delete": "Delete",
   "retry": "Retry",
   "backToLogin": "Back to login",
+  "nav": {
+    "calendar": "Calendar",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
   "serviceUnavailable": {
     "title": "Service Unavailable",
     "description": "Unable to connect to the server. Please check your connection and try again."

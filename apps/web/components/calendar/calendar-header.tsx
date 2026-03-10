@@ -1,30 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import type { TranslateFn } from '@b-cal/i18n/config';
 import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  LogOutIcon,
   MenuIcon,
-  SettingsIcon,
 } from 'lucide-react';
-import { logout } from '@/lib/api/auth';
-import { useUserStore } from '@/lib/stores/userStore';
 import { useCalendarStore, CalendarView } from '@/lib/stores/calendarStore';
 import { useLocale } from '@/lib/hooks/useLocale';
 import { getWeekNumber } from '@/lib/calendar/date-utils';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -34,14 +26,6 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { SidebarCalendar } from '@/components/calendar/sidebar-calendar';
-import { Separator } from '@/components/ui/separator';
-
-function getAvatarInitials(email: string): string {
-  const [localPart, domain] = email.split('@');
-  const localInitial = localPart?.[0]?.toUpperCase() ?? '';
-  const domainInitial = domain?.[0]?.toUpperCase() ?? '';
-  return `${localInitial}${domainInitial}`;
-}
 
 function formatDateDisplay(
   date: Date,
@@ -91,12 +75,9 @@ function formatDateDisplayShort(
 
 export function CalendarHeader() {
   const t = useTranslations('calendar');
-  const router = useRouter();
-  const { user, clearUser } = useUserStore();
   const { language } = useLocale();
-  const { view, currentDate, setView, setCurrentDate, clearCache, navigate } =
+  const { view, currentDate, setView, setCurrentDate, navigate } =
     useCalendarStore();
-  const initials = user?.email ? getAvatarInitials(user.email) : '?';
 
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -106,14 +87,6 @@ export function CalendarHeader() {
 
   const handleViewChange = (newView: CalendarView) => {
     setView(newView);
-  };
-
-  const handleLogout = async () => {
-    setDrawerOpen(false);
-    await logout();
-    clearUser();
-    clearCache();
-    router.push('/login');
   };
 
   return (
@@ -165,26 +138,6 @@ export function CalendarHeader() {
                 onClick={() => handleViewChange(CalendarView.Month)}
               >
                 {t('views.month')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <Avatar>
-                  <AvatarFallback>{initials}</AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push('/settings')}>
-                {t('userMenu.settings')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout}>
-                {t('userMenu.logout')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -274,33 +227,6 @@ export function CalendarHeader() {
           </SheetHeader>
           <div className="flex flex-1 flex-col overflow-y-auto px-4">
             <SidebarCalendar />
-            <Separator className="my-4" />
-            <div className="flex flex-col gap-2">
-              <p className="text-muted-foreground truncate text-sm">
-                {user?.email}
-              </p>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="justify-start"
-                onClick={() => {
-                  setDrawerOpen(false);
-                  router.push('/settings');
-                }}
-              >
-                <SettingsIcon className="mr-2 size-4" />
-                {t('userMenu.settings')}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="justify-start"
-                onClick={handleLogout}
-              >
-                <LogOutIcon className="mr-2 size-4" />
-                {t('userMenu.logout')}
-              </Button>
-            </div>
           </div>
         </SheetContent>
       </Sheet>

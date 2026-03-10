@@ -3,8 +3,6 @@
 import {
   GlobeIcon,
   PaletteIcon,
-  PanelLeftCloseIcon,
-  PanelLeftOpenIcon,
   ShieldIcon,
   UserIcon,
   XIcon,
@@ -25,8 +23,6 @@ export type SettingsTab = (typeof settingsTabKeys)[number]['key'];
 interface SettingsSidebarProps {
   activeTab: SettingsTab;
   onTabChange: (tab: SettingsTab) => void;
-  collapsed: boolean;
-  onCollapsedChange: (collapsed: boolean) => void;
   mobileOpen: boolean;
   onMobileOpenChange: (open: boolean) => void;
 }
@@ -34,8 +30,6 @@ interface SettingsSidebarProps {
 export function SettingsSidebar({
   activeTab,
   onTabChange,
-  collapsed,
-  onCollapsedChange,
   mobileOpen,
   onMobileOpenChange,
 }: SettingsSidebarProps) {
@@ -84,37 +78,16 @@ export function SettingsSidebar({
       </nav>
 
       {/* Desktop sidebar */}
-      <nav
-        className={cn(
-          'hidden flex-col gap-1 border-r p-2 transition-[width] duration-200 md:flex',
-          collapsed ? 'w-14' : 'w-56',
-        )}
-      >
-        <Button
-          variant="ghost"
-          size="icon"
-          className="mb-1 self-end"
-          onClick={() => onCollapsedChange(!collapsed)}
-          aria-label={
-            collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')
-          }
-        >
-          {collapsed ? (
-            <PanelLeftOpenIcon className="size-4" />
-          ) : (
-            <PanelLeftCloseIcon className="size-4" />
-          )}
-        </Button>
+      <nav className="hidden w-56 flex-col gap-1 border-r p-2 md:flex">
         {settingsTabKeys.map((tab) => (
           <Button
             key={tab.key}
             variant={activeTab === tab.key ? 'secondary' : 'ghost'}
-            className={cn('justify-start', collapsed && 'justify-center px-0')}
+            className="justify-start"
             onClick={() => onTabChange(tab.key)}
-            title={collapsed ? t(`tabs.${tab.key}`) : undefined}
           >
-            <tab.icon className={cn('size-4', !collapsed && 'mr-2')} />
-            {!collapsed && t(`tabs.${tab.key}`)}
+            <tab.icon className="mr-2 size-4" />
+            {t(`tabs.${tab.key}`)}
           </Button>
         ))}
       </nav>
