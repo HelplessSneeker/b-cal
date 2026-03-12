@@ -8,7 +8,8 @@
   "nav": {
     "calendar": "Calendar",
     "settings": "Settings",
-    "logout": "Logout"
+    "logout": "Logout",
+    "account": "Account"
   },
   "serviceUnavailable": {
     "title": "Service Unavailable",

@@ -8,7 +8,8 @@
   "nav": {
     "calendar": "Kalender",
     "settings": "Einstellungen",
-    "logout": "Abmelden"
+    "logout": "Abmelden",
+    "account": "Konto"
   },
   "serviceUnavailable": {
     "title": "Dienst nicht verfügbar",

@@ -131,6 +131,30 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
             </button>
           );
         })}
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="flex flex-1 flex-col items-center gap-0.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              aria-label={user?.email ?? ''}
+            >
+              <Avatar className="size-5">
+                <AvatarFallback className="text-[10px]">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <span>{t('nav.account')}</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" side="top">
+            <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOutIcon className="mr-2 size-4" />
+              {t('nav.logout')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </nav>
     </div>
   );
