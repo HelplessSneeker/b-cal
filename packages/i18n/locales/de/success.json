@@ -15,5 +15,7 @@
   "preferencesUpdated": "Einstellungen aktualisiert",
   "calendarEntryCreated": "Kalendereintrag erstellt",
   "calendarEntryUpdated": "Kalendereintrag wurde aktualisiert",
-  "calendarEntryDeleted": "Kalendereintrag gelöscht"
+  "calendarEntryDeleted": "Kalendereintrag gelöscht",
+  "calendarOccurrenceUpdated": "Kalendervorkommen aktualisiert",
+  "calendarOccurrenceDeleted": "Kalendervorkommen gelöscht"
 }

@@ -2,13 +2,17 @@ import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
 } from 'class-validator';
 import { stripHtmlTags } from '../../common/utils/strip-html-tags';
 import { IsStartBeforeEnd } from '../validators/date-range.validator';
+import { IsRecurrenceValid } from '../validators/recurrence.validator';
+import { RecurrenceFrequency } from '../enums/recurrence-frequency.enum';
 
 export class CreateCalendarDto {
   @IsDateString()
@@ -37,4 +41,18 @@ export class CreateCalendarDto {
   @IsOptional()
   @IsBoolean()
   wholeDay?: boolean;
+
+  @IsOptional()
+  @IsEnum(RecurrenceFrequency)
+  recurrenceFrequency?: RecurrenceFrequency;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^(MO|TU|WE|TH|FR|SA|SU)(,(MO|TU|WE|TH|FR|SA|SU))*$/)
+  @IsRecurrenceValid()
+  recurrenceByDay?: string;
+
+  @IsOptional()
+  @IsDateString()
+  recurrenceUntil?: string;
 }

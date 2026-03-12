@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CalendarController } from './calendar.controller';
 import { CalendarService } from './calendar.service';
+import { EditScope } from './enums/edit-scope.enum';
 
 jest.mock('generated/prisma/client', () => ({
   PrismaClient: class PrismaClient {},
@@ -15,6 +16,11 @@ const mockCalendarEntry = {
   endDate: new Date('2026-01-16'),
   content: 'Test content',
   wholeDay: false,
+  isRecurring: false,
+  recurrenceFrequency: null,
+  recurrenceByDay: null,
+  recurrenceUntil: null,
+  originalDate: null,
 };
 
 const mockCalendarService = {
@@ -127,7 +133,7 @@ describe('CalendarController', () => {
     it('should remove a calendar entry and return message', async () => {
       mockCalendarService.remove.mockResolvedValue(mockCalendarEntry);
 
-      const result = await controller.remove('user-1', 'entry-1');
+      const result = await controller.remove('user-1', 'entry-1', {});
 
       expect(result).toEqual({
         message: 'success.calendarEntryDeleted',
@@ -135,6 +141,21 @@ describe('CalendarController', () => {
       expect(mockCalendarService.remove).toHaveBeenCalledWith(
         'user-1',
         'entry-1',
+        undefined,
+      );
+    });
+
+    it('should pass scope to service for recurring entry deletion', async () => {
+      mockCalendarService.remove.mockResolvedValue({});
+
+      await controller.remove('user-1', 'entry-1', {
+        scope: EditScope.SINGLE,
+      });
+
+      expect(mockCalendarService.remove).toHaveBeenCalledWith(
+        'user-1',
+        'entry-1',
+        EditScope.SINGLE,
       );
     });
   });

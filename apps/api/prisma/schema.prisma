@@ -58,8 +58,14 @@ model CalendarEntry {
   content  String?
   wholeDay Boolean? @default(false)
 
+  recurrenceFrequency String?
+  recurrenceByDay     String?
+  recurrenceUntil     DateTime?
+
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
+
+  recurrenceExceptions RecurrenceException[]
 
   updatedAt DateTime? @updatedAt
   createdAt DateTime  @default(now())
@@ -68,6 +74,27 @@ model CalendarEntry {
   @@index([startDate])
   @@index([endDate])
   @@index([endDate, startDate])
+  @@index([recurrenceFrequency])
+}
+
+model RecurrenceException {
+  id              String        @id @default(uuid())
+  calendarEntry   CalendarEntry @relation(fields: [calendarEntryId], references: [id], onDelete: Cascade)
+  calendarEntryId String
+  originalDate    DateTime
+  isCancelled     Boolean       @default(false)
+
+  title     String?
+  startDate DateTime?
+  endDate   DateTime?
+  content   String?
+  wholeDay  Boolean?
+
+  updatedAt DateTime? @updatedAt
+  createdAt DateTime  @default(now())
+
+  @@unique([calendarEntryId, originalDate])
+  @@index([calendarEntryId])
 }
 
 model UserPreferences {

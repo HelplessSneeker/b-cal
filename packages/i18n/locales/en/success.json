@@ -15,5 +15,7 @@
   "preferencesUpdated": "Preferences updated",
   "calendarEntryCreated": "Calendar entry created",
   "calendarEntryUpdated": "Calendar entry has been updated",
-  "calendarEntryDeleted": "Deleted calendar entry"
+  "calendarEntryDeleted": "Deleted calendar entry",
+  "calendarOccurrenceUpdated": "Calendar occurrence updated",
+  "calendarOccurrenceDeleted": "Calendar occurrence deleted"
 }

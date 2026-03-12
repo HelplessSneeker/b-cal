@@ -11,5 +11,10 @@
   "preferencesRequired": "Sowohl Sprache als auch Zeitzone sind beim Erstellen der Einstellungen erforderlich",
   "loginFailed": "Anmeldung fehlgeschlagen",
   "emailNotVerified": "E-Mail nicht verifiziert",
-  "invalidCsrfToken": "Ungültiges CSRF-Token"
+  "invalidCsrfToken": "Ungültiges CSRF-Token",
+  "invalidOccurrenceId": "Ungültige Vorkommens-ID",
+  "occurrenceNotFound": "Kalendervorkommen nicht gefunden",
+  "scopeRequiredForRecurring": "Bereich ist beim Ändern eines wiederkehrenden Eintrags erforderlich",
+  "recurrenceByDayRequiresWeekly": "Tagesauswahl ist nur für wöchentliche Wiederholung gültig",
+  "recurrenceUntilBeforeStart": "Wiederholungsenddatum muss am oder nach dem Startdatum liegen"
 }

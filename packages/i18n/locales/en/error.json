@@ -11,5 +11,10 @@
   "preferencesRequired": "Both language and timezone are required when creating preferences",
   "loginFailed": "Login failed",
   "emailNotVerified": "Email not verified",
-  "invalidCsrfToken": "Invalid CSRF token"
+  "invalidCsrfToken": "Invalid CSRF token",
+  "invalidOccurrenceId": "Invalid occurrence identifier",
+  "occurrenceNotFound": "Calendar occurrence not found",
+  "scopeRequiredForRecurring": "Scope is required when modifying a recurring entry",
+  "recurrenceByDayRequiresWeekly": "Day selection is only valid for weekly recurrence",
+  "recurrenceUntilBeforeStart": "Recurrence end date must be on or after start date"
 }

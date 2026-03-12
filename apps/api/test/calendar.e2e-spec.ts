@@ -73,6 +73,11 @@ interface CalendarEntry {
   content: string | null;
   wholeDay: boolean | null;
   userId: string;
+  isRecurring?: boolean;
+  recurrenceFrequency?: string | null;
+  recurrenceByDay?: string | null;
+  recurrenceUntil?: string | null;
+  originalDate?: string | null;
 }
 
 interface DataResponse<T> {
@@ -185,7 +190,17 @@ describe('CalendarController (e2e)', () => {
   }, 30000);
 
   afterAll(async () => {
-    // Clean up calendar entries first (foreign key constraint)
+    // Clean up recurrence exceptions first
+    await prisma.recurrenceException.deleteMany({
+      where: {
+        calendarEntry: {
+          user: {
+            email: { in: [testUser.email, otherUser.email] },
+          },
+        },
+      },
+    });
+    // Clean up calendar entries (foreign key constraint)
     await prisma.calendarEntry.deleteMany({
       where: {
         user: {
@@ -908,6 +923,515 @@ describe('CalendarController (e2e)', () => {
         .get(`/calendar/${otherEntryId}`)
         .set('Cookie', otherUserCookies);
       expect(getResponse.status).toBe(200);
+    });
+  });
+
+  describe('Recurring entries', () => {
+    describe('POST /calendar (recurring)', () => {
+      it('should create a daily recurring entry', async () => {
+        const response = await request(app.getHttpServer())
+          .post('/calendar')
+          .set('Cookie', userCookies)
+          .send({
+            title: 'Daily Standup',
+            startDate: '2026-06-01T09:00:00.000Z',
+            endDate: '2026-06-01T09:30:00.000Z',
+            recurrenceFrequency: 'DAILY',
+            recurrenceUntil: '2026-06-05T09:00:00.000Z',
+          })
+          .expect(201);
+
+        const body = response.body as MessageResponse;
+        expect(body.message).toBe('Calendar entry created');
+      });
+
+      it('should create a weekly recurring entry with byDay', async () => {
+        await request(app.getHttpServer())
+          .post('/calendar')
+          .set('Cookie', userCookies)
+          .send({
+            title: 'Weekly MWF Meeting',
+            startDate: '2026-06-01T10:00:00.000Z',
+            endDate: '2026-06-01T11:00:00.000Z',
+            recurrenceFrequency: 'WEEKLY',
+            recurrenceByDay: 'MO,WE,FR',
+            recurrenceUntil: '2026-06-30T10:00:00.000Z',
+          })
+          .expect(201);
+      });
+
+      it('should create a monthly recurring entry', async () => {
+        await request(app.getHttpServer())
+          .post('/calendar')
+          .set('Cookie', userCookies)
+          .send({
+            title: 'Monthly Review',
+            startDate: '2026-06-01T14:00:00.000Z',
+            endDate: '2026-06-01T15:00:00.000Z',
+            recurrenceFrequency: 'MONTHLY',
+            recurrenceUntil: '2026-09-01T14:00:00.000Z',
+          })
+          .expect(201);
+      });
+
+      it('should return 400 when recurrenceByDay is used with DAILY', async () => {
+        const response = await request(app.getHttpServer())
+          .post('/calendar')
+          .set('Cookie', userCookies)
+          .send({
+            title: 'Invalid',
+            startDate: '2026-06-01T09:00:00.000Z',
+            endDate: '2026-06-01T09:30:00.000Z',
+            recurrenceFrequency: 'DAILY',
+            recurrenceByDay: 'MO,WE',
+          })
+          .expect(400);
+
+        const body = response.body as ErrorResponse;
+        expect(body.message).toContain('error.recurrenceByDayRequiresWeekly');
+      });
+
+      it('should return 400 for invalid recurrenceFrequency', async () => {
+        await request(app.getHttpServer())
+          .post('/calendar')
+          .set('Cookie', userCookies)
+          .send({
+            title: 'Invalid',
+            startDate: '2026-06-01T09:00:00.000Z',
+            endDate: '2026-06-01T09:30:00.000Z',
+            recurrenceFrequency: 'YEARLY',
+          })
+          .expect(400);
+      });
+
+      it('should return 400 for invalid recurrenceByDay format', async () => {
+        await request(app.getHttpServer())
+          .post('/calendar')
+          .set('Cookie', userCookies)
+          .send({
+            title: 'Invalid',
+            startDate: '2026-06-01T09:00:00.000Z',
+            endDate: '2026-06-01T09:30:00.000Z',
+            recurrenceFrequency: 'WEEKLY',
+            recurrenceByDay: 'MONDAY',
+          })
+          .expect(400);
+      });
+    });
+
+    describe('GET /calendar (recurring expansion)', () => {
+      let dailyEntryId: string;
+
+      beforeAll(async () => {
+        // Clean up and create a fresh daily recurring entry
+        await prisma.recurrenceException.deleteMany({
+          where: {
+            calendarEntry: {
+              user: { email: testUser.email },
+              title: 'Expand Test Daily',
+            },
+          },
+        });
+        await prisma.calendarEntry.deleteMany({
+          where: {
+            title: 'Expand Test Daily',
+            user: { email: testUser.email },
+          },
+        });
+
+        await request(app.getHttpServer())
+          .post('/calendar')
+          .set('Cookie', userCookies)
+          .send({
+            title: 'Expand Test Daily',
+            startDate: '2026-07-01T09:00:00.000Z',
+            endDate: '2026-07-01T09:30:00.000Z',
+            recurrenceFrequency: 'DAILY',
+            recurrenceUntil: '2026-07-05T09:00:00.000Z',
+          });
+        dailyEntryId = await findEntryByTitle(
+          prisma,
+          'Expand Test Daily',
+          testUser.email,
+        );
+      });
+
+      it('should expand recurring entries into virtual occurrences', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/calendar')
+          .query({
+            startDate: '2026-07-01T00:00:00.000Z',
+            endDate: '2026-07-05T23:59:59.000Z',
+          })
+          .set('Cookie', userCookies)
+          .expect(200);
+
+        const body = response.body as DataResponse<CalendarEntry[]>;
+        const dailyOccurrences = body.data.filter(
+          (e) => e.title === 'Expand Test Daily',
+        );
+        expect(dailyOccurrences).toHaveLength(5);
+        expect(dailyOccurrences[0].isRecurring).toBe(true);
+        expect(dailyOccurrences[0].recurrenceFrequency).toBe('DAILY');
+      });
+
+      it('should return synthetic IDs for expanded occurrences', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/calendar')
+          .query({
+            startDate: '2026-07-01T00:00:00.000Z',
+            endDate: '2026-07-05T23:59:59.000Z',
+          })
+          .set('Cookie', userCookies)
+          .expect(200);
+
+        const body = response.body as DataResponse<CalendarEntry[]>;
+        const dailyOccurrences = body.data.filter(
+          (e) => e.title === 'Expand Test Daily',
+        );
+
+        // Synthetic IDs contain a colon after the UUID
+        for (const occ of dailyOccurrences) {
+          expect(occ.id).toContain(':');
+          expect(occ.id.startsWith(dailyEntryId)).toBe(true);
+        }
+      });
+
+      it('should not return occurrences outside the query window', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/calendar')
+          .query({
+            startDate: '2026-07-03T00:00:00.000Z',
+            endDate: '2026-07-04T23:59:59.000Z',
+          })
+          .set('Cookie', userCookies)
+          .expect(200);
+
+        const body = response.body as DataResponse<CalendarEntry[]>;
+        const dailyOccurrences = body.data.filter(
+          (e) => e.title === 'Expand Test Daily',
+        );
+        expect(dailyOccurrences).toHaveLength(2); // Jul 3 and Jul 4
+      });
+
+      it('should set isRecurring=false for non-recurring entries', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/calendar')
+          .query({
+            startDate: '2025-01-15T00:00:00.000Z',
+            endDate: '2025-01-15T23:59:59.000Z',
+          })
+          .set('Cookie', userCookies)
+          .expect(200);
+
+        const body = response.body as DataResponse<CalendarEntry[]>;
+        const nonRecurring = body.data.filter((e) => !e.isRecurring);
+        for (const entry of nonRecurring) {
+          expect(entry.isRecurring).toBe(false);
+        }
+      });
+    });
+
+    describe('GET /calendar/:id (synthetic ID)', () => {
+      let parentId: string;
+
+      beforeAll(async () => {
+        await prisma.recurrenceException.deleteMany({
+          where: {
+            calendarEntry: {
+              user: { email: testUser.email },
+              title: 'FindOne Recurring',
+            },
+          },
+        });
+        await prisma.calendarEntry.deleteMany({
+          where: {
+            title: 'FindOne Recurring',
+            user: { email: testUser.email },
+          },
+        });
+
+        await request(app.getHttpServer())
+          .post('/calendar')
+          .set('Cookie', userCookies)
+          .send({
+            title: 'FindOne Recurring',
+            startDate: '2026-08-01T09:00:00.000Z',
+            endDate: '2026-08-01T09:30:00.000Z',
+            recurrenceFrequency: 'DAILY',
+            recurrenceUntil: '2026-08-03T09:00:00.000Z',
+          });
+        parentId = await findEntryByTitle(
+          prisma,
+          'FindOne Recurring',
+          testUser.email,
+        );
+      });
+
+      it('should return a specific occurrence by synthetic ID', async () => {
+        const syntheticId = `${parentId}:2026-08-02T09:00:00.000Z`;
+        const response = await request(app.getHttpServer())
+          .get(`/calendar/${encodeURIComponent(syntheticId)}`)
+          .set('Cookie', userCookies)
+          .expect(200);
+
+        const body = response.body as DataResponse<CalendarEntry>;
+        expect(body.data.title).toBe('FindOne Recurring');
+        expect(body.data.isRecurring).toBe(true);
+        expect(body.data.startDate).toBe('2026-08-02T09:00:00.000Z');
+      });
+
+      it('should return 404 for occurrence outside recurrence range', async () => {
+        const syntheticId = `${parentId}:2026-08-10T09:00:00.000Z`;
+        await request(app.getHttpServer())
+          .get(`/calendar/${encodeURIComponent(syntheticId)}`)
+          .set('Cookie', userCookies)
+          .expect(404);
+      });
+    });
+
+    describe('PATCH /calendar/:id (recurring update)', () => {
+      let parentId: string;
+
+      beforeEach(async () => {
+        await prisma.recurrenceException.deleteMany({
+          where: {
+            calendarEntry: {
+              user: { email: testUser.email },
+              title: 'Update Recurring',
+            },
+          },
+        });
+        await prisma.calendarEntry.deleteMany({
+          where: { title: 'Update Recurring', user: { email: testUser.email } },
+        });
+        // Also clean up split entries
+        await prisma.calendarEntry.deleteMany({
+          where: {
+            title: 'Updated Recurring',
+            user: { email: testUser.email },
+          },
+        });
+
+        await request(app.getHttpServer())
+          .post('/calendar')
+          .set('Cookie', userCookies)
+          .send({
+            title: 'Update Recurring',
+            startDate: '2026-09-01T09:00:00.000Z',
+            endDate: '2026-09-01T09:30:00.000Z',
+            recurrenceFrequency: 'DAILY',
+            recurrenceUntil: '2026-09-05T09:00:00.000Z',
+          });
+        parentId = await findEntryByTitle(
+          prisma,
+          'Update Recurring',
+          testUser.email,
+        );
+      });
+
+      it('should update all occurrences with scope ALL', async () => {
+        await request(app.getHttpServer())
+          .patch(`/calendar/${parentId}`)
+          .set('Cookie', userCookies)
+          .send({ title: 'Updated Recurring', scope: 'ALL' })
+          .expect(200);
+
+        // Verify all occurrences have the new title
+        const response = await request(app.getHttpServer())
+          .get('/calendar')
+          .query({
+            startDate: '2026-09-01T00:00:00.000Z',
+            endDate: '2026-09-05T23:59:59.000Z',
+          })
+          .set('Cookie', userCookies);
+        const body = response.body as DataResponse<CalendarEntry[]>;
+        const occurrences = body.data.filter((e) => e.id.startsWith(parentId));
+        expect(occurrences.length).toBe(5);
+        occurrences.forEach((o) => expect(o.title).toBe('Updated Recurring'));
+      });
+
+      it('should update a single occurrence with scope SINGLE', async () => {
+        const syntheticId = `${parentId}:2026-09-03T09:00:00.000Z`;
+        await request(app.getHttpServer())
+          .patch(`/calendar/${encodeURIComponent(syntheticId)}`)
+          .set('Cookie', userCookies)
+          .send({ title: 'Special Meeting', scope: 'SINGLE' })
+          .expect(200);
+
+        // Verify only that occurrence changed
+        const response = await request(app.getHttpServer())
+          .get('/calendar')
+          .query({
+            startDate: '2026-09-01T00:00:00.000Z',
+            endDate: '2026-09-05T23:59:59.000Z',
+          })
+          .set('Cookie', userCookies);
+        const body = response.body as DataResponse<CalendarEntry[]>;
+        const occurrences = body.data.filter((e) => e.id.startsWith(parentId));
+        const modifiedOcc = occurrences.find(
+          (o) => o.originalDate === '2026-09-03T09:00:00.000Z',
+        );
+        expect(modifiedOcc?.title).toBe('Special Meeting');
+
+        // Other occurrences unchanged
+        const otherOccs = occurrences.filter(
+          (o) => o.originalDate !== '2026-09-03T09:00:00.000Z',
+        );
+        otherOccs.forEach((o) => expect(o.title).toBe('Update Recurring'));
+      });
+
+      it('should split series with scope THIS_AND_FUTURE', async () => {
+        const syntheticId = `${parentId}:2026-09-03T09:00:00.000Z`;
+        await request(app.getHttpServer())
+          .patch(`/calendar/${encodeURIComponent(syntheticId)}`)
+          .set('Cookie', userCookies)
+          .send({ title: 'New Series', scope: 'THIS_AND_FUTURE' })
+          .expect(200);
+
+        // Verify: original series now ends before Sep 3
+        const response = await request(app.getHttpServer())
+          .get('/calendar')
+          .query({
+            startDate: '2026-09-01T00:00:00.000Z',
+            endDate: '2026-09-05T23:59:59.000Z',
+          })
+          .set('Cookie', userCookies);
+        const body = response.body as DataResponse<CalendarEntry[]>;
+
+        const oldSeries = body.data.filter(
+          (e) => e.title === 'Update Recurring',
+        );
+        const newSeries = body.data.filter((e) => e.title === 'New Series');
+
+        expect(oldSeries).toHaveLength(2); // Sep 1, Sep 2
+        expect(newSeries).toHaveLength(3); // Sep 3, Sep 4, Sep 5
+      });
+    });
+
+    describe('DELETE /calendar/:id (recurring delete)', () => {
+      let parentId: string;
+
+      beforeEach(async () => {
+        await prisma.recurrenceException.deleteMany({
+          where: {
+            calendarEntry: {
+              user: { email: testUser.email },
+              title: 'Delete Recurring',
+            },
+          },
+        });
+        await prisma.calendarEntry.deleteMany({
+          where: { title: 'Delete Recurring', user: { email: testUser.email } },
+        });
+
+        await request(app.getHttpServer())
+          .post('/calendar')
+          .set('Cookie', userCookies)
+          .send({
+            title: 'Delete Recurring',
+            startDate: '2026-10-01T09:00:00.000Z',
+            endDate: '2026-10-01T09:30:00.000Z',
+            recurrenceFrequency: 'DAILY',
+            recurrenceUntil: '2026-10-05T09:00:00.000Z',
+          });
+        parentId = await findEntryByTitle(
+          prisma,
+          'Delete Recurring',
+          testUser.email,
+        );
+      });
+
+      it('should delete all occurrences with scope ALL', async () => {
+        await request(app.getHttpServer())
+          .delete(`/calendar/${parentId}`)
+          .query({ scope: 'ALL' })
+          .set('Cookie', userCookies)
+          .expect(200);
+
+        // Verify no occurrences remain
+        const response = await request(app.getHttpServer())
+          .get('/calendar')
+          .query({
+            startDate: '2026-10-01T00:00:00.000Z',
+            endDate: '2026-10-05T23:59:59.000Z',
+          })
+          .set('Cookie', userCookies);
+        const body = response.body as DataResponse<CalendarEntry[]>;
+        const occurrences = body.data.filter(
+          (e) => e.title === 'Delete Recurring',
+        );
+        expect(occurrences).toHaveLength(0);
+      });
+
+      it('should cancel a single occurrence with scope SINGLE', async () => {
+        const syntheticId = `${parentId}:2026-10-03T09:00:00.000Z`;
+        await request(app.getHttpServer())
+          .delete(`/calendar/${encodeURIComponent(syntheticId)}`)
+          .query({ scope: 'SINGLE' })
+          .set('Cookie', userCookies)
+          .expect(200);
+
+        // Verify: 4 occurrences remain (Oct 1, 2, 4, 5)
+        const response = await request(app.getHttpServer())
+          .get('/calendar')
+          .query({
+            startDate: '2026-10-01T00:00:00.000Z',
+            endDate: '2026-10-05T23:59:59.000Z',
+          })
+          .set('Cookie', userCookies);
+        const body = response.body as DataResponse<CalendarEntry[]>;
+        const occurrences = body.data.filter(
+          (e) => e.title === 'Delete Recurring',
+        );
+        expect(occurrences).toHaveLength(4);
+      });
+
+      it('should truncate series with scope THIS_AND_FUTURE', async () => {
+        const syntheticId = `${parentId}:2026-10-03T09:00:00.000Z`;
+        await request(app.getHttpServer())
+          .delete(`/calendar/${encodeURIComponent(syntheticId)}`)
+          .query({ scope: 'THIS_AND_FUTURE' })
+          .set('Cookie', userCookies)
+          .expect(200);
+
+        // Verify: only 2 occurrences remain (Oct 1, 2)
+        const response = await request(app.getHttpServer())
+          .get('/calendar')
+          .query({
+            startDate: '2026-10-01T00:00:00.000Z',
+            endDate: '2026-10-05T23:59:59.000Z',
+          })
+          .set('Cookie', userCookies);
+        const body = response.body as DataResponse<CalendarEntry[]>;
+        const occurrences = body.data.filter(
+          (e) => e.title === 'Delete Recurring',
+        );
+        expect(occurrences).toHaveLength(2);
+      });
+
+      it('should delete entire series when THIS_AND_FUTURE on first occurrence', async () => {
+        const syntheticId = `${parentId}:2026-10-01T09:00:00.000Z`;
+        await request(app.getHttpServer())
+          .delete(`/calendar/${encodeURIComponent(syntheticId)}`)
+          .query({ scope: 'THIS_AND_FUTURE' })
+          .set('Cookie', userCookies)
+          .expect(200);
+
+        // Verify: no occurrences remain
+        const response = await request(app.getHttpServer())
+          .get('/calendar')
+          .query({
+            startDate: '2026-10-01T00:00:00.000Z',
+            endDate: '2026-10-05T23:59:59.000Z',
+          })
+          .set('Cookie', userCookies);
+        const body = response.body as DataResponse<CalendarEntry[]>;
+        const occurrences = body.data.filter(
+          (e) => e.title === 'Delete Recurring',
+        );
+        expect(occurrences).toHaveLength(0);
+      });
     });
   });
 });

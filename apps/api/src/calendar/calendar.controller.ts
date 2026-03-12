@@ -12,6 +12,7 @@ import {
 import { CalendarService } from './calendar.service';
 import { CreateCalendarDto } from './dto/create-calendar.dto';
 import { UpdateCalendarDto } from './dto/update-calendar.dto';
+import { DeleteCalendarDto } from './dto/delete-calendar.dto';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { EmailVerifiedGuard } from 'src/auth/guard/email-verified.guard';
 import { User } from 'src/auth/decorators/user.decorator';
@@ -59,6 +60,7 @@ export class CalendarController {
     @Param('id') id: string,
     @Body() updateCalendarDto: UpdateCalendarDto,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const entry = await this.calendarService.update(
       userId,
       id,
@@ -67,13 +69,18 @@ export class CalendarController {
 
     return {
       message: t('success.calendarEntryUpdated'),
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data: entry,
     };
   }
 
   @Delete(':id')
-  async remove(@User('id') userId: string, @Param('id') id: string) {
-    await this.calendarService.remove(userId, id);
+  async remove(
+    @User('id') userId: string,
+    @Param('id') id: string,
+    @Query() deleteCalendarDto: DeleteCalendarDto,
+  ) {
+    await this.calendarService.remove(userId, id, deleteCalendarDto.scope);
 
     return { message: t('success.calendarEntryDeleted') };
   }
