@@ -29,7 +29,22 @@
     "description": "Description",
     "descriptionPlaceholder": "Optional description",
     "save": "Save",
-    "create": "Create"
+    "create": "Create",
+    "repeat": "Repeat",
+    "repeatNone": "Does not repeat",
+    "repeatDaily": "Daily",
+    "repeatWeekly": "Weekly",
+    "repeatMonthly": "Monthly",
+    "repeatDays": "Repeat on",
+    "repeatUntil": "Ends on",
+    "scopeTitle": "Edit recurring event",
+    "scopeSingle": "This event",
+    "scopeThisAndFuture": "This and following events",
+    "scopeAll": "All events",
+    "deleteScopeTitle": "Delete recurring event",
+    "deleteScopeSingle": "This event",
+    "deleteScopeThisAndFuture": "This and following events",
+    "deleteScopeAll": "All events"
   },
   "validation": {
     "titleRequired": "Title is required",

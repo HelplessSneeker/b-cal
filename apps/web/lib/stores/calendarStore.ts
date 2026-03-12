@@ -74,6 +74,11 @@ export interface CalendarEntry {
   title: string;
   wholeDay: boolean;
   content?: string;
+  isRecurring?: boolean;
+  recurrenceFrequency?: string | null;
+  recurrenceByDay?: string | null;
+  recurrenceUntil?: Date | null;
+  originalDate?: Date | null;
 }
 
 interface LoadedRange {
@@ -114,6 +119,7 @@ interface CalendarState {
   entries: CalendarEntry[];
   entryMap: Map<string, CalendarEntry>;
   loadedRanges: LoadedRange[];
+  cacheVersion: number;
   isFetching: boolean;
   isEntryModalOpen: boolean;
   editingEntry: CalendarEntry | null;
@@ -121,9 +127,11 @@ interface CalendarState {
   setView: (view: CalendarView) => void;
   setCurrentDate: (date: Date) => void;
   mergeEntries: (entries: CalendarEntry[]) => void;
+  replaceEntries: (entries: CalendarEntry[]) => void;
   addLoadedRange: (start: number, end: number) => void;
   setIsFetching: (isFetching: boolean) => void;
   clearCache: () => void;
+  invalidateCache: () => void;
   navigate: (direction: -1 | 1) => void;
   openEntryModal: (entry?: CalendarEntry, defaultStart?: Date) => void;
   closeEntryModal: () => void;
@@ -138,6 +146,7 @@ export const useCalendarStore = create<CalendarState>((set) => ({
   entries: [],
   entryMap: new Map(),
   loadedRanges: [],
+  cacheVersion: 0,
   isFetching: false,
   isEntryModalOpen: false,
   editingEntry: null,
@@ -158,12 +167,25 @@ export const useCalendarStore = create<CalendarState>((set) => ({
       }
       return { entryMap: newMap, entries: rebuildEntries(newMap) };
     }),
+  replaceEntries: (entries) =>
+    set(() => {
+      const newMap = new Map<string, CalendarEntry>();
+      for (const entry of entries) {
+        newMap.set(entry.id, entry);
+      }
+      return { entryMap: newMap, entries: rebuildEntries(newMap) };
+    }),
   addLoadedRange: (start, end) =>
     set((state) => ({
       loadedRanges: mergeRanges([...state.loadedRanges, { start, end }]),
     })),
   setIsFetching: (isFetching) => set({ isFetching }),
   clearCache: () => set({ entryMap: new Map(), entries: [], loadedRanges: [] }),
+  invalidateCache: () =>
+    set((state) => ({
+      loadedRanges: [],
+      cacheVersion: state.cacheVersion + 1,
+    })),
   navigate: (direction) =>
     set((state) => {
       const currentDate = getAdjacentDate(

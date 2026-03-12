@@ -54,5 +54,10 @@ export class CreateCalendarDto {
 
   @IsOptional()
   @IsDateString()
+  @Transform(({ value }) =>
+    typeof value === 'string' && value.length === 10
+      ? `${value}T23:59:59.999Z`
+      : (value as string),
+  )
   recurrenceUntil?: string;
 }

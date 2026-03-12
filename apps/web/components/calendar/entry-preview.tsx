@@ -1,5 +1,6 @@
 'use client';
 
+import { Repeat } from 'lucide-react';
 import { type CalendarEntry } from '@/lib/stores/calendarStore';
 import { useLocale } from '@/lib/hooks/useLocale';
 import { isEffectiveWholeDay } from '@/lib/calendar/spanning-utils';
@@ -30,12 +31,18 @@ export function EntryPreview({ entry, onClick }: EntryPreviewProps) {
       onClick={onClick}
     >
       {isEffectiveWholeDay(entry) ? (
-        <span className="font-medium">{entry.title}</span>
+        <span className="flex items-center gap-1 font-medium">
+          {entry.isRecurring && <Repeat className="size-3 shrink-0" />}
+          <span className="truncate">{entry.title}</span>
+        </span>
       ) : (
         <>
           <span className="text-muted-foreground">
             {formatTime(entry.startDate, timezone)}
           </span>
+          {entry.isRecurring && (
+            <Repeat className="ml-1 inline size-3 align-text-bottom" />
+          )}
           <span className="ml-1 font-medium">{entry.title}</span>
         </>
       )}

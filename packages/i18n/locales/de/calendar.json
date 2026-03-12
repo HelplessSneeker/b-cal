@@ -29,7 +29,22 @@
     "description": "Beschreibung",
     "descriptionPlaceholder": "Optionale Beschreibung",
     "save": "Speichern",
-    "create": "Erstellen"
+    "create": "Erstellen",
+    "repeat": "Wiederholen",
+    "repeatNone": "Keine Wiederholung",
+    "repeatDaily": "Täglich",
+    "repeatWeekly": "Wöchentlich",
+    "repeatMonthly": "Monatlich",
+    "repeatDays": "Wiederholen am",
+    "repeatUntil": "Endet am",
+    "scopeTitle": "Wiederkehrenden Termin bearbeiten",
+    "scopeSingle": "Diesen Termin",
+    "scopeThisAndFuture": "Diesen und folgende Termine",
+    "scopeAll": "Alle Termine",
+    "deleteScopeTitle": "Wiederkehrenden Termin löschen",
+    "deleteScopeSingle": "Diesen Termin",
+    "deleteScopeThisAndFuture": "Diesen und folgende Termine",
+    "deleteScopeAll": "Alle Termine"
   },
   "validation": {
     "titleRequired": "Titel ist erforderlich",

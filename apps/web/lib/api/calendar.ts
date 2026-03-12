@@ -1,6 +1,9 @@
 import { api } from './api';
 import type { CalendarEntry } from '@/lib/stores/calendarStore';
 
+export type RecurrenceFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY';
+export type EditScope = 'SINGLE' | 'THIS_AND_FUTURE' | 'ALL';
+
 interface EntryDTO {
   id: string;
   title: string;
@@ -8,6 +11,11 @@ interface EntryDTO {
   endDate: string;
   wholeDay: boolean;
   content?: string;
+  isRecurring?: boolean;
+  recurrenceFrequency?: string | null;
+  recurrenceByDay?: string | null;
+  recurrenceUntil?: string | null;
+  originalDate?: string | null;
 }
 
 function toEntry(dto: EntryDTO): CalendarEntry {
@@ -18,19 +26,60 @@ function toEntry(dto: EntryDTO): CalendarEntry {
     endDate: new Date(dto.endDate),
     wholeDay: dto.wholeDay,
     content: dto.content,
+    isRecurring: dto.isRecurring ?? false,
+    recurrenceFrequency: dto.recurrenceFrequency ?? null,
+    recurrenceByDay: dto.recurrenceByDay ?? null,
+    recurrenceUntil: dto.recurrenceUntil ? new Date(dto.recurrenceUntil) : null,
+    originalDate: dto.originalDate ? new Date(dto.originalDate) : null,
   };
 }
 
-function toDTO(
-  entry: CalendarEntry | Omit<CalendarEntry, 'id'>,
-): Omit<EntryDTO, 'id'> {
-  return {
+export interface CreateEntryInput {
+  title: string;
+  startDate: Date;
+  endDate: Date;
+  wholeDay: boolean;
+  content?: string;
+  recurrenceFrequency?: RecurrenceFrequency;
+  recurrenceByDay?: string;
+  recurrenceUntil?: string;
+}
+
+function toCreateDTO(input: CreateEntryInput): Record<string, unknown> {
+  const dto: Record<string, unknown> = {
+    title: input.title,
+    startDate: input.startDate.toISOString(),
+    endDate: input.endDate.toISOString(),
+    wholeDay: input.wholeDay,
+    content: input.content,
+  };
+  if (input.recurrenceFrequency) {
+    dto.recurrenceFrequency = input.recurrenceFrequency;
+  }
+  if (input.recurrenceByDay) {
+    dto.recurrenceByDay = input.recurrenceByDay;
+  }
+  if (input.recurrenceUntil) {
+    dto.recurrenceUntil = input.recurrenceUntil;
+  }
+  return dto;
+}
+
+function toUpdateDTO(
+  entry: CalendarEntry,
+  scope?: EditScope,
+): Record<string, unknown> {
+  const dto: Record<string, unknown> = {
     title: entry.title,
     startDate: entry.startDate.toISOString(),
     endDate: entry.endDate.toISOString(),
     wholeDay: entry.wholeDay,
     content: entry.content,
   };
+  if (scope) {
+    dto.scope = scope;
+  }
+  return dto;
 }
 
 export async function getEntries(
@@ -55,27 +104,32 @@ export async function getEntries(
 }
 
 export async function createEntry(
-  entry: Omit<CalendarEntry, 'id'>,
+  input: CreateEntryInput,
 ): Promise<CalendarEntry> {
   const dto = await api<EntryDTO>('/calendar', {
     method: 'POST',
-    body: toDTO(entry),
+    body: toCreateDTO(input),
   });
   return toEntry(dto);
 }
 
 export async function updateEntry(
   entry: CalendarEntry,
+  scope?: EditScope,
 ): Promise<CalendarEntry> {
-  const dto = await api<EntryDTO>(`/calendar/${entry.id}`, {
+  const dto = await api<EntryDTO>(`/calendar/${encodeURIComponent(entry.id)}`, {
     method: 'PATCH',
-    body: toDTO(entry),
+    body: toUpdateDTO(entry, scope),
   });
   return toEntry(dto);
 }
 
-export async function deleteEntry(id: string): Promise<void> {
-  await api(`/calendar/${id}`, {
+export async function deleteEntry(
+  id: string,
+  scope?: EditScope,
+): Promise<void> {
+  const params = scope ? `?scope=${scope}` : '';
+  await api(`/calendar/${encodeURIComponent(id)}${params}`, {
     method: 'DELETE',
   });
 }

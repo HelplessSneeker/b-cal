@@ -27,6 +27,7 @@ function getFetchWindow(currentDate: Date): { start: Date; end: Date } {
 export function useCalendarData() {
   const view = useCalendarStore((s) => s.view);
   const currentDate = useCalendarStore((s) => s.currentDate);
+  const cacheVersion = useCalendarStore((s) => s.cacheVersion);
   const inFlightRef = useRef(new Set<string>());
 
   useEffect(() => {
@@ -41,13 +42,20 @@ export function useCalendarData() {
     if (inFlightRef.current.has(key)) return;
     inFlightRef.current.add(key);
 
-    const { setIsFetching, mergeEntries, addLoadedRange } =
+    const { setIsFetching, mergeEntries, replaceEntries, addLoadedRange } =
       useCalendarStore.getState();
+    // After invalidation (cacheVersion > 0), replace all entries to remove
+    // stale synthetic IDs from deleted/modified recurring occurrences.
+    const isRefresh = cacheVersion > 0 && loadedRanges.length === 0;
     setIsFetching(true);
 
     getEntries(start, end)
       .then((entries) => {
-        mergeEntries(entries);
+        if (isRefresh) {
+          replaceEntries(entries);
+        } else {
+          mergeEntries(entries);
+        }
         addLoadedRange(startTs, endTs);
       })
       .catch(() => {
@@ -57,5 +65,5 @@ export function useCalendarData() {
         setIsFetching(false);
         inFlightRef.current.delete(key);
       });
-  }, [view, currentDate]);
+  }, [view, currentDate, cacheVersion]);
 }

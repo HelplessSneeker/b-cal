@@ -1,5 +1,6 @@
 'use client';
 
+import { Repeat } from 'lucide-react';
 import { CalendarEntry } from '@/lib/stores/calendarStore';
 import { useLocale } from '@/lib/hooks/useLocale';
 import { getEventTopPosition, getEventHeight } from '@/lib/calendar/time-utils';
@@ -58,9 +59,13 @@ export function EntryBlock({
       onClick={() => onClick(entry)}
     >
       <p
-        className={cn('truncate font-medium', compact ? 'text-xs' : 'text-sm')}
+        className={cn(
+          'flex items-center gap-1 truncate font-medium',
+          compact ? 'text-xs' : 'text-sm',
+        )}
       >
-        {entry.title}
+        {entry.isRecurring && <Repeat className="size-3 shrink-0" />}
+        <span className="truncate">{entry.title}</span>
       </p>
       {!isShort && !compact && (
         <p className="truncate text-xs text-muted-foreground">
