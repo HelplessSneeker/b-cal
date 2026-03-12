@@ -22,12 +22,14 @@ Next.js 16 application using the App Router with React 19 and TypeScript.
   - `components/ui/` — shadcn/ui primitives
   - `components/calendar/` — Calendar-specific components (header, sidebar, time grid, day/week/month views, entry blocks)
   - `components/settings/` — Settings page tabs (profile, security, appearance, localization)
-  - `components/AuthProvider.tsx` — Wraps protected routes; redirects unauthenticated users to `/login` and unverified users to `/check-email`
+  - `components/app-shell.tsx` — Unified layout with desktop icon rail and mobile bottom tab bar (calendar, settings, user menu with logout)
+  - `components/AuthProvider.tsx` — Wraps protected routes; fetches CSRF token, redirects unauthenticated users to `/login` and unverified users to `/check-email`
   - `components/ConnectionGuard.tsx` — Full-screen overlay when backend is unreachable; polls `/health` every 10s
+  - `components/entry-modal.tsx` — Entry creation/editing form with recurrence controls and scope dialog for recurring entries
 - `lib/api/` — Typed API layer with silent token refresh, CSRF handling, and `X-Request-Id` generation
 - `lib/stores/` — Zustand stores (userStore, calendarStore, connectionStore)
 - `lib/calendar/` — Calendar utilities (date, time, overlap, spanning calculations)
-- `lib/hooks/` — Custom React hooks (useCalendarData)
+- `lib/hooks/` — Custom React hooks (useCalendarData, useLocale, useMediaQuery)
 - `proxy.ts` — Next.js 16 proxy (route protection, CSP nonce generation)
 - `src/config/env.ts` — Environment variable validation
 
@@ -45,12 +47,18 @@ Next.js 16 application using the App Router with React 19 and TypeScript.
 ### State Management
 
 - `useUserStore` — Current user (id, email, emailVerified, createdAt, preferences)
-- `useCalendarStore` — Calendar view state (Day/Week/Month, default: Month), current date, entries (deduplicated via `entryMap`), loaded date ranges, entry modal state. View and current date persisted to `localStorage` (keys `b-cal:view`, `b-cal:currentDate`).
-- `useConnectionStore` — Backend health tracking (consecutive failures, isBackendDown)
+- `useCalendarStore` — Calendar view state (Day/Week/Month, default: Month), current date, entries (deduplicated via `entryMap`), loaded date ranges, cache versioning for invalidation, entry modal state. View and current date persisted to `localStorage` (keys `b-cal:view`, `b-cal:currentDate`). Entries include recurring fields: `isRecurring`, `recurrenceFrequency`, `recurrenceByDay`, `recurrenceUntil`, `originalDate`.
+- `useConnectionStore` — Backend health tracking (consecutive failures threshold of 2, isBackendDown)
+
+### Calendar
+
+Day (24h grid with 30min slots, all-day section, current time indicator), Week (7-day grid with all-day row), Month (date cells with entry previews and "+N more" overflow). Swipe gesture support for mobile navigation.
+
+**Recurring entries**: Entries can recur DAILY, WEEKLY (with day selection), or MONTHLY. Recurring entries display a repeat icon. Editing or deleting a recurring entry opens a scope dialog (SINGLE, THIS_AND_FUTURE, ALL). The API returns virtual occurrences with synthetic IDs; the calendar store handles cache invalidation when recurring entries are modified.
 
 ### i18n
 
-Uses `next-intl` with translations from the shared `@b-cal/i18n` package. Supports EN and DE locales. Namespaces: common, auth, calendar, settings, error.
+Uses `next-intl` with translations from the shared `@b-cal/i18n` package. Supports EN and DE locales. Namespaces: common, auth, calendar, settings, error, success.
 
 ### Settings Page
 
@@ -60,15 +68,12 @@ Uses `next-intl` with translations from the shared `@b-cal/i18n` package. Suppor
 - **Appearance** — Theme (light/dark/system), accent color, week start day, density (persisted via `PATCH /user/preferences`)
 - **Localization** — Language and timezone preferences (persisted via `PATCH /user/preferences`)
 
-### Calendar Views
-
-Day (24h grid with 30min slots, all-day section, current time indicator), Week (7-day grid with all-day row), Month (date cells with entry previews and "+N more" overflow). Swipe gesture support for mobile navigation.
-
 ### Styling
 
 - Tailwind CSS v4 with CSS variables for theming (defined in `app/globals.css`)
 - shadcn/ui configured with "new-york" style and lucide icons
-- Dark mode CSS variables defined via `.dark` class (theme switching UI exists in appearance settings but `ThemeProvider` is not yet configured)
+- Dark mode via `.dark` class with `next-themes` ThemeProvider
+- Accent color customization via CSS variables (`lib/utils/accent-color.ts`)
 - Use `cn()` from `@/lib/utils/utils` for conditional class merging
 
 ### Testing

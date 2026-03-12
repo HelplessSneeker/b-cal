@@ -27,6 +27,7 @@ pnpm run prisma:generate                      # Regenerate Prisma client
 src/
 ├── auth/           # Auth controller, service, session service, strategies, guards, decorators, validators
 ├── calendar/       # CalendarController, CalendarService, DTOs, validators
+│   └── utils/      # expand-recurrence.ts (virtual occurrence generation), occurrence-id.ts (synthetic ID helpers)
 ├── common/filters/ # GlobalExceptionFilter (Sentry-integrated, includes request ID in responses)
 ├── common/logging/ # Custom pino serializers (redact sensitive headers/query params)
 ├── common/utils/   # strip-html-tags, i18n helper (t() function)
@@ -64,11 +65,22 @@ src/
 
 ### Calendar Endpoints (require JwtAuthGuard + EmailVerifiedGuard)
 
-- `POST /calendar` — create entry (title, startDate, endDate required; content, wholeDay optional)
-- `GET /calendar` — list user's entries; optional `startDate`/`endDate` query params for filtering
-- `GET /calendar/:id` — get single entry
-- `PATCH /calendar/:id` — update entry (partial updates)
-- `DELETE /calendar/:id` — delete entry
+- `POST /calendar` — create entry (title, startDate, endDate required; content, wholeDay optional; recurrenceFrequency, recurrenceByDay, recurrenceUntil optional for recurring entries)
+- `GET /calendar` — list user's entries; optional `startDate`/`endDate` query params. Recurring entries are expanded into virtual occurrences with synthetic IDs.
+- `GET /calendar/:id` — get single entry; supports synthetic IDs for individual occurrences
+- `PATCH /calendar/:id` — update entry; accepts optional `scope` in body (SINGLE, THIS_AND_FUTURE, ALL) for recurring entries; supports synthetic IDs
+- `DELETE /calendar/:id` — delete entry; accepts optional `scope` query param for recurring entries; supports synthetic IDs
+
+### Recurring Entries
+
+Entries with `recurrenceFrequency` set (DAILY, WEEKLY, MONTHLY) are recurring. Virtual occurrences are generated at query time by `expand-recurrence.ts` from the parent entry + `RecurrenceException` records (up to 1 year).
+
+**Synthetic IDs**: Format `{parentUUID}:{ISO8601DateTime}`. Used to reference individual occurrences in GET/PATCH/DELETE requests. Helpers in `occurrence-id.ts`: `composeSyntheticId()`, `isSyntheticId()`, `parseSyntheticId()`.
+
+**Edit scopes** (enum `EditScope`):
+- `SINGLE` — upserts a `RecurrenceException` with override fields or cancellation
+- `THIS_AND_FUTURE` — truncates the original series at the occurrence date, creates a new series from that point
+- `ALL` — modifies the parent entry directly; clears exceptions if dates changed
 
 ### Session Management
 
@@ -82,17 +94,17 @@ Auth uses a `Session` model instead of storing a single refresh token on the Use
 
 **Custom decorators:** `@User()` — extracts JwtUser (`{ id, email, emailVerified, sessionId }`) from request.
 
-**Custom validators:** `@IsValidPassword()` (8+ chars, number, symbol), `@IsStartBeforeEnd()` (startDate ≤ endDate).
+**Custom validators:** `@IsValidPassword()` (8+ chars, number, symbol), `@IsStartBeforeEnd()` (startDate <= endDate), `@IsRecurrenceValid()` (recurrenceByDay only with WEEKLY, recurrenceUntil >= startDate).
 
 **DTO max lengths:** email: 254, password: 128, title: 100, content: 5000. Calendar title/content sanitized via `stripHtmlTags`.
 
 ### Prisma Schema
 
-`User` (id, email, password, emailVerified, verificationToken, resetToken; relations to CalendarEntry, UserPreferences, Session), `Session` (id, userId, refreshToken, deviceName, ipAddress, userAgent, lastUsedAt, expiresAt, createdAt), `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId), `UserPreferences` (userId, language, timezone, theme, accentColor, weekStart, density).
+`User` (id, email, password, emailVerified, verificationToken, resetToken), `Session` (id, userId, refreshToken, deviceName, ipAddress, userAgent, lastUsedAt, expiresAt), `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId, recurrenceFrequency?, recurrenceByDay?, recurrenceUntil?), `RecurrenceException` (id, calendarEntryId, originalDate, isCancelled, title?, startDate?, endDate?, content?, wholeDay?; unique on calendarEntryId+originalDate, cascade delete), `UserPreferences` (userId, language, timezone, theme, accentColor, weekStart, density).
 
 ### i18n
 
-Uses `nestjs-i18n` with translations from the shared `@b-cal/i18n` package. `I18nModule` is configured in `AppModule` with `AcceptLanguageResolver` for locale detection (fallback: `en`). Namespaces: `error`, `success`. All user-facing strings (exception messages, response messages) use the `t()` helper from `src/common/utils/i18n.ts`, which calls `I18nContext.current()?.translate()` and falls back to the key when no context is available (e.g., unit tests).
+Uses `nestjs-i18n` with translations from the shared `@b-cal/i18n` package. `I18nModule` is configured in `AppModule` with `AcceptLanguageResolver` for locale detection (fallback: `en`). Namespaces: `error`, `success`. All user-facing strings use the `t()` helper from `src/common/utils/i18n.ts`, which calls `I18nContext.current()?.translate()` and falls back to the key when no context is available (e.g., unit tests).
 
 ### Rate Limiting
 
