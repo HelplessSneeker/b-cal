@@ -19,6 +19,7 @@ interface RecurringEntry {
   content: string | null;
   wholeDay: boolean | null;
   userId: string;
+  calendarId: string | null;
   recurrenceFrequency: string;
   recurrenceByDay: string | null;
   recurrenceUntil: Date | null;
@@ -34,6 +35,7 @@ export interface VirtualOccurrence {
   content: string | null;
   wholeDay: boolean | null;
   userId: string;
+  calendarId: string | null;
   isRecurring: boolean;
   recurrenceFrequency: string;
   recurrenceByDay: string | null;
@@ -184,6 +186,7 @@ export function expandRecurringEntry(
       wholeDay:
         exception?.wholeDay !== undefined ? exception.wholeDay : entry.wholeDay,
       userId: entry.userId,
+      calendarId: entry.calendarId,
       isRecurring: true,
       recurrenceFrequency: entry.recurrenceFrequency,
       recurrenceByDay: entry.recurrenceByDay,

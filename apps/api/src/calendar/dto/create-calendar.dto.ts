@@ -6,8 +6,10 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   Matches,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
 import { stripHtmlTags } from '../../common/utils/strip-html-tags';
 import { IsStartBeforeEnd } from '../validators/date-range.validator';
@@ -41,6 +43,11 @@ export class CreateCalendarDto {
   @IsOptional()
   @IsBoolean()
   wholeDay?: boolean;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsUUID()
+  calendarId?: string | null;
 
   @IsOptional()
   @IsEnum(RecurrenceFrequency)

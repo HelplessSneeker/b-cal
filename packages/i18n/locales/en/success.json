@@ -17,5 +17,8 @@
   "calendarEntryUpdated": "Calendar entry has been updated",
   "calendarEntryDeleted": "Deleted calendar entry",
   "calendarOccurrenceUpdated": "Calendar occurrence updated",
-  "calendarOccurrenceDeleted": "Calendar occurrence deleted"
+  "calendarOccurrenceDeleted": "Calendar occurrence deleted",
+  "calendarCreated": "Calendar created",
+  "calendarUpdated": "Calendar updated",
+  "calendarDeleted": "Calendar deleted"
 }

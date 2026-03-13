@@ -17,5 +17,8 @@
   "calendarEntryUpdated": "Kalendereintrag wurde aktualisiert",
   "calendarEntryDeleted": "Kalendereintrag gelöscht",
   "calendarOccurrenceUpdated": "Kalendervorkommen aktualisiert",
-  "calendarOccurrenceDeleted": "Kalendervorkommen gelöscht"
+  "calendarOccurrenceDeleted": "Kalendervorkommen gelöscht",
+  "calendarCreated": "Kalender erstellt",
+  "calendarUpdated": "Kalender aktualisiert",
+  "calendarDeleted": "Kalender gelöscht"
 }

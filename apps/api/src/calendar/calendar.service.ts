@@ -23,6 +23,13 @@ export class CalendarService {
   constructor(private prismaService: PrismaService) {}
 
   async create(userId: string, createCalendarDto: CreateCalendarDto) {
+    if (createCalendarDto.calendarId) {
+      await this.validateCalendarOwnership(
+        userId,
+        createCalendarDto.calendarId,
+      );
+    }
+
     const entry = await this.prismaService.calendarEntry.create({
       data: {
         userId,
@@ -135,6 +142,11 @@ export class CalendarService {
       return this.updateRecurringEntry(userId, id, scope, updateData);
     }
 
+    // Validate calendarId ownership if being changed
+    if (updateData.calendarId) {
+      await this.validateCalendarOwnership(userId, updateData.calendarId);
+    }
+
     // Non-recurring: existing logic
     const startDate = new Date(updateData.startDate ?? existingEntry.startDate);
     const endDate = new Date(updateData.endDate ?? existingEntry.endDate);
@@ -182,6 +194,15 @@ export class CalendarService {
   }
 
   // --- Private helpers ---
+
+  private async validateCalendarOwnership(userId: string, calendarId: string) {
+    const calendar = await this.prismaService.calendar.findUnique({
+      where: { id: calendarId, userId },
+    });
+    if (!calendar) {
+      throw new NotFoundException(t('error.calendarNotFound'));
+    }
+  }
 
   private async findRawEntry(userId: string, id: string) {
     const entry = await this.prismaService.calendarEntry.findUnique({
@@ -406,6 +427,7 @@ export class CalendarService {
                 updateData.wholeDay !== undefined
                   ? updateData.wholeDay
                   : parent.wholeDay,
+              calendarId: parent.calendarId,
               recurrenceFrequency:
                 updateData.recurrenceFrequency ?? parent.recurrenceFrequency,
               recurrenceByDay:

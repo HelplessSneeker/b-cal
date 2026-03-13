@@ -8,6 +8,7 @@ const baseEntry = {
   content: 'Team sync',
   wholeDay: false,
   userId: 'user-1',
+  calendarId: null,
   recurrenceFrequency: 'DAILY',
   recurrenceByDay: null,
   recurrenceUntil: new Date('2026-03-05T09:00:00.000Z'),

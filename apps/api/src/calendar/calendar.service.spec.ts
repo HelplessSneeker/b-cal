@@ -17,6 +17,7 @@ const mockCalendarEntry = {
   endDate: new Date('2026-01-16'),
   content: 'Test content',
   wholeDay: false,
+  calendarId: null,
   recurrenceFrequency: null,
   recurrenceByDay: null,
   recurrenceUntil: null,
@@ -34,6 +35,7 @@ const mockRecurringEntry = {
   endDate: new Date('2026-03-01T09:30:00.000Z'),
   content: 'Team sync',
   wholeDay: false,
+  calendarId: null,
   recurrenceFrequency: 'DAILY',
   recurrenceByDay: null,
   recurrenceUntil: new Date('2026-03-05T09:00:00.000Z'),
@@ -53,6 +55,9 @@ const mockPrismaService = {
   recurrenceException: {
     upsert: jest.fn(),
     deleteMany: jest.fn(),
+  },
+  calendar: {
+    findUnique: jest.fn(),
   },
   $transaction: jest.fn(),
 };

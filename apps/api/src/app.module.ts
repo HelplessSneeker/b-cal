@@ -5,6 +5,7 @@ import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { validate } from './config/env.validation';
 import { CalendarModule } from './calendar/calendar.module';
+import { CalendarsModule } from './calendars/calendars.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
@@ -89,6 +90,7 @@ const REQUEST_ID_HEADER = 'X-Request-Id';
       ],
     }),
     CalendarModule,
+    CalendarsModule,
     PrismaModule,
     AuthModule,
     UserModule,

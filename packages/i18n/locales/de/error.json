@@ -16,5 +16,7 @@
   "occurrenceNotFound": "Kalendervorkommen nicht gefunden",
   "scopeRequiredForRecurring": "Bereich ist beim Ändern eines wiederkehrenden Eintrags erforderlich",
   "recurrenceByDayRequiresWeekly": "Tagesauswahl ist nur für wöchentliche Wiederholung gültig",
-  "recurrenceUntilBeforeStart": "Wiederholungsenddatum muss am oder nach dem Startdatum liegen"
+  "recurrenceUntilBeforeStart": "Wiederholungsenddatum muss am oder nach dem Startdatum liegen",
+  "calendarNotFound": "Kalender nicht gefunden",
+  "maxCalendarsReached": "Maximale Anzahl an Kalendern erreicht"
 }

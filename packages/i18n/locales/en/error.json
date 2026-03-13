@@ -16,5 +16,7 @@
   "occurrenceNotFound": "Calendar occurrence not found",
   "scopeRequiredForRecurring": "Scope is required when modifying a recurring entry",
   "recurrenceByDayRequiresWeekly": "Day selection is only valid for weekly recurrence",
-  "recurrenceUntilBeforeStart": "Recurrence end date must be on or after start date"
+  "recurrenceUntilBeforeStart": "Recurrence end date must be on or after start date",
+  "calendarNotFound": "Calendar not found",
+  "maxCalendarsReached": "Maximum number of calendars reached"
 }
