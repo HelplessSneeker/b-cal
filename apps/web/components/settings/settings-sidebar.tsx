@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import {
   GlobeIcon,
   PaletteIcon,
@@ -11,7 +12,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils/utils';
 
-const settingsTabKeys = [
+export const settingsTabKeys = [
   { key: 'profile', icon: UserIcon },
   { key: 'security', icon: ShieldIcon },
   { key: 'appearance', icon: PaletteIcon },
@@ -22,14 +23,12 @@ export type SettingsTab = (typeof settingsTabKeys)[number]['key'];
 
 interface SettingsSidebarProps {
   activeTab: SettingsTab;
-  onTabChange: (tab: SettingsTab) => void;
   mobileOpen: boolean;
   onMobileOpenChange: (open: boolean) => void;
 }
 
 export function SettingsSidebar({
   activeTab,
-  onTabChange,
   mobileOpen,
   onMobileOpenChange,
 }: SettingsSidebarProps) {
@@ -66,13 +65,13 @@ export function SettingsSidebar({
             key={tab.key}
             variant={activeTab === tab.key ? 'secondary' : 'ghost'}
             className="justify-start"
-            onClick={() => {
-              onTabChange(tab.key);
-              onMobileOpenChange(false);
-            }}
+            asChild
+            onClick={() => onMobileOpenChange(false)}
           >
-            <tab.icon className="mr-2 size-4" />
-            {t(`tabs.${tab.key}`)}
+            <Link href={`/settings?tab=${tab.key}`}>
+              <tab.icon className="mr-2 size-4" />
+              {t(`tabs.${tab.key}`)}
+            </Link>
           </Button>
         ))}
       </nav>
@@ -84,10 +83,12 @@ export function SettingsSidebar({
             key={tab.key}
             variant={activeTab === tab.key ? 'secondary' : 'ghost'}
             className="justify-start"
-            onClick={() => onTabChange(tab.key)}
+            asChild
           >
-            <tab.icon className="mr-2 size-4" />
-            {t(`tabs.${tab.key}`)}
+            <Link href={`/settings?tab=${tab.key}`}>
+              <tab.icon className="mr-2 size-4" />
+              {t(`tabs.${tab.key}`)}
+            </Link>
           </Button>
         ))}
       </nav>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { MenuIcon } from 'lucide-react';
 import { AppShell } from '@/components/app-shell';
@@ -8,15 +9,22 @@ import { Button } from '@/components/ui/button';
 import {
   SettingsSidebar,
   type SettingsTab,
+  settingsTabKeys,
 } from '@/components/settings/settings-sidebar';
 import { ProfileTab } from '@/components/settings/profile-tab';
 import { LocalizationTab } from '@/components/settings/localization-tab';
 import { SecurityTab } from '@/components/settings/security-tab';
 import { AppearanceTab } from '@/components/settings/appearance-tab';
 
+const validTabs = settingsTabKeys.map((t) => t.key);
+
 function SettingsContent() {
   const t = useTranslations('settings');
-  const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const activeTab: SettingsTab = validTabs.includes(tabParam as SettingsTab)
+    ? (tabParam as SettingsTab)
+    : 'profile';
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -37,7 +45,6 @@ function SettingsContent() {
       <div className="flex min-h-0 flex-1">
         <SettingsSidebar
           activeTab={activeTab}
-          onTabChange={setActiveTab}
           mobileOpen={mobileOpen}
           onMobileOpenChange={setMobileOpen}
         />
