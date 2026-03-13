@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
@@ -35,17 +35,31 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   // Reading x-nonce forces dynamic rendering so each request gets a fresh CSP nonce
-  await headers();
+  const headersList = await headers();
+  const nonce = headersList.get('x-nonce') ?? undefined;
+
+  const cookieStore = await cookies();
+  const themeCookie = cookieStore.get('theme')?.value;
 
   const locale = await getLocale();
   const messages = await getMessages();
 
   return (
     <html lang={locale} suppressHydrationWarning>
+      <head>
+        {themeCookie && (
+          <script
+            nonce={nonce}
+            dangerouslySetInnerHTML={{
+              __html: `try{if(!localStorage.getItem("theme"))localStorage.setItem("theme",${JSON.stringify(themeCookie)})}catch(e){}`,
+            }}
+          />
+        )}
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider>
+        <ThemeProvider nonce={nonce}>
           <NextIntlClientProvider locale={locale} messages={messages}>
             {children}
             <ConnectionGuard />

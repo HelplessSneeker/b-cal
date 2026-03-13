@@ -11,6 +11,7 @@ import { AppShellSkeleton } from '@/components/app-shell-skeleton';
 import { setLocaleCookie } from '@/src/i18n/locale-cookie';
 import { useTheme } from 'next-themes';
 import { applyAccentColor } from '@/lib/utils/accent-color';
+import { setThemeCookie } from '@/lib/utils/theme-cookie';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -46,6 +47,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
           if (userData.preferences?.theme) {
             setTheme(userData.preferences.theme);
+            setThemeCookie(userData.preferences.theme);
           }
 
           if (userData.preferences?.accentColor) {

@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils/utils';
 import { useUserStore } from '@/lib/stores/userStore';
 import { updatePreferences } from '@/lib/api/auth';
 import { applyAccentColor } from '@/lib/utils/accent-color';
+import { setThemeCookie } from '@/lib/utils/theme-cookie';
 
 type Theme = 'light' | 'dark' | 'system';
 type AccentColor = 'blue' | 'indigo' | 'violet' | 'emerald' | 'amber' | 'slate';
@@ -135,6 +136,7 @@ export function AppearanceTab() {
                 onClick={() => {
                   setTheme(themeKey);
                   setNextTheme(themeKey);
+                  setThemeCookie(themeKey);
                 }}
                 className={cn(
                   'flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 p-3 transition-all',
