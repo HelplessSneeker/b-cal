@@ -44,7 +44,10 @@
     "deleteScopeTitle": "Wiederkehrenden Termin löschen",
     "deleteScopeSingle": "Diesen Termin",
     "deleteScopeThisAndFuture": "Diesen und folgende Termine",
-    "deleteScopeAll": "Alle Termine"
+    "deleteScopeAll": "Alle Termine",
+    "frequencyChangeHintTitle": "Frequenzänderung",
+    "frequencyChangeHint": "Die Änderung der Wiederholungsfrequenz gilt nur für diesen und zukünftige Termine. Vergangene Termine behalten ihren ursprünglichen Zeitplan.",
+    "frequencyChangeConfirm": "Weiter"
   },
   "validation": {
     "titleRequired": "Titel ist erforderlich",

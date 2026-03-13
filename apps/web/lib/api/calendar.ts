@@ -65,9 +65,16 @@ function toCreateDTO(input: CreateEntryInput): Record<string, unknown> {
   return dto;
 }
 
+interface RecurrenceUpdate {
+  frequency: RecurrenceFrequency;
+  byDay?: string;
+  until?: string;
+}
+
 function toUpdateDTO(
   entry: CalendarEntry,
   scope?: EditScope,
+  recurrence?: RecurrenceUpdate,
 ): Record<string, unknown> {
   const dto: Record<string, unknown> = {
     title: entry.title,
@@ -78,6 +85,15 @@ function toUpdateDTO(
   };
   if (scope) {
     dto.scope = scope;
+  }
+  if (recurrence) {
+    dto.recurrenceFrequency = recurrence.frequency;
+    if (recurrence.byDay) {
+      dto.recurrenceByDay = recurrence.byDay;
+    }
+    if (recurrence.until) {
+      dto.recurrenceUntil = recurrence.until;
+    }
   }
   return dto;
 }
@@ -116,10 +132,11 @@ export async function createEntry(
 export async function updateEntry(
   entry: CalendarEntry,
   scope?: EditScope,
+  recurrence?: RecurrenceUpdate,
 ): Promise<CalendarEntry> {
   const dto = await api<EntryDTO>(`/calendar/${encodeURIComponent(entry.id)}`, {
     method: 'PATCH',
-    body: toUpdateDTO(entry, scope),
+    body: toUpdateDTO(entry, scope, recurrence),
   });
   return toEntry(dto);
 }

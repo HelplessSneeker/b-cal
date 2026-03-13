@@ -104,15 +104,23 @@ function EntryForm({
   const [wholeDay, setWholeDay] = useState(initialValues.wholeDay);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Recurrence state — only for new entries (editing uses scope dialog)
   const isNewEntry = !editingEntry;
+  const isEditingRecurring = !!editingEntry?.isRecurring;
+  const showRecurrence = isNewEntry || isEditingRecurring;
+
   const [recurrenceFrequency, setRecurrenceFrequency] = useState<
     RecurrenceFrequency | ''
-  >('');
+  >((editingEntry?.recurrenceFrequency as RecurrenceFrequency) ?? '');
   const [recurrenceByDay, setRecurrenceByDay] = useState<Set<string>>(
-    new Set(),
+    editingEntry?.recurrenceByDay
+      ? new Set(editingEntry.recurrenceByDay.split(','))
+      : new Set(),
   );
-  const [recurrenceUntil, setRecurrenceUntil] = useState('');
+  const [recurrenceUntil, setRecurrenceUntil] = useState(
+    editingEntry?.recurrenceUntil
+      ? editingEntry.recurrenceUntil.toISOString().split('T')[0]
+      : '',
+  );
 
   const isMultiDay = useMemo(() => {
     if (!startDate || !endDate) return false;
@@ -167,7 +175,7 @@ function EntryForm({
       content: content.trim() || undefined,
     };
 
-    if (isNewEntry && recurrenceFrequency) {
+    if (showRecurrence && recurrenceFrequency) {
       const byDay =
         recurrenceFrequency === 'WEEKLY' && recurrenceByDay.size > 0
           ? [...recurrenceByDay].join(',')
@@ -264,7 +272,7 @@ function EntryForm({
           />
         </Field>
 
-        {isNewEntry && (
+        {showRecurrence && (
           <>
             <Field>
               <FieldLabel htmlFor="recurrence">{t('repeat')}</FieldLabel>
@@ -278,7 +286,9 @@ function EntryForm({
                 }
                 className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
               >
-                <option value="">{t('repeatNone')}</option>
+                {!isEditingRecurring && (
+                  <option value="">{t('repeatNone')}</option>
+                )}
                 <option value="DAILY">{t('repeatDaily')}</option>
                 <option value="WEEKLY">{t('repeatWeekly')}</option>
                 <option value="MONTHLY">{t('repeatMonthly')}</option>
@@ -397,6 +407,7 @@ function ScopeDialog({
 
 export function EntryModal() {
   const t = useTranslations('calendar.entry');
+  const tCommon = useTranslations('common');
   const {
     isEntryModalOpen,
     editingEntry,
@@ -412,6 +423,12 @@ export function EntryModal() {
     'edit' | 'delete' | null
   >(null);
   const [pendingEntry, setPendingEntry] = useState<CalendarEntry | null>(null);
+  const [pendingRecurrence, setPendingRecurrence] = useState<{
+    frequency: RecurrenceFrequency;
+    byDay?: string;
+    until?: string;
+  } | null>(null);
+  const [showFrequencyHint, setShowFrequencyHint] = useState(false);
 
   const isEditingRecurring = !!editingEntry?.isRecurring;
 
@@ -439,6 +456,7 @@ export function EntryModal() {
       if (isEditingRecurring) {
         // Show scope dialog before updating
         setPendingEntry(entry);
+        setPendingRecurrence(recurrence ?? null);
         setScopeDialogMode('edit');
         return;
       }
@@ -484,13 +502,25 @@ export function EntryModal() {
     }
   };
 
+  const frequencyChanged =
+    pendingRecurrence?.frequency !== editingEntry?.recurrenceFrequency;
+
   const handleScopeSelect = async (scope: EditScope) => {
+    if (scope === 'ALL' && frequencyChanged) {
+      // Frequency changed — show hint before proceeding
+      setScopeDialogMode(null);
+      setShowFrequencyHint(true);
+      return;
+    }
     setScopeDialogMode(null);
     setIsSubmitting(true);
     try {
       if (pendingEntry) {
-        // Edit with scope
-        await updateEntryApi(pendingEntry, scope);
+        await updateEntryApi(
+          pendingEntry,
+          scope,
+          pendingRecurrence ?? undefined,
+        );
         invalidateCache();
         closeEntryModal();
       }
@@ -499,7 +529,37 @@ export function EntryModal() {
     } finally {
       setIsSubmitting(false);
       setPendingEntry(null);
+      setPendingRecurrence(null);
     }
+  };
+
+  const handleFrequencyHintConfirm = async () => {
+    setShowFrequencyHint(false);
+    setIsSubmitting(true);
+    try {
+      if (pendingEntry) {
+        // Use THIS_AND_FUTURE so past events keep their original schedule
+        await updateEntryApi(
+          pendingEntry,
+          'THIS_AND_FUTURE',
+          pendingRecurrence ?? undefined,
+        );
+        invalidateCache();
+        closeEntryModal();
+      }
+    } catch {
+      // Error toast already shown by api()
+    } finally {
+      setIsSubmitting(false);
+      setPendingEntry(null);
+      setPendingRecurrence(null);
+    }
+  };
+
+  const handleFrequencyHintCancel = () => {
+    setShowFrequencyHint(false);
+    // Go back to scope dialog
+    setScopeDialogMode('edit');
   };
 
   const handleDelete = async () => {
@@ -539,6 +599,7 @@ export function EntryModal() {
   const handleScopeCancel = () => {
     setScopeDialogMode(null);
     setPendingEntry(null);
+    setPendingRecurrence(null);
   };
 
   const formKey = useMemo(() => {
@@ -549,7 +610,7 @@ export function EntryModal() {
   return (
     <>
       <Dialog
-        open={isEntryModalOpen && !scopeDialogMode}
+        open={isEntryModalOpen && !scopeDialogMode && !showFrequencyHint}
         onOpenChange={(open) => !open && closeEntryModal()}
       >
         <DialogContent className="sm:max-w-md">
@@ -585,6 +646,31 @@ export function EntryModal() {
         }
         onCancel={handleScopeCancel}
       />
+
+      <Dialog
+        open={showFrequencyHint}
+        onOpenChange={(open) => !open && handleFrequencyHintCancel()}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('frequencyChangeHintTitle')}</DialogTitle>
+          </DialogHeader>
+          <p className="text-muted-foreground text-sm">
+            {t('frequencyChangeHint')}
+          </p>
+          <DialogFooter>
+            <Button variant="ghost" onClick={handleFrequencyHintCancel}>
+              {tCommon('cancel')}
+            </Button>
+            <Button
+              onClick={handleFrequencyHintConfirm}
+              disabled={isSubmitting}
+            >
+              {t('frequencyChangeConfirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

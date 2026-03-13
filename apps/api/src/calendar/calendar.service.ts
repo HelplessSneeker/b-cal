@@ -248,9 +248,40 @@ export class CalendarService {
 
     switch (effectiveScope) {
       case EditScope.ALL: {
-        const dateFieldsChanged = updateData.startDate || updateData.endDate;
-
         const updatePayload: Record<string, unknown> = { ...updateData };
+
+        // When editing via a synthetic ID the dates belong to a specific
+        // occurrence, not the parent. Compute the time delta and apply it
+        // to the parent so the series start date isn't shifted.
+        if (originalDate) {
+          const parentStart = new Date(parent.startDate);
+          const parentEnd = new Date(parent.endDate);
+          const duration = parentEnd.getTime() - parentStart.getTime();
+
+          if (updateData.startDate) {
+            const offset =
+              new Date(updateData.startDate).getTime() - originalDate.getTime();
+            updatePayload.startDate = new Date(parentStart.getTime() + offset);
+          }
+
+          if (updateData.endDate) {
+            const expectedEnd = new Date(originalDate.getTime() + duration);
+            const offset =
+              new Date(updateData.endDate).getTime() - expectedEnd.getTime();
+            updatePayload.endDate = new Date(parentEnd.getTime() + offset);
+          }
+        }
+
+        // Only clear exceptions when the dates actually changed
+        const newStart = updatePayload.startDate
+          ? new Date(updatePayload.startDate as string | Date).getTime()
+          : new Date(parent.startDate).getTime();
+        const newEnd = updatePayload.endDate
+          ? new Date(updatePayload.endDate as string | Date).getTime()
+          : new Date(parent.endDate).getTime();
+        const dateFieldsChanged =
+          newStart !== new Date(parent.startDate).getTime() ||
+          newEnd !== new Date(parent.endDate).getTime();
 
         const updatedEntry = await this.prismaService.$transaction(
           async (tx) => {

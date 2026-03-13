@@ -322,6 +322,84 @@ describe('CalendarService', () => {
         expect(result.title).toBe('New Title');
       });
 
+      it('should preserve parent dates when editing via synthetic ID with scope ALL', async () => {
+        mockPrismaService.calendarEntry.findUnique.mockResolvedValue(
+          mockRecurringEntry,
+        );
+        const mockUpdate = jest.fn().mockResolvedValue(mockRecurringEntry);
+        const mockDeleteMany = jest.fn().mockResolvedValue({ count: 0 });
+        mockPrismaService.$transaction.mockImplementation(
+          // eslint-disable-next-line @typescript-eslint/require-await
+          async (fn: (tx: unknown) => unknown) =>
+            fn({
+              calendarEntry: { update: mockUpdate },
+              recurrenceException: { deleteMany: mockDeleteMany },
+            }),
+        );
+
+        // Edit the March 15 occurrence but with ALL scope — should not shift parent
+        const syntheticId = `${RECURRING_UUID}:2026-03-15T09:00:00.000Z`;
+        await service.update('user-1', syntheticId, {
+          title: 'Renamed',
+          startDate: '2026-03-15T09:00:00.000Z',
+          endDate: '2026-03-15T09:30:00.000Z',
+          scope: EditScope.ALL,
+        });
+
+        // Parent startDate should remain March 1, not shift to March 15
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const updateCall = mockUpdate.mock.calls[0][0];
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        expect(updateCall.data.startDate).toEqual(
+          new Date('2026-03-01T09:00:00.000Z'),
+        );
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        expect(updateCall.data.endDate).toEqual(
+          new Date('2026-03-01T09:30:00.000Z'),
+        );
+        // Dates did not actually change, so exceptions should NOT be cleared
+        expect(mockDeleteMany).not.toHaveBeenCalled();
+      });
+
+      it('should apply time-of-day change to parent when editing via synthetic ID with scope ALL', async () => {
+        mockPrismaService.calendarEntry.findUnique.mockResolvedValue(
+          mockRecurringEntry,
+        );
+        const mockUpdate = jest.fn().mockResolvedValue(mockRecurringEntry);
+        const mockDeleteMany = jest.fn().mockResolvedValue({ count: 0 });
+        mockPrismaService.$transaction.mockImplementation(
+          // eslint-disable-next-line @typescript-eslint/require-await
+          async (fn: (tx: unknown) => unknown) =>
+            fn({
+              calendarEntry: { update: mockUpdate },
+              recurrenceException: { deleteMany: mockDeleteMany },
+            }),
+        );
+
+        // Edit the March 15 occurrence: shift time from 9:00-9:30 to 10:00-10:30
+        const syntheticId = `${RECURRING_UUID}:2026-03-15T09:00:00.000Z`;
+        await service.update('user-1', syntheticId, {
+          title: 'Daily Standup',
+          startDate: '2026-03-15T10:00:00.000Z',
+          endDate: '2026-03-15T10:30:00.000Z',
+          scope: EditScope.ALL,
+        });
+
+        // Parent should shift from 9:00-9:30 to 10:00-10:30 (keeping March 1 date)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const updateCall = mockUpdate.mock.calls[0][0];
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        expect(updateCall.data.startDate).toEqual(
+          new Date('2026-03-01T10:00:00.000Z'),
+        );
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        expect(updateCall.data.endDate).toEqual(
+          new Date('2026-03-01T10:30:00.000Z'),
+        );
+        // Dates changed, so exceptions should be cleared
+        expect(mockDeleteMany).toHaveBeenCalled();
+      });
+
       it('should create exception for scope SINGLE with synthetic ID', async () => {
         mockPrismaService.calendarEntry.findUnique.mockResolvedValue(
           mockRecurringEntry,

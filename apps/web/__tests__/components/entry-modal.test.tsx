@@ -343,6 +343,7 @@ describe('EntryModal', () => {
       expect(updateMock).toHaveBeenCalledWith(
         expect.objectContaining({ title: 'Recurring Standup' }),
         'ALL',
+        expect.objectContaining({ frequency: 'DAILY' }),
       );
       // Cache should be invalidated (loadedRanges cleared)
       expect(useCalendarStore.getState().loadedRanges).toHaveLength(0);

@@ -44,7 +44,10 @@
     "deleteScopeTitle": "Delete recurring event",
     "deleteScopeSingle": "This event",
     "deleteScopeThisAndFuture": "This and following events",
-    "deleteScopeAll": "All events"
+    "deleteScopeAll": "All events",
+    "frequencyChangeHintTitle": "Frequency change",
+    "frequencyChangeHint": "Changing the repeat frequency will only apply to this and future events. Past events will keep their original schedule.",
+    "frequencyChangeConfirm": "Continue"
   },
   "validation": {
     "titleRequired": "Title is required",
