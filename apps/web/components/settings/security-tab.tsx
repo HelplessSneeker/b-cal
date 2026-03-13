@@ -26,6 +26,7 @@ import { Field, FieldLabel } from '@/components/ui/field';
 import { PasswordInput } from '@/components/ui/password-input';
 import { PasswordStrengthIndicator } from '@/components/ui/password-strength';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 
 const MOBILE_OS = ['android', 'ios', 'iphone', 'ipad', 'mobile'];
@@ -216,8 +217,20 @@ export function SecurityTab() {
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {isLoadingSessions ? (
-            <div className="flex justify-center py-4">
-              <Spinner />
+            <div className="flex flex-col gap-3">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-4 rounded-lg bg-muted/50 p-4"
+                >
+                  <Skeleton className="size-5 shrink-0 rounded" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-48" />
+                  </div>
+                  <Skeleton className="h-8 w-16 shrink-0 rounded-md" />
+                </div>
+              ))}
             </div>
           ) : sessions.length === 0 ? (
             <p className="text-muted-foreground text-sm">{t('noSessions')}</p>

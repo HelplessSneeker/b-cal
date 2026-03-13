@@ -34,14 +34,14 @@ beforeEach(() => {
 });
 
 describe('AuthProvider', () => {
-  it('shows loading while checking auth', () => {
+  it('shows skeleton while checking auth', () => {
     getMeMock.mockReturnValue(new Promise(() => {})); // never resolves
     render(
       <AuthProvider>
         <div>Protected</div>
       </AuthProvider>,
     );
-    expect(screen.getByText('Loading')).toBeInTheDocument();
+    expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
     expect(screen.queryByText('Protected')).not.toBeInTheDocument();
   });
 

@@ -7,7 +7,7 @@ import { fetchCsrfToken, ApiError } from '@/lib/api/api';
 import { useUserStore } from '@/lib/stores/userStore';
 import { useConnectionStore } from '@/lib/stores/connectionStore';
 import { checkHealth } from '@/components/ConnectionGuard';
-import { Loading } from '@/components/ui/loading';
+import { AppShellSkeleton } from '@/components/app-shell-skeleton';
 import { setLocaleCookie } from '@/src/i18n/locale-cookie';
 import { useTheme } from 'next-themes';
 import { applyAccentColor } from '@/lib/utils/accent-color';
@@ -106,7 +106,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   if (!hasChecked) {
-    return <Loading className="h-screen" />;
+    return <AppShellSkeleton />;
   }
 
   return null;
