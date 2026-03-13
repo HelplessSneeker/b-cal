@@ -10,6 +10,7 @@ import {
 } from '@/lib/calendar/spanning-utils';
 import { EntryPreview } from '@/components/calendar/entry-preview';
 import { MoreIndicator } from '@/components/calendar/more-indicator';
+import { useEntryColor } from '@/lib/hooks/useEntryColor';
 import { cn } from '@/lib/utils/utils';
 
 interface MonthWeekRowProps {
@@ -31,6 +32,7 @@ export function MonthWeekRow({
   onEntryClick,
   onMoreClick,
 }: MonthWeekRowProps) {
+  const getColorClasses = useEntryColor();
   const today = useMemo(() => new Date(), []);
 
   const wholeDayEntries = useMemo(
@@ -141,27 +143,32 @@ export function MonthWeekRow({
           }}
         >
           {/* Spanning (multi-day) entries */}
-          {visibleSpanningEntries.map((se) => (
-            <div
-              key={se.entry.id}
-              className={cn(
-                'flex min-w-0 cursor-pointer items-center overflow-hidden bg-blue-500/20 px-1 text-xs font-medium transition-colors hover:bg-blue-500/30',
-                !se.continuesBefore &&
-                  'ml-0.5 rounded-l border-l-2 border-blue-500',
-                !se.continuesAfter && 'mr-0.5 rounded-r',
-              )}
-              style={{
-                gridColumn: `${se.startCol + 1} / span ${se.span}`,
-                gridRow: se.row + 1,
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                onEntryClick(se.entry);
-              }}
-            >
-              <span className="truncate">{se.entry.title}</span>
-            </div>
-          ))}
+          {visibleSpanningEntries.map((se) => {
+            const colors = getColorClasses(se.entry.calendarId);
+            return (
+              <div
+                key={se.entry.id}
+                className={cn(
+                  'flex min-w-0 cursor-pointer items-center overflow-hidden px-1 text-xs font-medium transition-colors',
+                  colors.bg,
+                  colors.bgHover,
+                  !se.continuesBefore &&
+                    `ml-0.5 rounded-l border-l-2 ${colors.border}`,
+                  !se.continuesAfter && 'mr-0.5 rounded-r',
+                )}
+                style={{
+                  gridColumn: `${se.startCol + 1} / span ${se.span}`,
+                  gridRow: se.row + 1,
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEntryClick(se.entry);
+                }}
+              >
+                <span className="truncate">{se.entry.title}</span>
+              </div>
+            );
+          })}
 
           {/* Timed entries placed in free row slots per day */}
           {dayData.flatMap(({ dayTimed, freeRows, timedToShow, colIdx }) =>

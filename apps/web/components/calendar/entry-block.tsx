@@ -3,6 +3,7 @@
 import { Repeat } from 'lucide-react';
 import { CalendarEntry } from '@/lib/stores/calendarStore';
 import { useLocale } from '@/lib/hooks/useLocale';
+import { useEntryColor } from '@/lib/hooks/useEntryColor';
 import { getEventTopPosition, getEventHeight } from '@/lib/calendar/time-utils';
 import { OVERLAP_GAP_PX } from '@/lib/calendar/calendar-constants';
 import { cn } from '@/lib/utils/utils';
@@ -33,6 +34,8 @@ export function EntryBlock({
   compact = false,
 }: EntryBlockProps) {
   const { timezone } = useLocale();
+  const getColorClasses = useEntryColor();
+  const colors = getColorClasses(entry.calendarId);
   const top = getEventTopPosition(entry.startDate, timezone);
   const height = getEventHeight(entry.startDate, entry.endDate);
   const isShort = height < 40;
@@ -41,7 +44,10 @@ export function EntryBlock({
   return (
     <div
       className={cn(
-        'absolute cursor-pointer overflow-hidden rounded-md border-l-[3px] border-blue-500 bg-blue-500/20 transition-colors hover:z-10 hover:bg-blue-500/30',
+        'absolute cursor-pointer overflow-hidden rounded-md border-l-[3px] transition-colors hover:z-10',
+        colors.border,
+        colors.bg,
+        colors.bgHover,
         compact ? 'px-0.5 py-0.5' : 'px-2 py-1',
         !hasOverlapLayout && 'left-1 right-1',
         isShort && 'py-0',

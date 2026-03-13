@@ -6,6 +6,7 @@ import {
   type CalendarEntry,
 } from '@/lib/stores/calendarStore';
 import { useLocale } from '@/lib/hooks/useLocale';
+import { useVisibleEntries } from '@/lib/hooks/useVisibleEntries';
 import { TimeGrid } from '@/components/calendar/time-grid';
 import { DayColumn } from '@/components/calendar/day-column';
 import { WeekAllDayRow } from '@/components/calendar/week-all-day-row';
@@ -42,7 +43,7 @@ function isToday(date: Date): boolean {
 
 export function WeekView({ date }: { date?: Date }) {
   const storeDate = useCalendarStore((s) => s.currentDate);
-  const entries = useCalendarStore((s) => s.entries);
+  const entries = useVisibleEntries();
   const openEntryModal = useCalendarStore((s) => s.openEntryModal);
   const { language, weekStartDay } = useLocale();
   const currentDate = date ?? storeDate;

@@ -4,6 +4,7 @@ import { PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { SidebarCalendar } from '@/components/calendar/sidebar-calendar';
+import { CalendarList } from '@/components/calendar/calendar-list';
 import { useCalendarStore } from '@/lib/stores/calendarStore';
 
 export function CalendarSidebar() {
@@ -21,6 +22,7 @@ export function CalendarSidebar() {
         {t('newEntry')}
       </Button>
       <SidebarCalendar />
+      <CalendarList />
     </aside>
   );
 }

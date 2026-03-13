@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { CalendarEntry } from '@/lib/stores/calendarStore';
 import { TIME_COLUMN_WIDTH } from '@/lib/calendar/calendar-constants';
 import { computeSpanningEntries } from '@/lib/calendar/spanning-utils';
+import { useEntryColor } from '@/lib/hooks/useEntryColor';
 import { cn } from '@/lib/utils/utils';
 
 interface WeekAllDayRowProps {
@@ -19,6 +20,7 @@ export function WeekAllDayRow({
   onEntryClick,
   timeColumnWidth = TIME_COLUMN_WIDTH,
 }: WeekAllDayRowProps) {
+  const getColorClasses = useEntryColor();
   const spanningEntries = useMemo(
     () => computeSpanningEntries(allDayEntries, weekDays),
     [allDayEntries, weekDays],
@@ -53,25 +55,30 @@ export function WeekAllDayRow({
           className="grid grid-cols-7 gap-y-1 p-1"
           style={{ gridTemplateRows: `repeat(${totalRows}, 24px)` }}
         >
-          {spanningEntries.map((se) => (
-            <div
-              key={se.entry.id}
-              className={cn(
-                'flex min-w-0 cursor-pointer items-center overflow-hidden bg-blue-500/20 text-xs font-medium transition-colors hover:bg-blue-500/30',
-                timeColumnWidth >= TIME_COLUMN_WIDTH ? 'px-2' : 'px-0.5',
-                !se.continuesBefore &&
-                  'rounded-l-md border-l-[3px] border-blue-500',
-                !se.continuesAfter && 'rounded-r-md',
-              )}
-              style={{
-                gridColumn: `${se.startCol + 1} / span ${se.span}`,
-                gridRow: se.row + 1,
-              }}
-              onClick={() => onEntryClick(se.entry)}
-            >
-              <span className="truncate">{se.entry.title}</span>
-            </div>
-          ))}
+          {spanningEntries.map((se) => {
+            const colors = getColorClasses(se.entry.calendarId);
+            return (
+              <div
+                key={se.entry.id}
+                className={cn(
+                  'flex min-w-0 cursor-pointer items-center overflow-hidden text-xs font-medium transition-colors',
+                  colors.bg,
+                  colors.bgHover,
+                  timeColumnWidth >= TIME_COLUMN_WIDTH ? 'px-2' : 'px-0.5',
+                  !se.continuesBefore &&
+                    `rounded-l-md border-l-[3px] ${colors.border}`,
+                  !se.continuesAfter && 'rounded-r-md',
+                )}
+                style={{
+                  gridColumn: `${se.startCol + 1} / span ${se.span}`,
+                  gridRow: se.row + 1,
+                }}
+                onClick={() => onEntryClick(se.entry)}
+              >
+                <span className="truncate">{se.entry.title}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -11,6 +11,7 @@ interface EntryDTO {
   endDate: string;
   wholeDay: boolean;
   content?: string;
+  calendarId?: string | null;
   isRecurring?: boolean;
   recurrenceFrequency?: string | null;
   recurrenceByDay?: string | null;
@@ -26,6 +27,7 @@ function toEntry(dto: EntryDTO): CalendarEntry {
     endDate: new Date(dto.endDate),
     wholeDay: dto.wholeDay,
     content: dto.content,
+    calendarId: dto.calendarId ?? null,
     isRecurring: dto.isRecurring ?? false,
     recurrenceFrequency: dto.recurrenceFrequency ?? null,
     recurrenceByDay: dto.recurrenceByDay ?? null,

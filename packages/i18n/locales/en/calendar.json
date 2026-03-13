@@ -57,6 +57,19 @@
   },
   "more": "+{count} more",
   "moreEntries": "{count} more entries",
+  "calendars": {
+    "title": "Calendars",
+    "manage": "Manage calendars",
+    "manageTitle": "Manage Calendars",
+    "default": "Default",
+    "addCalendar": "Add calendar",
+    "namePlaceholder": "Calendar name",
+    "deleteTitle": "Delete \"{name}\"",
+    "deleteDescription": "What should happen to entries in this calendar?",
+    "deleteEntries": "Delete entries",
+    "keepEntries": "Keep entries",
+    "empty": "No calendars yet"
+  },
   "weekdays": {
     "mo": "Mo",
     "tu": "Tu",

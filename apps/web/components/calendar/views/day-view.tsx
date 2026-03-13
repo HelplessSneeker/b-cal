@@ -5,6 +5,7 @@ import {
   type CalendarEntry,
 } from '@/lib/stores/calendarStore';
 import { useLocale } from '@/lib/hooks/useLocale';
+import { useVisibleEntries } from '@/lib/hooks/useVisibleEntries';
 import { entryOverlapsDay } from '@/lib/calendar/spanning-utils';
 import { DAY_VIEW_MAX_COLUMNS } from '@/lib/calendar/calendar-constants';
 import { TimeGrid } from '@/components/calendar/time-grid';
@@ -22,7 +23,7 @@ function formatDayHeader(date: Date, locale: string): string {
 
 export function DayView({ date }: { date?: Date }) {
   const storeDate = useCalendarStore((s) => s.currentDate);
-  const entries = useCalendarStore((s) => s.entries);
+  const entries = useVisibleEntries();
   const openEntryModal = useCalendarStore((s) => s.openEntryModal);
   const { language } = useLocale();
   const currentDate = date ?? storeDate;

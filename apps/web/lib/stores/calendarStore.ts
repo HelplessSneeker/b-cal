@@ -74,6 +74,7 @@ export interface CalendarEntry {
   title: string;
   wholeDay: boolean;
   content?: string;
+  calendarId?: string | null;
   isRecurring?: boolean;
   recurrenceFrequency?: string | null;
   recurrenceByDay?: string | null;

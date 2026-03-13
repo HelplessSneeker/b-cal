@@ -7,6 +7,7 @@ import {
   CalendarView,
   type CalendarEntry,
 } from '@/lib/stores/calendarStore';
+import { useVisibleEntries } from '@/lib/hooks/useVisibleEntries';
 import { getMonthGridDates } from '@/lib/calendar/date-utils';
 import { entryOverlapsDay } from '@/lib/calendar/spanning-utils';
 import { MonthWeekRow } from '@/components/calendar/month-week-row';
@@ -26,7 +27,7 @@ function getOrderedWeekdayKeys(weekStartDay: number) {
 export function MonthView({ date }: { date?: Date }) {
   const t = useTranslations('calendar.weekdays');
   const storeDate = useCalendarStore((s) => s.currentDate);
-  const entries = useCalendarStore((s) => s.entries);
+  const entries = useVisibleEntries();
   const setView = useCalendarStore((s) => s.setView);
   const setCurrentDate = useCalendarStore((s) => s.setCurrentDate);
   const openEntryModal = useCalendarStore((s) => s.openEntryModal);

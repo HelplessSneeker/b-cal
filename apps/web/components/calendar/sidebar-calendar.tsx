@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { useCalendarStore, CalendarView } from '@/lib/stores/calendarStore';
+import { useVisibleEntries } from '@/lib/hooks/useVisibleEntries';
 import {
   getStartOfWeek,
   getEndOfWeek,
@@ -13,7 +14,8 @@ import { useLocale } from '@/lib/hooks/useLocale';
 import type { DateRange } from 'react-day-picker';
 
 export function SidebarCalendar() {
-  const { view, currentDate, setCurrentDate, entries } = useCalendarStore();
+  const { view, currentDate, setCurrentDate } = useCalendarStore();
+  const entries = useVisibleEntries();
   const { weekStartDay } = useLocale();
 
   // Get unique dates that have entries

@@ -3,6 +3,7 @@
 import { Repeat } from 'lucide-react';
 import { type CalendarEntry } from '@/lib/stores/calendarStore';
 import { useLocale } from '@/lib/hooks/useLocale';
+import { useEntryColor } from '@/lib/hooks/useEntryColor';
 import { isEffectiveWholeDay } from '@/lib/calendar/spanning-utils';
 import { cn } from '@/lib/utils/utils';
 
@@ -22,11 +23,16 @@ function formatTime(date: Date, timezone: string): string {
 
 export function EntryPreview({ entry, onClick }: EntryPreviewProps) {
   const { timezone } = useLocale();
+  const getColorClasses = useEntryColor();
+  const colors = getColorClasses(entry.calendarId);
   return (
     <div
       className={cn(
         'cursor-pointer truncate rounded px-1 py-0.5 text-xs transition-colors',
-        'border-l-2 border-blue-500 bg-blue-500/20 hover:bg-blue-500/30',
+        'border-l-2',
+        colors.border,
+        colors.bg,
+        colors.bgHover,
       )}
       onClick={onClick}
     >

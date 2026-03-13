@@ -2,6 +2,7 @@
 
 import { CalendarEntry } from '@/lib/stores/calendarStore';
 import { getDaySpanInfo } from '@/lib/calendar/spanning-utils';
+import { useEntryColor } from '@/lib/hooks/useEntryColor';
 import { cn } from '@/lib/utils/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -16,6 +17,8 @@ export function AllDaySection({
   currentDay,
   onEntryClick,
 }: AllDaySectionProps) {
+  const getColorClasses = useEntryColor();
+
   if (entries.length === 0) {
     return null;
   }
@@ -28,13 +31,16 @@ export function AllDaySection({
             entry,
             currentDay,
           );
+          const colors = getColorClasses(entry.calendarId);
           return (
             <div
               key={entry.id}
               className={cn(
-                'flex cursor-pointer items-center gap-1 bg-blue-500/20 px-3 py-1 transition-colors hover:bg-blue-500/30',
+                'flex cursor-pointer items-center gap-1 px-3 py-1 transition-colors',
+                colors.bg,
+                colors.bgHover,
                 !continuesBefore &&
-                  'rounded-l-md border-l-[3px] border-blue-500',
+                  `rounded-l-md border-l-[3px] ${colors.border}`,
                 !continuesAfter && 'rounded-r-md',
                 continuesBefore && !continuesAfter && 'rounded-l-none',
                 continuesAfter && !continuesBefore && 'rounded-r-none',

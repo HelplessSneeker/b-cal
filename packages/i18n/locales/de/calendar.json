@@ -57,6 +57,19 @@
   },
   "more": "+{count} weitere",
   "moreEntries": "{count} weitere Einträge",
+  "calendars": {
+    "title": "Kalender",
+    "manage": "Kalender verwalten",
+    "manageTitle": "Kalender verwalten",
+    "default": "Standard",
+    "addCalendar": "Kalender hinzufugen",
+    "namePlaceholder": "Kalendername",
+    "deleteTitle": "\"{name}\" loschen",
+    "deleteDescription": "Was soll mit den Eintragen in diesem Kalender passieren?",
+    "deleteEntries": "Eintrage loschen",
+    "keepEntries": "Eintrage behalten",
+    "empty": "Noch keine Kalender"
+  },
   "weekdays": {
     "mo": "Mo",
     "tu": "Di",

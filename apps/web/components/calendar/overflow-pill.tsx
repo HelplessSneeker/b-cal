@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { type CalendarEntry } from '@/lib/stores/calendarStore';
 import { useLocale } from '@/lib/hooks/useLocale';
+import { useEntryColor } from '@/lib/hooks/useEntryColor';
 import { type OverflowGroup } from '@/lib/calendar/overlap-utils';
 import { OVERLAP_GAP_PX } from '@/lib/calendar/calendar-constants';
 import {
@@ -10,6 +11,7 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from '@/components/ui/popover';
+import { cn } from '@/lib/utils/utils';
 
 interface OverflowPillProps {
   group: OverflowGroup;
@@ -29,11 +31,12 @@ function formatTimeRange(start: Date, end: Date, timezone: string): string {
 export function OverflowPill({ group, onEntryClick }: OverflowPillProps) {
   const t = useTranslations('calendar');
   const { timezone } = useLocale();
+  const getColorClasses = useEntryColor();
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className="absolute z-[5] cursor-pointer overflow-hidden rounded-md border border-dashed border-blue-400 bg-blue-500/10 px-1 py-0.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-500/20"
+          className="absolute z-[5] cursor-pointer overflow-hidden rounded-md border border-dashed border-muted-foreground/40 bg-muted/60 px-1 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted"
           style={{
             top: group.topPx,
             height: group.heightPx,
@@ -49,19 +52,27 @@ export function OverflowPill({ group, onEntryClick }: OverflowPillProps) {
           {t('moreEntries', { count: group.hiddenCount })}
         </p>
         <ul className="space-y-1">
-          {group.hiddenEntries.map((entry) => (
-            <li key={entry.id}>
-              <button
-                className="w-full cursor-pointer rounded-md border-l-[3px] border-blue-500 bg-blue-500/10 px-2 py-1 text-left transition-colors hover:bg-blue-500/20"
-                onClick={() => onEntryClick(entry)}
-              >
-                <p className="truncate text-sm font-medium">{entry.title}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {formatTimeRange(entry.startDate, entry.endDate, timezone)}
-                </p>
-              </button>
-            </li>
-          ))}
+          {group.hiddenEntries.map((entry) => {
+            const colors = getColorClasses(entry.calendarId);
+            return (
+              <li key={entry.id}>
+                <button
+                  className={cn(
+                    'w-full cursor-pointer rounded-md border-l-[3px] px-2 py-1 text-left transition-colors',
+                    colors.border,
+                    colors.bg,
+                    colors.bgHover,
+                  )}
+                  onClick={() => onEntryClick(entry)}
+                >
+                  <p className="truncate text-sm font-medium">{entry.title}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {formatTimeRange(entry.startDate, entry.endDate, timezone)}
+                  </p>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </PopoverContent>
     </Popover>
