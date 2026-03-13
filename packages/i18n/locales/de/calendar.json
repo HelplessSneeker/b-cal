@@ -47,7 +47,9 @@
     "deleteScopeAll": "Alle Termine",
     "frequencyChangeHintTitle": "Frequenzänderung",
     "frequencyChangeHint": "Die Änderung der Wiederholungsfrequenz gilt nur für diesen und zukünftige Termine. Vergangene Termine behalten ihren ursprünglichen Zeitplan.",
-    "frequencyChangeConfirm": "Weiter"
+    "frequencyChangeConfirm": "Weiter",
+    "calendar": "Kalender",
+    "calendarDefault": "Standard"
   },
   "validation": {
     "titleRequired": "Titel ist erforderlich",

@@ -23,6 +23,8 @@ import {
   useCalendarStore,
   type CalendarEntry,
 } from '@/lib/stores/calendarStore';
+import { useCalendarsStore } from '@/lib/stores/calendarsStore';
+import { getColorClasses } from '@/lib/utils/calendar-colors';
 import { useLocale } from '@/lib/hooks/useLocale';
 import {
   formatDateTimeLocal,
@@ -68,6 +70,7 @@ function EntryForm({
   const tCommon = useTranslations('common');
   const tWeekdays = useTranslations('calendar.weekdays');
   const { timezone } = useLocale();
+  const calendars = useCalendarsStore((s) => s.calendars);
   const initialValues = useMemo(() => {
     if (editingEntry) {
       return {
@@ -102,6 +105,9 @@ function EntryForm({
   const [endDate, setEndDate] = useState(initialValues.endDate);
   const [content, setContent] = useState(initialValues.content);
   const [wholeDay, setWholeDay] = useState(initialValues.wholeDay);
+  const [calendarId, setCalendarId] = useState<string | null>(
+    editingEntry?.calendarId ?? null,
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isNewEntry = !editingEntry;
@@ -173,6 +179,7 @@ function EntryForm({
       endDate: parseDateTimeLocal(endDate, timezone),
       wholeDay: effectiveWholeDay,
       content: content.trim() || undefined,
+      calendarId,
     };
 
     if (showRecurrence && recurrenceFrequency) {
@@ -208,6 +215,30 @@ function EntryForm({
           />
           <FieldError>{errors.title}</FieldError>
         </Field>
+
+        {calendars.length > 0 && (
+          <Field>
+            <FieldLabel htmlFor="calendarId">{t('calendar')}</FieldLabel>
+            <div className="relative">
+              <span
+                className={`absolute top-1/2 left-3 size-2.5 -translate-y-1/2 rounded-full ${calendarId ? getColorClasses(calendars.find((c) => c.id === calendarId)?.color ?? '').dot : 'bg-primary'}`}
+              />
+              <select
+                id="calendarId"
+                value={calendarId ?? ''}
+                onChange={(e) => setCalendarId(e.target.value || null)}
+                className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-9 w-full rounded-md border py-1 pl-8 pr-3 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
+              >
+                <option value="">{t('calendarDefault')}</option>
+                {calendars.map((cal) => (
+                  <option key={cal.id} value={cal.id}>
+                    {cal.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </Field>
+        )}
 
         <Field orientation="horizontal" className="items-center">
           <Checkbox
@@ -482,6 +513,7 @@ export function EntryModal() {
           endDate: entry.endDate,
           wholeDay: entry.wholeDay,
           content: entry.content,
+          calendarId: entry.calendarId,
           recurrenceFrequency: recurrence?.frequency,
           recurrenceByDay: recurrence?.byDay,
           recurrenceUntil: recurrence?.until,

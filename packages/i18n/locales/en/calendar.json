@@ -47,7 +47,9 @@
     "deleteScopeAll": "All events",
     "frequencyChangeHintTitle": "Frequency change",
     "frequencyChangeHint": "Changing the repeat frequency will only apply to this and future events. Past events will keep their original schedule.",
-    "frequencyChangeConfirm": "Continue"
+    "frequencyChangeConfirm": "Continue",
+    "calendar": "Calendar",
+    "calendarDefault": "Default"
   },
   "validation": {
     "titleRequired": "Title is required",

@@ -42,6 +42,7 @@ export interface CreateEntryInput {
   endDate: Date;
   wholeDay: boolean;
   content?: string;
+  calendarId?: string | null;
   recurrenceFrequency?: RecurrenceFrequency;
   recurrenceByDay?: string;
   recurrenceUntil?: string;
@@ -54,6 +55,7 @@ function toCreateDTO(input: CreateEntryInput): Record<string, unknown> {
     endDate: input.endDate.toISOString(),
     wholeDay: input.wholeDay,
     content: input.content,
+    calendarId: input.calendarId ?? null,
   };
   if (input.recurrenceFrequency) {
     dto.recurrenceFrequency = input.recurrenceFrequency;
@@ -84,6 +86,7 @@ function toUpdateDTO(
     endDate: entry.endDate.toISOString(),
     wholeDay: entry.wholeDay,
     content: entry.content,
+    calendarId: entry.calendarId ?? null,
   };
   if (scope) {
     dto.scope = scope;
