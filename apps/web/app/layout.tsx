@@ -50,6 +50,7 @@ export default async function RootLayout({
         {themeCookie && (
           <script
             nonce={nonce}
+            suppressHydrationWarning
             dangerouslySetInnerHTML={{
               __html: `try{if(!localStorage.getItem("theme"))localStorage.setItem("theme",${JSON.stringify(themeCookie)})}catch(e){}`,
             }}
