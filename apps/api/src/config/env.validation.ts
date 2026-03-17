@@ -96,6 +96,18 @@ class EnvironmentVariables {
   @IsString()
   SENTRY_DSN?: string;
 
+  @IsString()
+  @IsNotEmpty()
+  REDIS_HOST: string;
+
+  @IsNumberString()
+  REDIS_PORT: string;
+
+  @ValidateIf((o: { NODE_ENV?: string }) => o.NODE_ENV === 'production')
+  @IsString()
+  @IsNotEmpty()
+  REDIS_PASSWORD: string;
+
   @IsOptional()
   @IsNumberString()
   DB_POOL_MAX?: string;

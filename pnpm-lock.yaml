@@ -44,6 +44,12 @@ importers:
       '@b-cal/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
+      '@keyv/redis':
+        specifier: ^5.1.6
+        version: 5.1.6(keyv@5.6.0)
+      '@nestjs/cache-manager':
+        specifier: ^3.1.0
+        version: 3.1.0(@nestjs/common@11.1.13(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.13)(cache-manager@7.2.8)(keyv@5.6.0)(rxjs@7.8.2)
       '@nestjs/common':
         specifier: ^11.0.1
         version: 11.1.13(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -89,6 +95,12 @@ importers:
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
+      cache-manager:
+        specifier: ^7.2.8
+        version: 7.2.8
+      cacheable:
+        specifier: ^2.3.3
+        version: 2.3.3
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -107,6 +119,9 @@ importers:
       helmet:
         specifier: ^8.1.0
         version: 8.1.0
+      keyv:
+        specifier: ^5.6.0
+        version: 5.6.0
       nestjs-i18n:
         specifier: ^10.6.0
         version: 10.6.0(@nestjs/common@11.1.13(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.13)(class-validator@0.14.3)(rxjs@7.8.2)
@@ -596,6 +611,12 @@ packages:
 
   '@borewit/text-codec@0.2.1':
     resolution: {integrity: sha512-k7vvKPbf7J2fZ5klGRD9AeKfUvojuZIQ3BT5u7Jfv+puwXkUBUT5PVyMDfJZpy30CBDXGMgw7fguK/lpOMBvgw==}
+
+  '@cacheable/memory@2.0.8':
+    resolution: {integrity: sha512-FvEb29x5wVwu/Kf93IWwsOOEuhHh6dYCJF3vcKLzXc0KXIW181AOzv6ceT4ZpBHDvAfG60eqb+ekmrnLHIy+jw==}
+
+  '@cacheable/utils@2.4.0':
+    resolution: {integrity: sha512-PeMMsqjVq+bF0WBsxFBxr/WozBJiZKY0rUojuaCoIaKnEl3Ju1wfEwS+SV1DU/cSe8fqHIPiYJFif8T3MVt4cQ==}
 
   '@chevrotain/cst-dts-gen@10.5.0':
     resolution: {integrity: sha512-lhmC/FyqQ2o7pGK4Om+hzuDrm9rhFYIJ/AXoQBeongmn870Xeb0L6oGEiuR8nohFNL5sMaQEJWCxr1oIVIVXrw==}
@@ -1341,6 +1362,21 @@ packages:
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
 
+  '@keyv/bigmap@1.3.1':
+    resolution: {integrity: sha512-WbzE9sdmQtKy8vrNPa9BRnwZh5UF4s1KTmSK0KUVLo3eff5BlQNNWDnFOouNpKfPKDnms9xynJjsMYjMaT/aFQ==}
+    engines: {node: '>= 18'}
+    peerDependencies:
+      keyv: ^5.6.0
+
+  '@keyv/redis@5.1.6':
+    resolution: {integrity: sha512-eKvW6pspvVaU5dxigaIDZr635/Uw6urTXL3gNbY9WTR8d3QigZQT+r8gxYSEOsw4+1cCBsC4s7T2ptR0WC9LfQ==}
+    engines: {node: '>= 18'}
+    peerDependencies:
+      keyv: ^5.6.0
+
+  '@keyv/serialize@1.1.1':
+    resolution: {integrity: sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA==}
+
   '@lukeed/csprng@1.1.0':
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
     engines: {node: '>=8'}
@@ -1361,6 +1397,15 @@ packages:
       '@nestjs/common': ^10.0.0 || ^11.0.0
       axios: ^1.3.1
       rxjs: ^7.0.0
+
+  '@nestjs/cache-manager@3.1.0':
+    resolution: {integrity: sha512-pEIqYZrBcE8UdkJmZRduurvoUfdU+3kRPeO1R2muiMbZnRuqlki5klFFNllO9LyYWzrx98bd1j0PSPKSJk1Wbw==}
+    peerDependencies:
+      '@nestjs/common': ^9.0.0 || ^10.0.0 || ^11.0.0
+      '@nestjs/core': ^9.0.0 || ^10.0.0 || ^11.0.0
+      cache-manager: '>=6'
+      keyv: '>=5'
+      rxjs: ^7.8.1
 
   '@nestjs/cli@11.0.16':
     resolution: {integrity: sha512-P0H+Vcjki6P5160E5QnMt3Q0X5FTg4PZkP99Ig4lm/4JWqfw32j3EXv3YBTJ2DmxLwOQ/IS9F7dzKpMAgzKTGg==}
@@ -2718,6 +2763,15 @@ packages:
   '@radix-ui/rect@1.1.1':
     resolution: {integrity: sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw==}
 
+  '@redis/client@5.11.0':
+    resolution: {integrity: sha512-GHoprlNQD51Xq2Ztd94HHV94MdFZQ3CVrpA04Fz8MVoHM0B7SlbmPEVIjwTbcv58z8QyjnrOuikS0rWF03k5dQ==}
+    engines: {node: '>= 18'}
+    peerDependencies:
+      '@node-rs/xxhash': ^1.1.0
+    peerDependenciesMeta:
+      '@node-rs/xxhash':
+        optional: true
+
   '@rolldown/pluginutils@1.0.0-rc.3':
     resolution: {integrity: sha512-eybk3TjzzzV97Dlj5c+XrBFW57eTNhzod66y9HrBlzJ6NsCrWCp/2kaPS3K9wJmurBC0Tdw4yPjXKZqlznim3Q==}
 
@@ -3998,6 +4052,12 @@ packages:
       magicast:
         optional: true
 
+  cache-manager@7.2.8:
+    resolution: {integrity: sha512-0HDaDLBBY/maa/LmUVAr70XUOwsiQD+jyzCBjmUErYZUKdMS9dT59PqW59PpVqfGM7ve6H0J6307JTpkCYefHQ==}
+
+  cacheable@2.3.3:
+    resolution: {integrity: sha512-iffYMX4zxKp54evOH27fm92hs+DeC1DhXmNVN8Tr94M/iZIV42dqTHSR2Ik4TOSPyOAwKr7Yu3rN9ALoLkbWyQ==}
+
   call-bind-apply-helpers@1.0.2:
     resolution: {integrity: sha512-Sp1ablJ0ivDkSzjcaJdxEunN5/XvksFJ2sMBFfq6x0ryhQV/2b/KwFe21cMpmHtPOSij8K99/wSfoEuTObmuMQ==}
     engines: {node: '>= 0.4'}
@@ -4123,6 +4183,10 @@ packages:
   clsx@2.1.1:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
     engines: {node: '>=6'}
+
+  cluster-key-slot@1.1.2:
+    resolution: {integrity: sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA==}
+    engines: {node: '>=0.10.0'}
 
   co@4.6.0:
     resolution: {integrity: sha512-QVb0dM5HvG+uaxitm8wONl7jltx8dqhfU33DcqtOZcLSVIKSDDLDi7+0LbAKiyI8hD9u42m2YxXSkMGWThaecQ==}
@@ -4974,6 +5038,10 @@ packages:
     resolution: {integrity: sha512-NqADB8VjPFLM2V0VvHUewwwsw0ZWBaIdgo+ieHtK3hasLz4qeCRjYcqfB6AQrBggRKppKF8L52/VqdVsO47Dlw==}
     engines: {node: '>= 0.4'}
 
+  hashery@1.5.0:
+    resolution: {integrity: sha512-nhQ6ExaOIqti2FDWoEMWARUqIKyjr2VcZzXShrI+A3zpeiuPWzx6iPftt44LhP74E5sW36B75N6VHbvRtpvO6Q==}
+    engines: {node: '>=20'}
+
   hasown@2.0.2:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
@@ -4994,6 +5062,9 @@ packages:
   hono@4.12.8:
     resolution: {integrity: sha512-VJCEvtrezO1IAR+kqEYnxUOoStaQPGrCmX3j4wDTNOcD1uRPFpGlwQUIW8niPuvHXaTUxeOUl5MMDGrl+tmO9A==}
     engines: {node: '>=16.9.0'}
+
+  hookified@1.15.1:
+    resolution: {integrity: sha512-MvG/clsADq1GPM2KGo2nyfaWVyn9naPiXrqIe4jYjXNZQt238kWyOGrsyc/DmRAQ+Re6yeo6yX/yoNCG5KAEVg==}
 
   html-encoding-sniffer@6.0.0:
     resolution: {integrity: sha512-CV9TW3Y3f8/wT0BRFc1/KAVQ3TUHiXmaAb6VW9vtiMFf7SLoMd1PdAc4W3KFOFETBJUb90KatHqlsZMWV+R9Gg==}
@@ -5483,6 +5554,9 @@ packages:
 
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
+
+  keyv@5.6.0:
+    resolution: {integrity: sha512-CYDD3SOtsHtyXeEORYRx2qBtpDJFjRTGXUtmNEMGyzYOKj1TE3tycdlho7kA1Ufx9OYWZzg52QFBGALTirzDSw==}
 
   language-subtag-registry@0.3.23:
     resolution: {integrity: sha512-0K65Lea881pHotoGEa5gDlMxt3pctLi2RplBb7Ezh4rRdLEOtgi7n4EwK9lamnUCkKBqaeKRVebTq6BAxSkpXQ==}
@@ -6290,6 +6364,10 @@ packages:
 
   pure-rand@7.0.1:
     resolution: {integrity: sha512-oTUZM/NAZS8p7ANR3SHh30kXB+zK2r2BPcEn/awJIbOvq82WoMN4p62AWWp3Hhw50G0xMsw1mhIBLqHw64EcNQ==}
+
+  qified@0.6.0:
+    resolution: {integrity: sha512-tsSGN1x3h569ZSU1u6diwhltLyfUWDp3YbFHedapTmpBl0B3P6U3+Qptg7xu+v+1io1EwhdPyyRHYbEw0KN2FA==}
+    engines: {node: '>=20'}
 
   qs@6.14.2:
     resolution: {integrity: sha512-V/yCWTTF7VJ9hIh18Ugr2zhJMP01MY7c5kh4J870L7imm6/DIzBsNLTXzMwUA3yZ5b/KBqLx8Kp3uRvd7xSe3Q==}
@@ -7771,6 +7849,18 @@ snapshots:
 
   '@borewit/text-codec@0.2.1': {}
 
+  '@cacheable/memory@2.0.8':
+    dependencies:
+      '@cacheable/utils': 2.4.0
+      '@keyv/bigmap': 1.3.1(keyv@5.6.0)
+      hookified: 1.15.1
+      keyv: 5.6.0
+
+  '@cacheable/utils@2.4.0':
+    dependencies:
+      hashery: 1.5.0
+      keyv: 5.6.0
+
   '@chevrotain/cst-dts-gen@10.5.0':
     dependencies:
       '@chevrotain/gast': 10.5.0
@@ -8494,6 +8584,23 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
+  '@keyv/bigmap@1.3.1(keyv@5.6.0)':
+    dependencies:
+      hashery: 1.5.0
+      hookified: 1.15.1
+      keyv: 5.6.0
+
+  '@keyv/redis@5.1.6(keyv@5.6.0)':
+    dependencies:
+      '@redis/client': 5.11.0
+      cluster-key-slot: 1.1.2
+      hookified: 1.15.1
+      keyv: 5.6.0
+    transitivePeerDependencies:
+      - '@node-rs/xxhash'
+
+  '@keyv/serialize@1.1.1': {}
+
   '@lukeed/csprng@1.1.0': {}
 
   '@microsoft/tsdoc@0.16.0': {}
@@ -8516,6 +8623,14 @@ snapshots:
       axios: 1.13.5
       rxjs: 7.8.2
     optional: true
+
+  '@nestjs/cache-manager@3.1.0(@nestjs/common@11.1.13(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.13)(cache-manager@7.2.8)(keyv@5.6.0)(rxjs@7.8.2)':
+    dependencies:
+      '@nestjs/common': 11.1.13(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 11.1.13(@nestjs/common@11.1.13(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.13)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      cache-manager: 7.2.8
+      keyv: 5.6.0
+      rxjs: 7.8.2
 
   '@nestjs/cli@11.0.16(@swc/core@1.15.18)(@types/node@22.19.8)':
     dependencies:
@@ -9919,6 +10034,10 @@ snapshots:
 
   '@radix-ui/rect@1.1.1': {}
 
+  '@redis/client@5.11.0':
+    dependencies:
+      cluster-key-slot: 1.1.2
+
   '@rolldown/pluginutils@1.0.0-rc.3': {}
 
   '@rollup/plugin-commonjs@28.0.1(rollup@4.59.0)':
@@ -11301,6 +11420,19 @@ snapshots:
       pkg-types: 2.3.0
       rc9: 2.1.2
 
+  cache-manager@7.2.8:
+    dependencies:
+      '@cacheable/utils': 2.4.0
+      keyv: 5.6.0
+
+  cacheable@2.3.3:
+    dependencies:
+      '@cacheable/memory': 2.0.8
+      '@cacheable/utils': 2.4.0
+      hookified: 1.15.1
+      keyv: 5.6.0
+      qified: 0.6.0
+
   call-bind-apply-helpers@1.0.2:
     dependencies:
       es-errors: 1.3.0
@@ -11424,6 +11556,8 @@ snapshots:
   clone@1.0.4: {}
 
   clsx@2.1.1: {}
+
+  cluster-key-slot@1.1.2: {}
 
   co@4.6.0: {}
 
@@ -12425,6 +12559,10 @@ snapshots:
     dependencies:
       has-symbols: 1.1.0
 
+  hashery@1.5.0:
+    dependencies:
+      hookified: 1.15.1
+
   hasown@2.0.2:
     dependencies:
       function-bind: 1.1.2
@@ -12440,6 +12578,8 @@ snapshots:
       hermes-estree: 0.25.1
 
   hono@4.12.8: {}
+
+  hookified@1.15.1: {}
 
   html-encoding-sniffer@6.0.0(@noble/hashes@1.8.0):
     dependencies:
@@ -13156,6 +13296,10 @@ snapshots:
   keyv@4.5.4:
     dependencies:
       json-buffer: 3.0.1
+
+  keyv@5.6.0:
+    dependencies:
+      '@keyv/serialize': 1.1.1
 
   language-subtag-registry@0.3.23: {}
 
@@ -13910,6 +14054,10 @@ snapshots:
   pure-rand@6.1.0: {}
 
   pure-rand@7.0.1: {}
+
+  qified@0.6.0:
+    dependencies:
+      hookified: 1.15.1
 
   qs@6.14.2:
     dependencies:

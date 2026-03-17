@@ -2,7 +2,9 @@ import { randomUUID } from 'crypto';
 import * as path from 'path';
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-import { ConfigModule } from '@nestjs/config';
+import { CacheModule } from '@nestjs/cache-manager';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { createKeyv } from '@keyv/redis';
 import { validate } from './config/env.validation';
 import { CalendarModule } from './calendar/calendar.module';
 import { CalendarsModule } from './calendars/calendars.module';
@@ -28,6 +30,23 @@ const REQUEST_ID_HEADER = 'X-Request-Id';
   imports: [
     SentryModule.forRoot(),
     ConfigModule.forRoot({ validate }),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const host = config.get<string>('REDIS_HOST');
+        const port = config.get<string>('REDIS_PORT');
+        const password = config.get<string>('REDIS_PASSWORD');
+        const redisUrl = password
+          ? `redis://:${password}@${host}:${port}`
+          : `redis://${host}:${port}`;
+        return {
+          stores: [createKeyv(redisUrl)],
+          ttl: 900000, // 15 minutes
+        };
+      },
+    }),
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',

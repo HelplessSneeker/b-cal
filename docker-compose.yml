@@ -18,6 +18,22 @@ services:
       retries: 5
       start_period: 10s
 
+  redis:
+    image: redis:7-alpine
+    container_name: b-cal-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   api:
     build:
       context: .
@@ -45,8 +61,12 @@ services:
       MAIL_PORT: 1025
       MAIL_USER: user
       MAIL_PASS: pass
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   web:
@@ -67,3 +87,4 @@ services:
 
 volumes:
   postgres_data:
+  redis-data:

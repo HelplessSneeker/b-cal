@@ -1,4 +1,11 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma, User, UserPreferences } from 'generated/prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -8,7 +15,14 @@ import { t } from 'src/common/utils/i18n';
 export class UserService {
   private readonly logger = new Logger(UserService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private cache: Cache,
+  ) {}
+
+  private prefsCacheKey(userId: string): string {
+    return `user-prefs:${userId}`;
+  }
 
   async findOne(
     email: string,
@@ -131,12 +145,36 @@ export class UserService {
         id: userId,
       },
     });
+    try {
+      await this.cache.del(this.prefsCacheKey(userId));
+    } catch (error) {
+      this.logger.warn(`Failed to delete cache for user ${userId}`, error);
+    }
   }
 
   async findPreferences(userId: string): Promise<UserPreferences | null> {
-    return this.prisma.userPreferences.findUnique({
+    const cacheKey = this.prefsCacheKey(userId);
+
+    try {
+      const cached = await this.cache.get<UserPreferences>(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      this.logger.warn('Failed to read preferences from cache', error);
+    }
+
+    const prefs = await this.prisma.userPreferences.findUnique({
       where: { userId },
     });
+
+    if (prefs) {
+      try {
+        await this.cache.set(cacheKey, prefs);
+      } catch (error) {
+        this.logger.warn('Failed to write preferences to cache', error);
+      }
+    }
+
+    return prefs;
   }
 
   async upsertPreferences(
@@ -149,19 +187,31 @@ export class UserService {
       weekStart: string;
     },
   ): Promise<UserPreferences> {
-    return this.prisma.userPreferences.upsert({
+    const result = await this.prisma.userPreferences.upsert({
       where: { userId },
       create: { userId, ...data },
       update: data,
     });
+    try {
+      await this.cache.del(this.prefsCacheKey(userId));
+    } catch (error) {
+      this.logger.warn(
+        `Failed to invalidate preferences cache for user ${userId}`,
+        error,
+      );
+    }
+    return result;
   }
 
   async findByIdWithPreferences(
     id: string,
   ): Promise<(User & { preferences: UserPreferences | null }) | null> {
-    return this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id },
-      include: { preferences: true },
     });
+    if (!user) return null;
+
+    const preferences = await this.findPreferences(id);
+    return { ...user, preferences };
   }
 }

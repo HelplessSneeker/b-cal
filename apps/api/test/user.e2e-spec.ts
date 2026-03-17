@@ -1,6 +1,7 @@
 import * as path from 'path';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, Module, ValidationPipe } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
@@ -30,6 +31,7 @@ class TestMailService {
 @Module({
   imports: [
     ConfigModule.forRoot(),
+    CacheModule.register({ isGlobal: true }),
     LoggerModule.forRoot({
       pinoHttp: {
         level: 'silent',
