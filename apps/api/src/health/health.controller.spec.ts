@@ -7,6 +7,7 @@ import {
   MemoryHealthIndicator,
   PrismaHealthIndicator,
 } from '@nestjs/terminus';
+import { RedisHealthIndicator } from './redis-health.indicator';
 
 jest.mock('../prisma/prisma.service', () => ({
   PrismaService: jest.fn(),
@@ -50,6 +51,10 @@ describe('HealthController', () => {
         {
           provide: DiskHealthIndicator,
           useValue: { checkStorage: jest.fn() },
+        },
+        {
+          provide: RedisHealthIndicator,
+          useValue: { isHealthy: jest.fn() },
         },
       ],
     }).compile();

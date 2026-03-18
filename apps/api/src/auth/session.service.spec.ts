@@ -16,7 +16,12 @@ const mockPrismaService = {
     delete: jest.fn(),
     deleteMany: jest.fn(),
   },
+  $transaction: jest.fn(),
 };
+
+mockPrismaService.$transaction.mockImplementation(
+  (fn: (client: typeof mockPrismaService) => unknown) => fn(mockPrismaService),
+);
 
 describe('SessionService', () => {
   let service: SessionService;
@@ -119,6 +124,42 @@ describe('SessionService', () => {
       expect(mockPrismaService.session.deleteMany).toHaveBeenCalledWith({
         where: { id: { in: ['session-0'] } },
       });
+    });
+
+    it('should wrap in $transaction when no tx provided', async () => {
+      mockPrismaService.session.findMany.mockResolvedValue([]);
+      mockPrismaService.session.create.mockResolvedValue({ id: 'session-1' });
+
+      await service.createSession({
+        userId: 'user-1',
+        hashedRefreshToken: 'hashed-token',
+      });
+
+      expect(mockPrismaService.$transaction).toHaveBeenCalledWith(
+        expect.any(Function),
+      );
+    });
+
+    it('should not call $transaction when tx is provided', async () => {
+      const txClient = {
+        session: {
+          findMany: jest.fn().mockResolvedValue([]),
+          create: jest.fn().mockResolvedValue({ id: 'session-1' }),
+          deleteMany: jest.fn(),
+        },
+      };
+
+      await service.createSession(
+        {
+          userId: 'user-1',
+          hashedRefreshToken: 'hashed-token',
+        },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        txClient as any,
+      );
+
+      expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+      expect(txClient.session.create).toHaveBeenCalled();
     });
   });
 

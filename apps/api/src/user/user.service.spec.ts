@@ -37,7 +37,12 @@ const mockPrisma = {
     findUnique: jest.fn(),
     upsert: jest.fn(),
   },
+  $transaction: jest.fn(),
 };
+
+mockPrisma.$transaction.mockImplementation(
+  (fn: (client: typeof mockPrisma) => unknown) => fn(mockPrisma),
+);
 
 const mockCache = {
   get: jest.fn(),
@@ -123,6 +128,26 @@ describe('UserService', () => {
 
       expect(result).toEqual({ id: 'user-2', ...input });
       expect(mockPrisma.user.create).toHaveBeenCalledWith({ data: input });
+    });
+  });
+
+  describe('validateEmail', () => {
+    it('should use a transaction for atomicity', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const bcrypt = require('bcrypt') as { compare: jest.Mock };
+      jest.spyOn(bcrypt, 'compare').mockResolvedValue(true);
+
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...mockUser,
+        verificationToken: 'hashed-token',
+      });
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+
+      await service.validateEmail('test@example.com', 'raw-token');
+
+      expect(mockPrisma.$transaction).toHaveBeenCalledWith(
+        expect.any(Function),
+      );
     });
   });
 

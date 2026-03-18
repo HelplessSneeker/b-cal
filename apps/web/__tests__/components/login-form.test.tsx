@@ -93,6 +93,51 @@ describe('LoginForm', () => {
     });
   });
 
+  it('login with ?from=//evil.com redirects to /', async () => {
+    searchParamsMap = { from: '//evil.com' };
+    loginMock.mockResolvedValue({ success: true });
+    const user = userEvent.setup();
+    render(<LoginForm />);
+
+    await user.type(screen.getByLabelText('Email'), 'alice@example.com');
+    await user.type(screen.getByLabelText('Password'), 'password123!');
+    await user.click(screen.getByRole('button', { name: 'Login' }));
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/');
+    });
+  });
+
+  it('login with ?from=https://evil.com redirects to /', async () => {
+    searchParamsMap = { from: 'https://evil.com' };
+    loginMock.mockResolvedValue({ success: true });
+    const user = userEvent.setup();
+    render(<LoginForm />);
+
+    await user.type(screen.getByLabelText('Email'), 'alice@example.com');
+    await user.type(screen.getByLabelText('Password'), 'password123!');
+    await user.click(screen.getByRole('button', { name: 'Login' }));
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/');
+    });
+  });
+
+  it('login with ?from=/settings redirects to /settings', async () => {
+    searchParamsMap = { from: '/settings' };
+    loginMock.mockResolvedValue({ success: true });
+    const user = userEvent.setup();
+    render(<LoginForm />);
+
+    await user.type(screen.getByLabelText('Email'), 'alice@example.com');
+    await user.type(screen.getByLabelText('Password'), 'password123!');
+    await user.click(screen.getByRole('button', { name: 'Login' }));
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/settings');
+    });
+  });
+
   it('successful signup redirects to /check-email', async () => {
     signupMock.mockResolvedValue({ success: true });
     const user = userEvent.setup();

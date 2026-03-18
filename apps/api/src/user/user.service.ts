@@ -66,30 +66,32 @@ export class UserService {
   }
 
   async validateEmail(email: string, verificationToken: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { email },
+      });
+
+      const isMatch = user?.verificationToken
+        ? await bcrypt.compare(verificationToken, user.verificationToken)
+        : false;
+
+      if (!user || !isMatch) {
+        this.logger.error(
+          `Email validation failed: invalid token for user ${user?.id ?? 'unknown'}`,
+        );
+        throw new BadRequestException(t('error.invalidOrExpiredToken'));
+      }
+
+      await tx.user.update({
+        where: { id: user.id },
+        data: {
+          verificationToken: null,
+          emailVerified: true,
+        },
+      });
+
+      return user.id;
     });
-
-    const isMatch = user?.verificationToken
-      ? await bcrypt.compare(verificationToken, user.verificationToken)
-      : false;
-
-    if (!user || !isMatch) {
-      this.logger.error(
-        `Email validation failed: invalid token for user ${user?.id ?? 'unknown'}`,
-      );
-      throw new BadRequestException(t('error.invalidOrExpiredToken'));
-    }
-
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        verificationToken: null,
-        emailVerified: true,
-      },
-    });
-
-    return user.id;
   }
 
   async setPasswordResetToken(email: string, token: string) {

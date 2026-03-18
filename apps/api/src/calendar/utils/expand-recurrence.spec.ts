@@ -290,5 +290,21 @@ describe('expandRecurringEntry', () => {
 
       expect(occurrences).toHaveLength(3);
     });
+
+    it('should cap DAILY occurrences at 1000 for large windows', () => {
+      const longEntry = {
+        ...baseEntry,
+        recurrenceUntil: null,
+      };
+
+      const occurrences = expandRecurringEntry(
+        longEntry,
+        [],
+        new Date('2026-03-01T00:00:00.000Z'),
+        new Date('2030-03-01T00:00:00.000Z'), // 4-year window
+      );
+
+      expect(occurrences).toHaveLength(1000);
+    });
   });
 });

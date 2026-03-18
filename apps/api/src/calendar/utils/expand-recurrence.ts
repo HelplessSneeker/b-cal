@@ -55,6 +55,8 @@ const DAY_NAMES = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
 
 const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 
+const MAX_OCCURRENCES = 1000;
+
 function addDays(date: Date, days: number): Date {
   const result = new Date(date);
   result.setUTCDate(result.getUTCDate() + days);
@@ -91,17 +93,24 @@ function generateCandidateDates(
     const allowedDays = new Set(
       entry.recurrenceByDay.split(',').map((d) => DAY_NAMES.indexOf(d)),
     );
-    // Start from the entry's start date or the window start, whichever is earlier
-    // We need to start from entryStart to correctly iterate through all matching days
-    let cursor = new Date(entryStart);
-    while (cursor <= windowEnd) {
-      if (cursor >= windowStart && allowedDays.has(cursor.getUTCDay())) {
-        dates.push(new Date(cursor));
-      } else if (cursor < windowStart && allowedDays.has(cursor.getUTCDay())) {
-        // Skip, before window
+    // Find the Sunday of the entry's start week
+    let weekStart = new Date(entryStart);
+    weekStart = addDays(weekStart, -weekStart.getUTCDay());
+
+    while (weekStart <= windowEnd && dates.length < MAX_OCCURRENCES) {
+      for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+        const candidate = addDays(weekStart, dayOffset);
+        if (candidate < entryStart) continue;
+        if (candidate > windowEnd) break;
+        if (
+          candidate >= windowStart &&
+          allowedDays.has(candidate.getUTCDay())
+        ) {
+          dates.push(new Date(candidate));
+          if (dates.length >= MAX_OCCURRENCES) break;
+        }
       }
-      cursor = addDays(cursor, 1);
-      // Safety: cap at window end + 1 day
+      weekStart = addDays(weekStart, 7);
     }
     return dates;
   }
@@ -109,7 +118,7 @@ function generateCandidateDates(
   let cursor = new Date(entryStart);
   let monthCount = 0;
 
-  while (cursor <= windowEnd) {
+  while (cursor <= windowEnd && dates.length < MAX_OCCURRENCES) {
     if (cursor >= windowStart) {
       dates.push(new Date(cursor));
     }
@@ -170,6 +179,8 @@ export function expandRecurringEntry(
   const occurrences: VirtualOccurrence[] = [];
 
   for (const candidateDate of candidateDates) {
+    if (occurrences.length >= MAX_OCCURRENCES) break;
+
     const dateKey = candidateDate.toISOString();
     const exception = exceptionMap.get(dateKey);
 

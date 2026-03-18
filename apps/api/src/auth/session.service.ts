@@ -37,36 +37,40 @@ export class SessionService {
     },
     tx?: Prisma.TransactionClient,
   ) {
-    const client = tx ?? this.prisma;
-
-    // Enforce session cap
-    const sessions = await client.session.findMany({
-      where: { userId: data.userId },
-      orderBy: { lastUsedAt: 'asc' },
-      select: { id: true },
-    });
-
-    if (sessions.length >= SESSION_MAX_SESSIONS) {
-      const toDelete = sessions.slice(
-        0,
-        sessions.length - SESSION_MAX_SESSIONS + 1,
-      );
-      await client.session.deleteMany({
-        where: { id: { in: toDelete.map((s) => s.id) } },
+    const doWork = async (client: Prisma.TransactionClient) => {
+      // Enforce session cap
+      const sessions = await client.session.findMany({
+        where: { userId: data.userId },
+        orderBy: { lastUsedAt: 'asc' },
+        select: { id: true },
       });
-    }
 
-    return client.session.create({
-      data: {
-        ...(data.id && { id: data.id }),
-        userId: data.userId,
-        refreshToken: data.hashedRefreshToken,
-        deviceName: this.parseDeviceName(data.userAgent),
-        ipAddress: data.ipAddress,
-        userAgent: data.userAgent,
-        expiresAt: new Date(Date.now() + SESSION_MAX_AGE_MS),
-      },
-    });
+      if (sessions.length >= SESSION_MAX_SESSIONS) {
+        const toDelete = sessions.slice(
+          0,
+          sessions.length - SESSION_MAX_SESSIONS + 1,
+        );
+        await client.session.deleteMany({
+          where: { id: { in: toDelete.map((s) => s.id) } },
+        });
+      }
+
+      return client.session.create({
+        data: {
+          ...(data.id && { id: data.id }),
+          userId: data.userId,
+          refreshToken: data.hashedRefreshToken,
+          deviceName: this.parseDeviceName(data.userAgent),
+          ipAddress: data.ipAddress,
+          userAgent: data.userAgent,
+          expiresAt: new Date(Date.now() + SESSION_MAX_AGE_MS),
+        },
+      });
+    };
+
+    return tx
+      ? doWork(tx)
+      : this.prisma.$transaction((txClient) => doWork(txClient));
   }
 
   async findById(sessionId: string) {

@@ -14,6 +14,7 @@ import {
   PrismaHealthIndicator,
 } from '@nestjs/terminus';
 import { PrismaService } from '../prisma/prisma.service';
+import { RedisHealthIndicator } from './redis-health.indicator';
 
 @Controller('health')
 @SkipThrottle()
@@ -26,6 +27,7 @@ export class HealthController {
     private prisma: PrismaService,
     private memory: MemoryHealthIndicator,
     private disk: DiskHealthIndicator,
+    private redis: RedisHealthIndicator,
   ) {}
 
   @Get()
@@ -41,6 +43,7 @@ export class HealthController {
             path: '/',
             thresholdPercent: 0.9,
           }),
+        () => this.redis.isHealthy('redis'),
       ]);
     } catch (error) {
       if (error instanceof Error && 'response' in error) {

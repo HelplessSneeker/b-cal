@@ -10,6 +10,7 @@ import { JwtRefreshStrategy } from './strategy/jwt-refresh.strategy';
 import { AuthController } from './auth.controller';
 import { MailModule } from 'src/mail/mail.module';
 import { SessionService } from './session.service';
+import { SessionCleanupService } from './session-cleanup.service';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { SessionService } from './session.service';
   providers: [
     AuthService,
     SessionService,
+    SessionCleanupService,
     LocalStrategy,
     JwtStrategy,
     JwtRefreshStrategy,

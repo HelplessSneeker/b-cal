@@ -47,6 +47,7 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
+  @@index([userId, lastUsedAt])
 }
 
 model CalendarEntry {
@@ -85,6 +86,8 @@ model CalendarEntry {
   @@index([endDate, startDate])
   @@index([recurrenceFrequency])
   @@index([calendarId])
+  @@index([userId, startDate])
+  @@index([userId, recurrenceFrequency])
 }
 
 model RecurrenceException {

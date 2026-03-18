@@ -77,8 +77,15 @@ export function LoginForm({
         router.push('/check-email');
       } else {
         const raw = searchParams.get('from') ?? '/';
-        const redirectTo =
-          raw.startsWith('/') && !raw.startsWith('//') ? raw : '/';
+        let redirectTo = '/';
+        try {
+          const target = new URL(raw, window.location.origin);
+          if (target.origin === window.location.origin) {
+            redirectTo = target.pathname + target.search + target.hash;
+          }
+        } catch {
+          // Invalid URL, fall back to '/'
+        }
         router.push(redirectTo);
         router.refresh();
       }

@@ -5,6 +5,7 @@ import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { BullModule } from '@nestjs/bullmq';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { createKeyv } from '@keyv/redis';
 import { validate } from './config/env.validation';
 import { CalendarModule } from './calendar/calendar.module';
@@ -18,6 +19,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from './health/health.module';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { CacheShutdownService } from './common/cache-shutdown.service';
 import {
   reqSerializer,
   resSerializer,
@@ -31,6 +33,7 @@ const REQUEST_ID_HEADER = 'X-Request-Id';
 @Module({
   imports: [
     SentryModule.forRoot(),
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({ validate }),
     BullModule.forRootAsync({
       imports: [ConfigModule],
@@ -139,6 +142,7 @@ const REQUEST_ID_HEADER = 'X-Request-Id';
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    CacheShutdownService,
   ],
 })
 export class AppModule {}
