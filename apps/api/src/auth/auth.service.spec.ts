@@ -8,7 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
-import { MailService } from 'src/mail/mail.service';
+import { MailQueueService } from 'src/mail/mail-queue.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SessionService } from './session.service';
 import { JwtUser } from './types';
@@ -46,9 +46,9 @@ const mockJwtService = {
   verify: jest.fn(),
 };
 
-const mockMailService = {
-  sendVerificationEmail: jest.fn(),
-  sendPasswordResetEmail: jest.fn(),
+const mockMailQueueService = {
+  enqueueVerificationEmail: jest.fn(),
+  enqueuePasswordResetEmail: jest.fn(),
 };
 
 const mockPrismaService = {
@@ -78,7 +78,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: UserService, useValue: mockUserService },
         { provide: JwtService, useValue: mockJwtService },
-        { provide: MailService, useValue: mockMailService },
+        { provide: MailQueueService, useValue: mockMailQueueService },
         // eslint-disable-next-line
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: SessionService, useValue: mockSessionService },
@@ -171,7 +171,9 @@ describe('AuthService', () => {
         email: 'new@example.com',
         emailVerified: false,
       });
-      mockMailService.sendVerificationEmail.mockResolvedValue(undefined);
+      mockMailQueueService.enqueueVerificationEmail.mockResolvedValue(
+        undefined,
+      );
       mockSessionService.createSession.mockResolvedValue({ id: 'session-1' });
 
       const result = await service.signup({
@@ -198,10 +200,9 @@ describe('AuthService', () => {
         }),
         mockPrismaService,
       );
-      expect(mockMailService.sendVerificationEmail).toHaveBeenCalledWith(
-        'new@example.com',
-        'verification-token',
-      );
+      expect(
+        mockMailQueueService.enqueueVerificationEmail,
+      ).toHaveBeenCalledWith('new@example.com', 'verification-token');
     });
 
     it('should throw ConflictException if email already exists', async () => {
@@ -338,7 +339,9 @@ describe('AuthService', () => {
         'hashed-new-verification-token',
       );
       mockUserService.updateVerificationToken.mockResolvedValue(undefined);
-      mockMailService.sendVerificationEmail.mockResolvedValue(undefined);
+      mockMailQueueService.enqueueVerificationEmail.mockResolvedValue(
+        undefined,
+      );
 
       await service.resendVerificationEmail('user-1');
 
@@ -352,10 +355,9 @@ describe('AuthService', () => {
         'user-1',
         'hashed-new-verification-token',
       );
-      expect(mockMailService.sendVerificationEmail).toHaveBeenCalledWith(
-        mockUser.email,
-        'new-verification-token',
-      );
+      expect(
+        mockMailQueueService.enqueueVerificationEmail,
+      ).toHaveBeenCalledWith(mockUser.email, 'new-verification-token');
     });
 
     it('should throw BadRequestException if user not found', async () => {
@@ -384,7 +386,9 @@ describe('AuthService', () => {
       mockJwtService.signAsync.mockResolvedValue('reset-token');
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-reset-token');
       mockUserService.setPasswordResetToken.mockResolvedValue(undefined);
-      mockMailService.sendPasswordResetEmail.mockResolvedValue(undefined);
+      mockMailQueueService.enqueuePasswordResetEmail.mockResolvedValue(
+        undefined,
+      );
 
       await service.requestPasswordReset('test@example.com');
 
@@ -398,10 +402,9 @@ describe('AuthService', () => {
         'test@example.com',
         'hashed-reset-token',
       );
-      expect(mockMailService.sendPasswordResetEmail).toHaveBeenCalledWith(
-        'test@example.com',
-        'reset-token',
-      );
+      expect(
+        mockMailQueueService.enqueuePasswordResetEmail,
+      ).toHaveBeenCalledWith('test@example.com', 'reset-token');
     });
 
     it('should silently return for non-existent user', async () => {
@@ -414,7 +417,9 @@ describe('AuthService', () => {
       );
       expect(mockJwtService.signAsync).not.toHaveBeenCalled();
       expect(mockUserService.setPasswordResetToken).not.toHaveBeenCalled();
-      expect(mockMailService.sendPasswordResetEmail).not.toHaveBeenCalled();
+      expect(
+        mockMailQueueService.enqueuePasswordResetEmail,
+      ).not.toHaveBeenCalled();
     });
   });
 

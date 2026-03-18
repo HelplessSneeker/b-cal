@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import * as path from 'path';
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { BullModule } from '@nestjs/bullmq';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { createKeyv } from '@keyv/redis';
@@ -30,6 +31,17 @@ const REQUEST_ID_HEADER = 'X-Request-Id';
   imports: [
     SentryModule.forRoot(),
     ConfigModule.forRoot({ validate }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          host: config.get<string>('REDIS_HOST'),
+          port: parseInt(config.get<string>('REDIS_PORT')!, 10),
+          password: config.get<string>('REDIS_PASSWORD'),
+        },
+      }),
+    }),
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],

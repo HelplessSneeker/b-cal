@@ -14,19 +14,20 @@ import { CalendarModule } from 'src/calendar/calendar.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserModule } from 'src/user/user.module';
+import { BullModule } from '@nestjs/bullmq';
 import { MailModule } from 'src/mail/mail.module';
-import { MailService } from 'src/mail/mail.service';
+import { MailQueueService } from 'src/mail/mail-queue.service';
 import cookieParser from 'cookie-parser';
 
-class TestMailService {
+class TestMailQueueService {
   lastVerificationTokenByEmail = new Map<string, string>();
   lastResetTokenByEmail = new Map<string, string>();
 
-  sendVerificationEmail(email: string, token: string) {
+  enqueueVerificationEmail(email: string, token: string) {
     this.lastVerificationTokenByEmail.set(email, token);
   }
 
-  sendPasswordResetEmail(email: string, token: string) {
+  enqueuePasswordResetEmail(email: string, token: string) {
     this.lastResetTokenByEmail.set(email, token);
   }
 }
@@ -53,6 +54,7 @@ class TestMailService {
     ThrottlerModule.forRoot({
       throttlers: [{ ttl: 60000, limit: 100000 }],
     }),
+    BullModule.forRoot({ connection: { host: 'localhost', port: 6379 } }),
     CalendarModule,
     PrismaModule,
     AuthModule,
@@ -107,7 +109,7 @@ function getCookieValue(cookies: string[], name: string): string | undefined {
 describe('AuthController (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
-  let testMailService: TestMailService;
+  let testMailQueueService: TestMailQueueService;
 
   const testUser = {
     email: `e2e-test-${Date.now()}@example.com`,
@@ -115,13 +117,13 @@ describe('AuthController (e2e)', () => {
   };
 
   beforeAll(async () => {
-    testMailService = new TestMailService();
+    testMailQueueService = new TestMailQueueService();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [TestAppModule],
     })
-      .overrideProvider(MailService)
-      .useValue(testMailService)
+      .overrideProvider(MailQueueService)
+      .useValue(testMailQueueService)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -164,7 +166,7 @@ describe('AuthController (e2e)', () => {
 
       // Verify the email so subsequent login tests can work
       const verificationToken =
-        testMailService.lastVerificationTokenByEmail.get(testUser.email);
+        testMailQueueService.lastVerificationTokenByEmail.get(testUser.email);
       await request(app.getHttpServer())
         .get('/auth/verify-email')
         .query({ token: verificationToken })
@@ -444,7 +446,9 @@ describe('AuthController (e2e)', () => {
     it('should verify email with valid token', async () => {
       // Get the plain verification token captured by TestMailService
       const verificationToken =
-        testMailService.lastVerificationTokenByEmail.get(verifyEmailUser.email);
+        testMailQueueService.lastVerificationTokenByEmail.get(
+          verifyEmailUser.email,
+        );
       expect(verificationToken).toBeDefined();
 
       // Confirm user is not yet verified
@@ -503,7 +507,9 @@ describe('AuthController (e2e)', () => {
       await request(app.getHttpServer()).post('/auth/signup').send(anotherUser);
 
       const verificationToken =
-        testMailService.lastVerificationTokenByEmail.get(anotherUser.email);
+        testMailQueueService.lastVerificationTokenByEmail.get(
+          anotherUser.email,
+        );
 
       // First verification should succeed
       await request(app.getHttpServer())
@@ -572,7 +578,9 @@ describe('AuthController (e2e)', () => {
     it('should return 400 when email is already verified', async () => {
       // Verify the email first using the captured plain token
       const verificationToken =
-        testMailService.lastVerificationTokenByEmail.get(unverifiedUser.email);
+        testMailQueueService.lastVerificationTokenByEmail.get(
+          unverifiedUser.email,
+        );
       await request(app.getHttpServer())
         .get('/auth/verify-email')
         .query({ token: verificationToken })
@@ -660,7 +668,7 @@ describe('AuthController (e2e)', () => {
 
       // Verify the email so the user can login after password reset
       const verificationToken =
-        testMailService.lastVerificationTokenByEmail.get(
+        testMailQueueService.lastVerificationTokenByEmail.get(
           resetPasswordUser.email,
         );
       await request(app.getHttpServer())
@@ -684,7 +692,7 @@ describe('AuthController (e2e)', () => {
         .send({ email: resetPasswordUser.email });
 
       // Get the plain reset token captured from the mail service
-      const resetToken = testMailService.lastResetTokenByEmail.get(
+      const resetToken = testMailQueueService.lastResetTokenByEmail.get(
         resetPasswordUser.email,
       );
       expect(resetToken).toBeDefined();
@@ -751,7 +759,7 @@ describe('AuthController (e2e)', () => {
         .post('/auth/forgot-password')
         .send({ email: resetPasswordUser.email });
 
-      const resetToken = testMailService.lastResetTokenByEmail.get(
+      const resetToken = testMailQueueService.lastResetTokenByEmail.get(
         resetPasswordUser.email,
       );
 
@@ -774,7 +782,7 @@ describe('AuthController (e2e)', () => {
         .post('/auth/forgot-password')
         .send({ email: resetPasswordUser.email });
 
-      const resetToken = testMailService.lastResetTokenByEmail.get(
+      const resetToken = testMailQueueService.lastResetTokenByEmail.get(
         resetPasswordUser.email,
       );
 
@@ -802,7 +810,9 @@ describe('AuthController (e2e)', () => {
 
       // Verify email first (not strictly needed for reset, but good practice)
       const verificationToken =
-        testMailService.lastVerificationTokenByEmail.get(anotherUser.email);
+        testMailQueueService.lastVerificationTokenByEmail.get(
+          anotherUser.email,
+        );
       await request(app.getHttpServer())
         .get('/auth/verify-email')
         .query({ token: verificationToken });
@@ -812,7 +822,7 @@ describe('AuthController (e2e)', () => {
         .post('/auth/forgot-password')
         .send({ email: anotherUser.email });
 
-      const resetToken = testMailService.lastResetTokenByEmail.get(
+      const resetToken = testMailQueueService.lastResetTokenByEmail.get(
         anotherUser.email,
       );
 
@@ -849,7 +859,7 @@ describe('AuthController (e2e)', () => {
         .post('/auth/forgot-password')
         .send({ email: resetPasswordUser.email });
 
-      const resetToken = testMailService.lastResetTokenByEmail.get(
+      const resetToken = testMailQueueService.lastResetTokenByEmail.get(
         resetPasswordUser.email,
       );
 
@@ -874,7 +884,9 @@ describe('AuthController (e2e)', () => {
       // Create and verify user
       await request(app.getHttpServer()).post('/auth/signup').send(sessionUser);
       const verificationToken =
-        testMailService.lastVerificationTokenByEmail.get(sessionUser.email);
+        testMailQueueService.lastVerificationTokenByEmail.get(
+          sessionUser.email,
+        );
       await request(app.getHttpServer())
         .get('/auth/verify-email')
         .query({ token: verificationToken });
@@ -1010,7 +1022,7 @@ describe('AuthController (e2e)', () => {
         // Create and verify user
         await request(app.getHttpServer()).post('/auth/signup').send(capUser);
         const verificationToken =
-          testMailService.lastVerificationTokenByEmail.get(capUser.email);
+          testMailQueueService.lastVerificationTokenByEmail.get(capUser.email);
         await request(app.getHttpServer())
           .get('/auth/verify-email')
           .query({ token: verificationToken });

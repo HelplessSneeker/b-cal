@@ -13,7 +13,7 @@ import { SignupDto } from './dto/signup.dto';
 import { jwtConstants, saltRounds } from './constants';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { MailService } from 'src/mail/mail.service';
+import { MailQueueService } from 'src/mail/mail-queue.service';
 import { ChangePasswordDTO } from './dto/change-password.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SessionService } from './session.service';
@@ -26,7 +26,7 @@ export class AuthService {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
-    private mailService: MailService,
+    private mailQueueService: MailQueueService,
     private prisma: PrismaService,
     private sessionService: SessionService,
   ) {}
@@ -157,7 +157,10 @@ export class AuthService {
       return { user, tokens: { access_token, refresh_token } };
     });
 
-    await this.mailService.sendVerificationEmail(email, verificationToken);
+    await this.mailQueueService.enqueueVerificationEmail(
+      email,
+      verificationToken,
+    );
 
     this.logger.log(`User signed up: ${user.id}`);
     return tokens;
@@ -221,7 +224,10 @@ export class AuthService {
       user.id,
       hashedVerificationToken,
     );
-    await this.mailService.sendVerificationEmail(user.email, verificationToken);
+    await this.mailQueueService.enqueueVerificationEmail(
+      user.email,
+      verificationToken,
+    );
     this.logger.log(`Verification email resent: ${user.id}`);
   }
 
@@ -260,7 +266,7 @@ export class AuthService {
     const hashedResetToken = await bcrypt.hash(resetToken, saltRounds);
 
     await this.userService.setPasswordResetToken(email, hashedResetToken);
-    await this.mailService.sendPasswordResetEmail(email, resetToken);
+    await this.mailQueueService.enqueuePasswordResetEmail(email, resetToken);
     this.logger.log(`Password reset requested: ${user.id}`);
   }
 

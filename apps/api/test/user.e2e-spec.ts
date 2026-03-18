@@ -14,18 +14,19 @@ import { CalendarModule } from 'src/calendar/calendar.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserModule } from 'src/user/user.module';
+import { BullModule } from '@nestjs/bullmq';
 import { MailModule } from 'src/mail/mail.module';
-import { MailService } from 'src/mail/mail.service';
+import { MailQueueService } from 'src/mail/mail-queue.service';
 import cookieParser from 'cookie-parser';
 
-class TestMailService {
+class TestMailQueueService {
   lastVerificationTokenByEmail = new Map<string, string>();
 
-  sendVerificationEmail(email: string, token: string) {
+  enqueueVerificationEmail(email: string, token: string) {
     this.lastVerificationTokenByEmail.set(email, token);
   }
 
-  async sendPasswordResetEmail() {}
+  async enqueuePasswordResetEmail() {}
 }
 
 @Module({
@@ -50,6 +51,7 @@ class TestMailService {
     ThrottlerModule.forRoot({
       throttlers: [{ ttl: 60000, limit: 100000 }],
     }),
+    BullModule.forRoot({ connection: { host: 'localhost', port: 6379 } }),
     CalendarModule,
     PrismaModule,
     AuthModule,
@@ -76,16 +78,16 @@ function extractCookies(response: request.Response): string[] {
 describe('UserController (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
-  let testMailService: TestMailService;
+  let testMailQueueService: TestMailQueueService;
 
   beforeAll(async () => {
-    testMailService = new TestMailService();
+    testMailQueueService = new TestMailQueueService();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [TestAppModule],
     })
-      .overrideProvider(MailService)
-      .useValue(testMailService)
+      .overrideProvider(MailQueueService)
+      .useValue(testMailQueueService)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -146,7 +148,7 @@ describe('UserController (e2e)', () => {
       await request(app.getHttpServer()).post('/auth/signup').send(testUser);
 
       const verificationToken =
-        testMailService.lastVerificationTokenByEmail.get(testUser.email);
+        testMailQueueService.lastVerificationTokenByEmail.get(testUser.email);
       await request(app.getHttpServer())
         .get('/auth/verify-email')
         .query({ token: verificationToken });
@@ -219,7 +221,7 @@ describe('UserController (e2e)', () => {
       await request(app.getHttpServer()).post('/auth/signup').send(testUser);
 
       const verificationToken =
-        testMailService.lastVerificationTokenByEmail.get(testUser.email);
+        testMailQueueService.lastVerificationTokenByEmail.get(testUser.email);
       await request(app.getHttpServer())
         .get('/auth/verify-email')
         .query({ token: verificationToken });
@@ -262,9 +264,11 @@ describe('UserController (e2e)', () => {
       await request(app.getHttpServer()).post('/auth/signup').send(otherUser);
 
       const deleteVerificationToken =
-        testMailService.lastVerificationTokenByEmail.get(userToDelete.email);
+        testMailQueueService.lastVerificationTokenByEmail.get(
+          userToDelete.email,
+        );
       const otherVerificationToken =
-        testMailService.lastVerificationTokenByEmail.get(otherUser.email);
+        testMailQueueService.lastVerificationTokenByEmail.get(otherUser.email);
 
       await request(app.getHttpServer())
         .get('/auth/verify-email')

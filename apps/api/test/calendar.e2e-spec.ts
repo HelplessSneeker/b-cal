@@ -14,18 +14,19 @@ import { CalendarModule } from 'src/calendar/calendar.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserModule } from 'src/user/user.module';
+import { BullModule } from '@nestjs/bullmq';
 import { MailModule } from 'src/mail/mail.module';
-import { MailService } from 'src/mail/mail.service';
+import { MailQueueService } from 'src/mail/mail-queue.service';
 import cookieParser from 'cookie-parser';
 
-class TestMailService {
+class TestMailQueueService {
   lastVerificationTokenByEmail = new Map<string, string>();
 
-  sendVerificationEmail(email: string, token: string) {
+  enqueueVerificationEmail(email: string, token: string) {
     this.lastVerificationTokenByEmail.set(email, token);
   }
 
-  async sendPasswordResetEmail() {}
+  async enqueuePasswordResetEmail() {}
 }
 
 @Module({
@@ -50,6 +51,7 @@ class TestMailService {
     ThrottlerModule.forRoot({
       throttlers: [{ ttl: 60000, limit: 100000 }],
     }),
+    BullModule.forRoot({ connection: { host: 'localhost', port: 6379 } }),
     CalendarModule,
     PrismaModule,
     AuthModule,
@@ -115,7 +117,7 @@ async function findEntryByTitle(
 describe('CalendarController (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
-  let testMailService: TestMailService;
+  let testMailQueueService: TestMailQueueService;
 
   const testUser = {
     email: `calendar-e2e-${Date.now()}@example.com`,
@@ -132,13 +134,13 @@ describe('CalendarController (e2e)', () => {
   let userId: string;
 
   beforeAll(async () => {
-    testMailService = new TestMailService();
+    testMailQueueService = new TestMailQueueService();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [TestAppModule],
     })
-      .overrideProvider(MailService)
-      .useValue(testMailService)
+      .overrideProvider(MailQueueService)
+      .useValue(testMailQueueService)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -159,7 +161,7 @@ describe('CalendarController (e2e)', () => {
 
     // Verify the test user's email
     const testVerificationToken =
-      testMailService.lastVerificationTokenByEmail.get(testUser.email);
+      testMailQueueService.lastVerificationTokenByEmail.get(testUser.email);
     await request(app.getHttpServer())
       .get('/auth/verify-email')
       .query({ token: testVerificationToken });
@@ -180,7 +182,7 @@ describe('CalendarController (e2e)', () => {
 
     // Verify the other user's email
     const otherVerificationToken =
-      testMailService.lastVerificationTokenByEmail.get(otherUser.email);
+      testMailQueueService.lastVerificationTokenByEmail.get(otherUser.email);
     await request(app.getHttpServer())
       .get('/auth/verify-email')
       .query({ token: otherVerificationToken });
