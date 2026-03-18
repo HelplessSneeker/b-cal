@@ -21,4 +21,10 @@ export class MailQueueService {
     await this.mailQueue.add(MAIL_JOB_SEND, data);
     this.logger.debug(`Enqueued password reset email for ${email}`);
   }
+
+  async enqueueReminderEmail(email: string, title: string, startDate: string) {
+    const data: MailJobData = { type: 'reminder', email, title, startDate };
+    await this.mailQueue.add(MAIL_JOB_SEND, data);
+    this.logger.debug(`Enqueued reminder email for ${email}`);
+  }
 }

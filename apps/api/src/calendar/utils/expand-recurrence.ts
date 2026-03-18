@@ -23,6 +23,9 @@ interface RecurringEntry {
   recurrenceFrequency: string;
   recurrenceByDay: string | null;
   recurrenceUntil: Date | null;
+  reminderType: string | null;
+  reminderAmount: number | null;
+  reminderUnit: string | null;
   createdAt: Date;
   updatedAt: Date | null;
 }
@@ -40,6 +43,9 @@ export interface VirtualOccurrence {
   recurrenceFrequency: string;
   recurrenceByDay: string | null;
   recurrenceUntil: Date | null;
+  reminderType: string | null;
+  reminderAmount: number | null;
+  reminderUnit: string | null;
   originalDate: Date;
   createdAt: Date;
   updatedAt: Date | null;
@@ -191,6 +197,9 @@ export function expandRecurringEntry(
       recurrenceFrequency: entry.recurrenceFrequency,
       recurrenceByDay: entry.recurrenceByDay,
       recurrenceUntil: entry.recurrenceUntil,
+      reminderType: entry.reminderType,
+      reminderAmount: entry.reminderAmount,
+      reminderUnit: entry.reminderUnit,
       originalDate: candidateDate,
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt,

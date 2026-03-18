@@ -30,6 +30,13 @@ export class MailProcessor extends WorkerHost {
             job.data.token,
           );
           break;
+        case 'reminder':
+          await this.mailService.sendReminderEmail(
+            job.data.email,
+            job.data.title,
+            job.data.startDate,
+          );
+          break;
       }
 
       this.logger.log(`Mail job ${job.id} completed successfully`);

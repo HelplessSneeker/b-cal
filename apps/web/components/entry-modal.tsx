@@ -30,6 +30,7 @@ import {
   formatDateTimeLocal,
   parseDateTimeLocal,
 } from '@/lib/calendar/time-utils';
+import { X } from 'lucide-react';
 import {
   createEntry as createEntryApi,
   updateEntry as updateEntryApi,
@@ -37,6 +38,8 @@ import {
   type RecurrenceFrequency,
   type EditScope,
   type CreateEntryInput,
+  type ReminderType,
+  type ReminderUnit,
 } from '@/lib/api/calendar';
 
 const WEEKDAY_KEYS = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'] as const;
@@ -128,6 +131,17 @@ function EntryForm({
       : '',
   );
 
+  const [hasReminder, setHasReminder] = useState(!!editingEntry?.reminderType);
+  const [reminderType, setReminderType] = useState<ReminderType>(
+    (editingEntry?.reminderType as ReminderType) ?? 'EMAIL',
+  );
+  const [reminderAmount, setReminderAmount] = useState(
+    editingEntry?.reminderAmount ?? 15,
+  );
+  const [reminderUnit, setReminderUnit] = useState<ReminderUnit>(
+    (editingEntry?.reminderUnit as ReminderUnit) ?? 'MINUTES',
+  );
+
   const isMultiDay = useMemo(() => {
     if (!startDate || !endDate) return false;
     return startDate.split('T')[0] !== endDate.split('T')[0];
@@ -180,6 +194,9 @@ function EntryForm({
       wholeDay: effectiveWholeDay,
       content: content.trim() || undefined,
       calendarId,
+      reminderType: hasReminder ? reminderType : null,
+      reminderAmount: hasReminder ? reminderAmount : null,
+      reminderUnit: hasReminder ? reminderUnit : null,
     };
 
     if (showRecurrence && recurrenceFrequency) {
@@ -302,6 +319,62 @@ function EntryForm({
             rows={3}
           />
         </Field>
+
+        {!hasReminder ? (
+          <button
+            type="button"
+            onClick={() => setHasReminder(true)}
+            className="text-primary text-sm font-medium hover:underline text-left"
+          >
+            {t('addReminder')}
+          </button>
+        ) : (
+          <Field>
+            <div className="flex items-center gap-2">
+              <select
+                value={reminderType}
+                onChange={(e) =>
+                  setReminderType(e.target.value as ReminderType)
+                }
+                className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-9 rounded-md border px-2 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
+              >
+                <option value="EMAIL">{t('reminderTypeEmail')}</option>
+              </select>
+              <Input
+                type="number"
+                min={1}
+                max={10080}
+                value={reminderAmount}
+                onChange={(e) =>
+                  setReminderAmount(parseInt(e.target.value, 10) || 1)
+                }
+                className="w-20"
+              />
+              <select
+                value={reminderUnit}
+                onChange={(e) =>
+                  setReminderUnit(e.target.value as ReminderUnit)
+                }
+                className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-9 rounded-md border px-2 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
+              >
+                <option value="MINUTES">{t('reminderMinutes')}</option>
+                <option value="HOURS">{t('reminderHours')}</option>
+                <option value="DAYS">{t('reminderDays')}</option>
+              </select>
+              <span className="text-muted-foreground text-sm">
+                {t('reminderBefore')}
+              </span>
+              <button
+                type="button"
+                onClick={() => setHasReminder(false)}
+                className="text-muted-foreground hover:text-foreground ml-auto"
+                title={t('removeReminder')}
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+          </Field>
+        )}
 
         {showRecurrence && (
           <>
@@ -517,6 +590,9 @@ export function EntryModal() {
           recurrenceFrequency: recurrence?.frequency,
           recurrenceByDay: recurrence?.byDay,
           recurrenceUntil: recurrence?.until,
+          reminderType: entry.reminderType as CreateEntryInput['reminderType'],
+          reminderAmount: entry.reminderAmount,
+          reminderUnit: entry.reminderUnit as CreateEntryInput['reminderUnit'],
         };
         const created = await createEntryApi(input);
         if (recurrence) {

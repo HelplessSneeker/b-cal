@@ -49,7 +49,14 @@
     "frequencyChangeHint": "Die Änderung der Wiederholungsfrequenz gilt nur für diesen und zukünftige Termine. Vergangene Termine behalten ihren ursprünglichen Zeitplan.",
     "frequencyChangeConfirm": "Weiter",
     "calendar": "Kalender",
-    "calendarDefault": "Standard"
+    "calendarDefault": "Standard",
+    "addReminder": "Erinnerung hinzufügen",
+    "removeReminder": "Erinnerung entfernen",
+    "reminderTypeEmail": "E-Mail",
+    "reminderMinutes": "Minuten",
+    "reminderHours": "Stunden",
+    "reminderDays": "Tage",
+    "reminderBefore": "vorher"
   },
   "validation": {
     "titleRequired": "Titel ist erforderlich",

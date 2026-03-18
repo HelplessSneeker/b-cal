@@ -24,6 +24,7 @@ import {
 } from './common/logging/pino-serializers';
 import { AcceptLanguageResolver, I18nModule } from 'nestjs-i18n';
 import { defaultLocale } from '@b-cal/i18n/config';
+import { ReminderModule } from './reminder/reminder.module';
 
 const REQUEST_ID_HEADER = 'X-Request-Id';
 
@@ -126,6 +127,7 @@ const REQUEST_ID_HEADER = 'X-Request-Id';
     AuthModule,
     UserModule,
     MailModule,
+    ReminderModule,
     HealthModule,
   ],
   providers: [

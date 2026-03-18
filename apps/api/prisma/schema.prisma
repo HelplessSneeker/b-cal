@@ -69,7 +69,12 @@ model CalendarEntry {
   calendar   Calendar? @relation(fields: [calendarId], references: [id], onDelete: SetNull)
   calendarId String?
 
+  reminderType   String?
+  reminderAmount Int?
+  reminderUnit   String?
+
   recurrenceExceptions RecurrenceException[]
+  remindersSent        ReminderSent[]
 
   updatedAt DateTime? @updatedAt
   createdAt DateTime  @default(now())
@@ -116,6 +121,17 @@ model Calendar {
   createdAt DateTime  @default(now())
 
   @@index([userId])
+}
+
+model ReminderSent {
+  id              String        @id @default(uuid())
+  calendarEntry   CalendarEntry @relation(fields: [calendarEntryId], references: [id], onDelete: Cascade)
+  calendarEntryId String
+  occurrenceDate  DateTime
+  sentAt          DateTime      @default(now())
+
+  @@unique([calendarEntryId, occurrenceDate])
+  @@index([calendarEntryId])
 }
 
 model UserPreferences {

@@ -129,6 +129,32 @@ export class MailService {
     });
   }
 
+  async sendReminderEmail(
+    email: string,
+    title: string,
+    startDate: string,
+  ): Promise<nodemailer.SentMessageInfo> {
+    const formattedDate = new Date(startDate).toLocaleString('en-US', {
+      dateStyle: 'full',
+      timeStyle: 'short',
+    });
+    const calendarUrl = `${this.config.get<string>('FRONTEND_URL')}/`;
+
+    return this.sendMail({
+      from: this.getFromAddress(),
+      to: email,
+      subject: `Reminder: ${title}`,
+      html: this.buildEmailHtml({
+        heading: 'Upcoming Event',
+        description: `Your event <strong>${title}</strong> is starting at ${formattedDate}.`,
+        buttonText: 'Open Calendar',
+        buttonUrl: calendarUrl,
+        footerText:
+          'You are receiving this because you set a reminder for this event.',
+      }),
+    });
+  }
+
   private buildEmailHtml(options: {
     heading: string;
     description: string;

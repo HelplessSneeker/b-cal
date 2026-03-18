@@ -80,6 +80,9 @@ export interface CalendarEntry {
   recurrenceByDay?: string | null;
   recurrenceUntil?: Date | null;
   originalDate?: Date | null;
+  reminderType?: string | null;
+  reminderAmount?: number | null;
+  reminderUnit?: string | null;
 }
 
 interface LoadedRange {

@@ -17,6 +17,9 @@ interface EntryDTO {
   recurrenceByDay?: string | null;
   recurrenceUntil?: string | null;
   originalDate?: string | null;
+  reminderType?: string | null;
+  reminderAmount?: number | null;
+  reminderUnit?: string | null;
 }
 
 function toEntry(dto: EntryDTO): CalendarEntry {
@@ -33,8 +36,14 @@ function toEntry(dto: EntryDTO): CalendarEntry {
     recurrenceByDay: dto.recurrenceByDay ?? null,
     recurrenceUntil: dto.recurrenceUntil ? new Date(dto.recurrenceUntil) : null,
     originalDate: dto.originalDate ? new Date(dto.originalDate) : null,
+    reminderType: dto.reminderType ?? null,
+    reminderAmount: dto.reminderAmount ?? null,
+    reminderUnit: dto.reminderUnit ?? null,
   };
 }
+
+export type ReminderType = 'EMAIL';
+export type ReminderUnit = 'MINUTES' | 'HOURS' | 'DAYS';
 
 export interface CreateEntryInput {
   title: string;
@@ -46,6 +55,9 @@ export interface CreateEntryInput {
   recurrenceFrequency?: RecurrenceFrequency;
   recurrenceByDay?: string;
   recurrenceUntil?: string;
+  reminderType?: ReminderType | null;
+  reminderAmount?: number | null;
+  reminderUnit?: ReminderUnit | null;
 }
 
 function toCreateDTO(input: CreateEntryInput): Record<string, unknown> {
@@ -65,6 +77,15 @@ function toCreateDTO(input: CreateEntryInput): Record<string, unknown> {
   }
   if (input.recurrenceUntil) {
     dto.recurrenceUntil = input.recurrenceUntil;
+  }
+  if (input.reminderType) {
+    dto.reminderType = input.reminderType;
+    dto.reminderAmount = input.reminderAmount;
+    dto.reminderUnit = input.reminderUnit;
+  } else if (input.reminderType === null) {
+    dto.reminderType = null;
+    dto.reminderAmount = null;
+    dto.reminderUnit = null;
   }
   return dto;
 }
@@ -99,6 +120,15 @@ function toUpdateDTO(
     if (recurrence.until) {
       dto.recurrenceUntil = recurrence.until;
     }
+  }
+  if (entry.reminderType) {
+    dto.reminderType = entry.reminderType;
+    dto.reminderAmount = entry.reminderAmount;
+    dto.reminderUnit = entry.reminderUnit;
+  } else {
+    dto.reminderType = null;
+    dto.reminderAmount = null;
+    dto.reminderUnit = null;
   }
   return dto;
 }

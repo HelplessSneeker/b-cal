@@ -158,6 +158,13 @@ export class CalendarService {
       throw new BadRequestException(t('error.startDateBeforeEndDate'));
     }
 
+    // Clean up ReminderSent records when reminder is removed
+    if (updateData.reminderType === null) {
+      await this.prismaService.reminderSent.deleteMany({
+        where: { calendarEntryId: id },
+      });
+    }
+
     const entry = await this.prismaService.calendarEntry.update({
       where: {
         userId,
@@ -311,6 +318,12 @@ export class CalendarService {
                 where: { calendarEntryId: parentId },
               });
             }
+            // Clean up ReminderSent records when reminder is removed
+            if (updateData.reminderType === null) {
+              await tx.reminderSent.deleteMany({
+                where: { calendarEntryId: parentId },
+              });
+            }
             return tx.calendarEntry.update({
               where: { userId, id: parentId },
               data: updatePayload,
@@ -435,6 +448,18 @@ export class CalendarService {
                   ? updateData.recurrenceByDay
                   : parent.recurrenceByDay,
               recurrenceUntil: parent.recurrenceUntil,
+              reminderType:
+                updateData.reminderType !== undefined
+                  ? updateData.reminderType
+                  : parent.reminderType,
+              reminderAmount:
+                updateData.reminderAmount !== undefined
+                  ? updateData.reminderAmount
+                  : parent.reminderAmount,
+              reminderUnit:
+                updateData.reminderUnit !== undefined
+                  ? updateData.reminderUnit
+                  : parent.reminderUnit,
             },
           });
         });

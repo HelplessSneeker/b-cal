@@ -49,7 +49,14 @@
     "frequencyChangeHint": "Changing the repeat frequency will only apply to this and future events. Past events will keep their original schedule.",
     "frequencyChangeConfirm": "Continue",
     "calendar": "Calendar",
-    "calendarDefault": "Default"
+    "calendarDefault": "Default",
+    "addReminder": "Add Reminder",
+    "removeReminder": "Remove reminder",
+    "reminderTypeEmail": "Email",
+    "reminderMinutes": "minutes",
+    "reminderHours": "hours",
+    "reminderDays": "days",
+    "reminderBefore": "before"
   },
   "validation": {
     "titleRequired": "Title is required",

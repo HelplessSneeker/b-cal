@@ -3,18 +3,24 @@ import {
   IsBoolean,
   IsDateString,
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
   Matches,
+  Max,
   MaxLength,
+  Min,
   ValidateIf,
 } from 'class-validator';
 import { stripHtmlTags } from '../../common/utils/strip-html-tags';
 import { IsStartBeforeEnd } from '../validators/date-range.validator';
 import { IsRecurrenceValid } from '../validators/recurrence.validator';
+import { IsReminderValid } from '../validators/reminder.validator';
 import { RecurrenceFrequency } from '../enums/recurrence-frequency.enum';
+import { ReminderType } from '../enums/reminder-type.enum';
+import { ReminderUnit } from '../enums/reminder-unit.enum';
 
 export class CreateCalendarDto {
   @IsDateString()
@@ -67,4 +73,22 @@ export class CreateCalendarDto {
       : (value as string),
   )
   recurrenceUntil?: string;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsEnum(ReminderType)
+  @IsReminderValid()
+  reminderType?: ReminderType | null;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsInt()
+  @Min(1)
+  @Max(10080)
+  reminderAmount?: number | null;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsEnum(ReminderUnit)
+  reminderUnit?: ReminderUnit | null;
 }
