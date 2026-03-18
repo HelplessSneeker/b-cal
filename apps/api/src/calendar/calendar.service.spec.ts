@@ -483,7 +483,120 @@ describe('CalendarService', () => {
         const syntheticId = `${RECURRING_UUID}:2026-03-02T09:00:00.000Z`;
         await service.remove('user-1', syntheticId, EditScope.SINGLE);
 
-        expect(mockPrismaService.recurrenceException.upsert).toHaveBeenCalled();
+        // Verify the upsert sets isCancelled: true with correct identifiers
+        expect(
+          mockPrismaService.recurrenceException.upsert,
+        ).toHaveBeenCalledWith(
+          expect.objectContaining({
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            create: expect.objectContaining({
+              isCancelled: true,
+              calendarEntryId: RECURRING_UUID,
+              originalDate: new Date('2026-03-02T09:00:00.000Z'),
+            }),
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            update: expect.objectContaining({
+              isCancelled: true,
+            }),
+          }),
+        );
+      });
+
+      it('should throw BadRequestException for SINGLE scope without synthetic ID', async () => {
+        mockPrismaService.calendarEntry.findUnique.mockResolvedValue(
+          mockRecurringEntry,
+        );
+
+        await expect(
+          service.remove('user-1', RECURRING_UUID, EditScope.SINGLE),
+        ).rejects.toThrow(BadRequestException);
+      });
+
+      it('should truncate series with scope THIS_AND_FUTURE', async () => {
+        mockPrismaService.calendarEntry.findUnique.mockResolvedValue(
+          mockRecurringEntry,
+        );
+        const mockUpdate = jest.fn().mockResolvedValue(mockRecurringEntry);
+        const mockDeleteMany = jest.fn().mockResolvedValue({ count: 0 });
+        mockPrismaService.$transaction.mockImplementation(
+          // eslint-disable-next-line @typescript-eslint/require-await
+          async (fn: (tx: unknown) => unknown) =>
+            fn({
+              calendarEntry: { update: mockUpdate },
+              recurrenceException: { deleteMany: mockDeleteMany },
+            }),
+        );
+
+        const syntheticId = `${RECURRING_UUID}:2026-03-03T09:00:00.000Z`;
+        await service.remove('user-1', syntheticId, EditScope.THIS_AND_FUTURE);
+
+        // Should set recurrenceUntil to the day before the occurrence (March 2)
+        const expectedDayBefore = new Date('2026-03-03T09:00:00.000Z');
+        expectedDayBefore.setUTCDate(expectedDayBefore.getUTCDate() - 1);
+        expect(mockUpdate).toHaveBeenCalledWith({
+          where: { userId: 'user-1', id: RECURRING_UUID },
+          data: { recurrenceUntil: expectedDayBefore },
+        });
+
+        // Should delete future exceptions
+        expect(mockDeleteMany).toHaveBeenCalledWith({
+          where: {
+            calendarEntryId: RECURRING_UUID,
+            originalDate: { gte: new Date('2026-03-03T09:00:00.000Z') },
+          },
+        });
+      });
+
+      it('should delete entire series when THIS_AND_FUTURE targets first occurrence', async () => {
+        mockPrismaService.calendarEntry.findUnique.mockResolvedValue(
+          mockRecurringEntry,
+        );
+        mockPrismaService.calendarEntry.delete.mockResolvedValue(
+          mockRecurringEntry,
+        );
+
+        // Use the parent's start date as the occurrence date
+        const syntheticId = `${RECURRING_UUID}:2026-03-01T09:00:00.000Z`;
+        await service.remove('user-1', syntheticId, EditScope.THIS_AND_FUTURE);
+
+        // Should fall through to ALL scope and delete the parent
+        expect(mockPrismaService.calendarEntry.delete).toHaveBeenCalledWith({
+          where: { userId: 'user-1', id: RECURRING_UUID },
+        });
+      });
+
+      it('should throw BadRequestException for THIS_AND_FUTURE without synthetic ID', async () => {
+        mockPrismaService.calendarEntry.findUnique.mockResolvedValue(
+          mockRecurringEntry,
+        );
+
+        await expect(
+          service.remove('user-1', RECURRING_UUID, EditScope.THIS_AND_FUTURE),
+        ).rejects.toThrow(BadRequestException);
+      });
+
+      it('should throw NotFoundException when parent not found during recurring removal', async () => {
+        mockPrismaService.calendarEntry.findUnique.mockResolvedValue(null);
+
+        const syntheticId = `${RECURRING_UUID}:2026-03-02T09:00:00.000Z`;
+        await expect(
+          service.remove('user-1', syntheticId, EditScope.SINGLE),
+        ).rejects.toThrow(NotFoundException);
+      });
+
+      it('should default to ALL scope when scope is undefined for recurring entry', async () => {
+        mockPrismaService.calendarEntry.findUnique.mockResolvedValue(
+          mockRecurringEntry,
+        );
+        mockPrismaService.calendarEntry.delete.mockResolvedValue(
+          mockRecurringEntry,
+        );
+
+        await service.remove('user-1', RECURRING_UUID);
+
+        expect(mockPrismaService.calendarEntry.delete).toHaveBeenCalledWith({
+          where: { userId: 'user-1', id: RECURRING_UUID },
+        });
       });
     });
   });
