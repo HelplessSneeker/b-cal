@@ -51,7 +51,7 @@ export class MailService {
 
     this.logger.debug(`Ethereal User: ${testAccount.user}`);
     this.logger.debug(`Ethereal Pass: ${testAccount.pass}`);
-    this.logger.debug(`Preview URL: https://ethereal.email`);
+    this.logger.debug(`Base Preview URL: https://ethereal.email`);
 
     return nodemailer.createTransport({
       host: 'smtp.ethereal.email',
