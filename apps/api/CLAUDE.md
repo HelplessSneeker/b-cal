@@ -19,7 +19,7 @@ pnpm run prisma:generate                      # Regenerate Prisma client
 
 ## Architecture
 
-**Modules:** AppModule imports ConfigModule, LoggerModule (nestjs-pino), I18nModule (nestjs-i18n), ThrottlerModule, SentryModule, PrismaModule (global), AuthModule, UserModule, CalendarModule, MailModule, HealthModule.
+**Modules:** AppModule imports ConfigModule, ScheduleModule, BullModule (BullMQ with Redis), CacheModule (Redis-backed via `@keyv/redis`), LoggerModule (nestjs-pino), I18nModule (nestjs-i18n), ThrottlerModule, SentryModule, PrismaModule (global), AuthModule, UserModule, CalendarModule, CalendarsModule, MailModule, ReminderModule, HealthModule.
 
 ### File Structure
 
@@ -28,13 +28,15 @@ src/
 ├── auth/           # Auth controller, service, session service, strategies, guards, decorators, validators
 ├── calendar/       # CalendarController, CalendarService, DTOs, validators
 │   └── utils/      # expand-recurrence.ts (virtual occurrence generation), occurrence-id.ts (synthetic ID helpers)
+├── calendars/      # CalendarsController, CalendarsService, DTOs (named calendar management)
 ├── common/filters/ # GlobalExceptionFilter (Sentry-integrated, includes request ID in responses)
 ├── common/logging/ # Custom pino serializers (redact sensitive headers/query params)
 ├── common/utils/   # strip-html-tags, i18n helper (t() function)
 ├── config/         # env.validation.ts (runtime env var validation via class-validator)
 ├── csrf/           # CSRF protection config (double-submit cookie via csrf-csrf)
-├── health/         # HealthController, HealthModule (@nestjs/terminus)
-├── mail/           # MailModule, MailService (nodemailer)
+├── health/         # HealthController, HealthModule (@nestjs/terminus), RedisHealthIndicator
+├── mail/           # MailModule, MailService (nodemailer), MailQueueService, MailProcessor (BullMQ)
+├── reminder/       # ReminderModule, ReminderService (polls for due reminders), ReminderProcessor (BullMQ)
 ├── prisma/         # PrismaModule (global), PrismaService
 ├── user/           # UserController, UserService (account deletion, preferences)
 └── main.ts         # Bootstrap with CORS, cookies, validation pipe, Helmet, CSP, CSRF
@@ -60,16 +62,24 @@ src/
 ### User Endpoints (require JwtAuthGuard + EmailVerifiedGuard)
 
 - `DELETE /user` — delete user account, clears auth cookies
-- `GET /user/preferences` — get user preferences (language, timezone, theme, accentColor, weekStart, density)
+- `GET /user/preferences` — get user preferences (language, timezone, theme, accentColor, weekStart)
 - `PATCH /user/preferences` — update user preferences (all fields optional on update)
 
 ### Calendar Endpoints (require JwtAuthGuard + EmailVerifiedGuard)
 
-- `POST /calendar` — create entry (title, startDate, endDate required; content, wholeDay optional; recurrenceFrequency, recurrenceByDay, recurrenceUntil optional for recurring entries)
+- `POST /calendar` — create entry (title, startDate, endDate required; content, wholeDay, calendarId optional; recurrenceFrequency, recurrenceByDay, recurrenceUntil optional for recurring entries; reminderType, reminderAmount, reminderUnit optional for email reminders)
 - `GET /calendar` — list user's entries; optional `startDate`/`endDate` query params. Recurring entries are expanded into virtual occurrences with synthetic IDs.
 - `GET /calendar/:id` — get single entry; supports synthetic IDs for individual occurrences
 - `PATCH /calendar/:id` — update entry; accepts optional `scope` in body (SINGLE, THIS_AND_FUTURE, ALL) for recurring entries; supports synthetic IDs
 - `DELETE /calendar/:id` — delete entry; accepts optional `scope` query param for recurring entries; supports synthetic IDs
+
+### Calendars Endpoints (require JwtAuthGuard + EmailVerifiedGuard)
+
+- `POST /calendars` — create a named calendar (name, color required; max 5 per user)
+- `GET /calendars` — list all calendars for the current user
+- `GET /calendars/:id` — get a single calendar
+- `PATCH /calendars/:id` — update calendar (name, color)
+- `DELETE /calendars/:id` — delete calendar; optional `deleteEntries` query param to also delete associated entries
 
 ### Recurring Entries
 
@@ -81,6 +91,10 @@ Entries with `recurrenceFrequency` set (DAILY, WEEKLY, MONTHLY) are recurring. V
 - `SINGLE` — upserts a `RecurrenceException` with override fields or cancellation
 - `THIS_AND_FUTURE` — truncates the original series at the occurrence date, creates a new series from that point
 - `ALL` — modifies the parent entry directly; clears exceptions if dates changed
+
+### Email Reminders
+
+Calendar entries support optional email reminders via `reminderType` (EMAIL), `reminderAmount` (1–10080), and `reminderUnit` (MINUTES, HOURS, DAYS). All three must be set together or all null (enforced by `@IsReminderValid()` validator). `ReminderService` uses `@nestjs/schedule` to poll every 60s for due reminders, computes fire times, and enqueues send jobs via BullMQ. `ReminderProcessor` sends emails through `MailQueueService.enqueueReminderEmail()`. `ReminderSent` model ensures idempotency; records older than 7 days are auto-cleaned.
 
 ### Session Management
 
@@ -100,7 +114,7 @@ Auth uses a `Session` model instead of storing a single refresh token on the Use
 
 ### Prisma Schema
 
-`User` (id, email, password, emailVerified, verificationToken, resetToken), `Session` (id, userId, refreshToken, deviceName, ipAddress, userAgent, lastUsedAt, expiresAt), `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId, recurrenceFrequency?, recurrenceByDay?, recurrenceUntil?), `RecurrenceException` (id, calendarEntryId, originalDate, isCancelled, title?, startDate?, endDate?, content?, wholeDay?; unique on calendarEntryId+originalDate, cascade delete), `UserPreferences` (userId, language, timezone, theme, accentColor, weekStart, density).
+`User` (id, email, password, emailVerified, verificationToken, resetToken), `Session` (id, userId, refreshToken, deviceName, ipAddress, userAgent, lastUsedAt, expiresAt), `Calendar` (id, name, color, userId), `CalendarEntry` (id, title, startDate, endDate, content, wholeDay, userId, calendarId?, recurrenceFrequency?, recurrenceByDay?, recurrenceUntil?, reminderType?, reminderAmount?, reminderUnit?), `RecurrenceException` (id, calendarEntryId, originalDate, isCancelled, title?, startDate?, endDate?, content?, wholeDay?; unique on calendarEntryId+originalDate, cascade delete), `ReminderSent` (id, calendarEntryId, occurrenceDate, sentAt; unique on calendarEntryId+occurrenceDate, cascade delete), `UserPreferences` (userId, language, timezone, theme, accentColor, weekStart).
 
 ### i18n
 
@@ -121,7 +135,7 @@ Global throttling via `@nestjs/throttler` (APP_GUARD) with two throttlers: defau
 
 ### Environment
 
-`PORT`, `FRONTEND_URL`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `DB_HOST`, `SECRET_KEY`, `REFRESH_SECRET_KEY`, `MAIL_SECRET_KEY`, `CSRF_SECRET` (min 32 chars each), `MAIL_HOST`/`MAIL_PORT`/`MAIL_USER`/`MAIL_PASS` (production only), `MAIL_FROM` (optional), `SENTRY_DSN` (optional), pool tuning vars (optional).
+`PORT`, `FRONTEND_URL`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `DB_HOST`, `SECRET_KEY`, `REFRESH_SECRET_KEY`, `MAIL_SECRET_KEY`, `CSRF_SECRET` (min 32 chars each), `MAIL_HOST`/`MAIL_PORT`/`MAIL_USER`/`MAIL_PASS` (production only), `MAIL_FROM` (optional), `REDIS_HOST`, `REDIS_PORT` (required), `REDIS_PASSWORD` (production only), `SENTRY_DSN` (optional), pool tuning vars (optional).
 
 ### Code Style
 

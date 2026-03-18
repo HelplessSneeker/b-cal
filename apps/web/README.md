@@ -16,11 +16,16 @@ The frontend for b-cal — a calendar application built with Next.js 16 and Reac
 - **Authentication** — Cookie-based auth with login, signup, email verification, and password reset
 - **Current Time Indicator** — Red line showing current time on today's view
 - **Silent Token Refresh** — Automatic 401 retry with deduplication
+- **Recurring Entries** — DAILY, WEEKLY, MONTHLY recurrence with scope editing (single/future/all)
+- **Email Reminders** — Configurable reminders (minutes/hours/days before) for calendar entries
+- **Named Calendars** — Multiple calendars with custom colors and visibility toggling
+- **Settings** — Profile, security (password change, sessions), appearance (theme, accent, week start), localization (language, timezone)
+- **i18n** — EN/DE translations via `next-intl`
 - **CSRF Protection** — Auto-fetches and sends CSRF tokens on state-changing requests
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) 22+
+- [Node.js](https://nodejs.org/) 24+
 - [pnpm](https://pnpm.io/) 10+
 - Running API backend (see [API README](../api/README.md))
 
@@ -67,6 +72,8 @@ app/                          # Next.js App Router pages
 ├── verify-email/             # Email verification callback
 ├── forgot-password/          # Password reset request
 ├── reset-password/           # Password reset form
+├── settings/                 # Settings (profile, security, appearance, localization)
+├── health/                   # Health check route
 └── page.tsx                  # Main calendar (protected)
 
 components/
@@ -78,7 +85,10 @@ components/
 │   ├── time-grid.tsx         # Scrollable 24h time grid
 │   ├── day-column.tsx        # Single day with time slots
 │   └── entry-block.tsx       # Positioned calendar entry
+├── settings/                  # Settings tabs (profile, security, appearance, localization)
+├── app-shell.tsx              # Layout with desktop icon rail and mobile bottom tab bar
 ├── AuthProvider.tsx           # Auth guard (redirects unauthenticated/unverified)
+├── ConnectionGuard.tsx        # Full-screen overlay when backend is unreachable
 ├── entry-modal.tsx            # Create/edit/delete entry dialog
 ├── login-form.tsx             # Shared login/signup form
 ├── verify-email-content.tsx   # Email verification handler
@@ -88,8 +98,8 @@ lib/
 ├── api/                      # Typed API layer (auth, calendar, CSRF)
 ├── calendar/                 # Date/time utils and layout constants
 ├── hooks/                    # Custom hooks (useCalendarData)
-├── stores/                   # Zustand stores (user, calendar)
-└── utils/                    # Helpers (cn, password validation)
+├── stores/                   # Zustand stores (user, calendar, calendars, connection)
+└── utils/                    # Helpers (cn, password validation, accent color)
 
 proxy.ts                      # Route protection + CSP nonce (Next.js 16 proxy)
 ```
@@ -104,7 +114,7 @@ proxy.ts                      # Route protection + CSP nonce (Next.js 16 proxy)
 
 ## Docker
 
-Multi-stage Dockerfile using Node 22 Alpine with Next.js standalone output. Requires `NEXT_PUBLIC_BACKEND_URL` as a build arg. Exposes port 8080.
+Multi-stage Dockerfile using Node 24 Alpine with Next.js standalone output. Requires `NEXT_PUBLIC_BACKEND_URL` as a build arg. Exposes port 8080.
 
 ```bash
 # Build from monorepo root

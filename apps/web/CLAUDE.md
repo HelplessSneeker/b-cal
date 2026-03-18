@@ -25,7 +25,7 @@ Next.js 16 application using the App Router with React 19 and TypeScript.
   - `components/app-shell.tsx` — Unified layout with desktop icon rail and mobile bottom tab bar (calendar, settings, user menu with logout)
   - `components/AuthProvider.tsx` — Wraps protected routes; fetches CSRF token, redirects unauthenticated users to `/login` and unverified users to `/check-email`
   - `components/ConnectionGuard.tsx` — Full-screen overlay when backend is unreachable; polls `/health` every 10s
-  - `components/entry-modal.tsx` — Entry creation/editing form with recurrence controls and scope dialog for recurring entries
+  - `components/entry-modal.tsx` — Entry creation/editing form with recurrence controls, email reminder settings, and scope dialog for recurring entries
 - `lib/api/` — Typed API layer with silent token refresh, CSRF handling, and `X-Request-Id` generation
 - `lib/stores/` — Zustand stores (userStore, calendarStore, connectionStore)
 - `lib/calendar/` — Calendar utilities (date, time, overlap, spanning calculations)
@@ -47,7 +47,8 @@ Next.js 16 application using the App Router with React 19 and TypeScript.
 ### State Management
 
 - `useUserStore` — Current user (id, email, emailVerified, createdAt, preferences)
-- `useCalendarStore` — Calendar view state (Day/Week/Month, default: Month), current date, entries (deduplicated via `entryMap`), loaded date ranges, cache versioning for invalidation, entry modal state. View and current date persisted to `localStorage` (keys `b-cal:view`, `b-cal:currentDate`). Entries include recurring fields: `isRecurring`, `recurrenceFrequency`, `recurrenceByDay`, `recurrenceUntil`, `originalDate`.
+- `useCalendarStore` — Calendar view state (Day/Week/Month, default: Month), current date, entries (deduplicated via `entryMap`), loaded date ranges, cache versioning for invalidation, entry modal state. View and current date persisted to `localStorage` (keys `b-cal:view`, `b-cal:currentDate`). Entries include recurring fields: `isRecurring`, `recurrenceFrequency`, `recurrenceByDay`, `recurrenceUntil`, `originalDate`; and reminder fields: `reminderType`, `reminderAmount`, `reminderUnit`.
+- `useCalendarsStore` — Named calendars (CRUD, visibility toggling). Hidden calendar IDs persisted to `localStorage` (key `b-cal:hiddenCalendarIds`).
 - `useConnectionStore` — Backend health tracking (consecutive failures threshold of 2, isBackendDown)
 
 ### Calendar
@@ -65,7 +66,7 @@ Uses `next-intl` with translations from the shared `@b-cal/i18n` package. Suppor
 `/settings` with tabs:
 - **Profile** — Account info, delete account
 - **Security** — Change password, session management (list/revoke sessions)
-- **Appearance** — Theme (light/dark/system), accent color, week start day, density (persisted via `PATCH /user/preferences`)
+- **Appearance** — Theme (light/dark/system), accent color, week start day (persisted via `PATCH /user/preferences`)
 - **Localization** — Language and timezone preferences (persisted via `PATCH /user/preferences`)
 
 ### Styling

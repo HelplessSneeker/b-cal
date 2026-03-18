@@ -17,9 +17,15 @@ A full-stack calendar application built as a Turborepo monorepo.
 
 - Calendar with **Day**, **Week**, and **Month** views
 - Create, edit, and delete calendar entries (timed and all-day)
+- Recurring entries (daily, weekly, monthly) with scope editing
+- Configurable email reminders for calendar entries
+- Named calendars with custom colors
 - Cookie-based JWT authentication (access + refresh tokens)
+- Multi-device session management
 - Email verification on signup
 - Password reset via email
+- User preferences (theme, accent color, language, timezone)
+- i18n (English and German)
 - Swagger API documentation (development)
 
 ## Project Structure
@@ -27,15 +33,17 @@ A full-stack calendar application built as a Turborepo monorepo.
 ```
 b-cal/
 ├── apps/
-│   ├── api/     # NestJS REST API      → localhost:3000
-│   └── web/     # Next.js frontend     → localhost:8080
-├── turbo.json   # Turborepo pipeline config
-└── package.json # Root scripts & shared devDependencies
+│   ├── api/          # NestJS REST API      → localhost:3000
+│   └── web/          # Next.js frontend     → localhost:8080
+├── packages/
+│   └── i18n/         # Shared i18n (EN/DE locales)
+├── turbo.json        # Turborepo pipeline config
+└── package.json      # Root scripts & shared devDependencies
 ```
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) 22+
+- [Node.js](https://nodejs.org/) 24+
 - [pnpm](https://pnpm.io/) 10+
 - [Docker](https://www.docker.com/)
 
@@ -50,13 +58,11 @@ pnpm install
 ### 2. Set up the API
 
 ```bash
-cd apps/api
-
 # Copy and configure environment variables
-cp .env.example .env  # Edit with your values
+cp apps/api/.env.example apps/api/.env  # Edit with your values
 
-# Start PostgreSQL
-docker compose up -d
+# Start PostgreSQL and Redis
+pnpm services:up
 
 # Generate Prisma client and run migrations
 pnpm prisma:generate
@@ -69,10 +75,8 @@ pnpm prisma:seed
 ### 3. Set up the web frontend
 
 ```bash
-cd apps/web
-
 # Copy and configure environment variables
-cp .env.example .env  # Set NEXT_PUBLIC_BACKEND_URL=http://localhost:3000
+cp apps/web/.env.example apps/web/.env  # Set NEXT_PUBLIC_BACKEND_URL=http://localhost:3000
 ```
 
 ### 4. Start development servers
@@ -105,8 +109,8 @@ This starts four services:
 | Service | Description | Port |
 |---|---|---|
 | `postgres` | PostgreSQL 16 database | 5432 |
-| `migrate` | Runs Prisma migrations, then exits | — |
-| `api` | NestJS API (waits for migrations) | 3000 |
+| `redis` | Redis 7 for caching and job queue | 6379 |
+| `api` | NestJS API (waits for postgres + redis) | 3000 |
 | `web` | Next.js frontend (waits for API health) | 8080 |
 
 Data is persisted in a `postgres_data` Docker volume. The API uses hardcoded dev secrets — **do not use this compose file in production**.
@@ -123,6 +127,8 @@ Data is persisted in a `postgres_data` Docker volume. The API uses hardcoded dev
 | `pnpm test` | Run all tests |
 | `pnpm format` | Format all packages with Prettier |
 | `pnpm format:check` | Check formatting without fixing |
+| `pnpm services:up` | Start all Docker services (PostgreSQL + Redis) |
+| `pnpm services:down` | Stop all Docker services |
 
 See individual app READMEs for app-specific commands.
 

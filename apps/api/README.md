@@ -15,24 +15,28 @@ The REST API for b-cal — a calendar application built with NestJS 11, Prisma, 
 - Email verification on signup (JWT token, 1 day expiry)
 - Password reset via email (JWT token, 1 hour expiry)
 - CSRF protection (double-submit cookie pattern)
-- Calendar entry CRUD with date range filtering
+- Calendar entry CRUD with date range filtering and recurring entries (DAILY, WEEKLY, MONTHLY)
+- Configurable email reminders with scheduled delivery via BullMQ
+- Named calendars with custom colors (max 5 per user)
+- Session management (multi-device, max 5 sessions per user)
+- Redis-backed caching and BullMQ job queue for async mail processing
 - Rate limiting (global + stricter auth endpoints)
 - Structured logging with request IDs (nestjs-pino)
-- Health checks (database, memory, disk)
+- Health checks (database, Redis, memory, disk)
 - Swagger API documentation (development only)
 - Sentry error monitoring
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) 22+
+- [Node.js](https://nodejs.org/) 24+
 - [pnpm](https://pnpm.io/) 10+
 - [Docker](https://www.docker.com/)
 
 ## Getting Started
 
 ```bash
-# Start PostgreSQL
-docker compose up -d
+# Start PostgreSQL and Redis (from monorepo root)
+pnpm services:up
 
 # Install dependencies (from monorepo root)
 pnpm install
@@ -100,6 +104,11 @@ MAIL_USER=user@example.com
 MAIL_PASS=password
 MAIL_FROM="b-cal <noreply@b-cal.dev>"  # optional
 
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=  # required in production
+
 # Optional
 SENTRY_DSN=
 DB_POOL_MAX=10
@@ -118,13 +127,17 @@ For e2e tests, create `.env.test` with `DB_NAME=b_cal_test` (copy the rest from 
 | `GET` | `/auth/csrf-token` | — | Get CSRF token (sets cookie) |
 | `POST` | `/auth/signup` | — | Register new user, sends verification email |
 | `POST` | `/auth/login` | — | Login with email and password |
-| `POST` | `/auth/refresh` | Refresh | Refresh access and refresh tokens |
-| `POST` | `/auth/logout` | JWT | Logout and invalidate refresh token |
+| `POST` | `/auth/refresh` | Refresh | Refresh access token (no rotation) |
+| `POST` | `/auth/logout` | JWT | Logout and delete session |
 | `GET` | `/auth/me` | JWT | Get current user info |
 | `POST` | `/auth/resend-verification` | JWT | Resend verification email |
 | `GET` | `/auth/verify-email?token=` | — | Verify email address |
 | `POST` | `/auth/forgot-password` | — | Request password reset email |
 | `POST` | `/auth/reset-password` | — | Reset password with token |
+| `POST` | `/auth/update-password` | JWT+Email | Change password (requires current password) |
+| `GET` | `/auth/sessions` | JWT+Email | List active sessions |
+| `DELETE` | `/auth/sessions/:id` | JWT+Email | Revoke a specific session |
+| `DELETE` | `/auth/sessions` | JWT+Email | Revoke all sessions |
 
 ### Calendar
 
@@ -145,12 +158,26 @@ All endpoints require JWT + verified email.
 | Method | Endpoint | Description |
 |---|---|---|
 | `DELETE` | `/user` | Delete user account |
+| `GET` | `/user/preferences` | Get user preferences |
+| `PATCH` | `/user/preferences` | Update user preferences |
+
+### Calendars
+
+All endpoints require JWT + verified email.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/calendars` | Create calendar (name, color) |
+| `GET` | `/calendars` | List user's calendars |
+| `GET` | `/calendars/:id` | Get single calendar |
+| `PATCH` | `/calendars/:id` | Update calendar |
+| `DELETE` | `/calendars/:id` | Delete calendar (optional `deleteEntries` query) |
 
 ### Health
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/health` | Database, memory, and disk health status |
+| `GET` | `/health` | Database, Redis, memory, and disk health status |
 
 ## Database Schema
 
@@ -161,10 +188,34 @@ All endpoints require JWT + verified email.
 | `id` | UUID | Primary key |
 | `email` | String | Unique, indexed |
 | `password` | String | bcrypt hashed |
-| `refreshToken` | String? | bcrypt hashed |
 | `emailVerified` | Boolean | Default `false` |
 | `verificationToken` | String? | JWT token |
 | `resetToken` | String? | bcrypt hashed |
+| `createdAt` | DateTime | Auto-set |
+| `updatedAt` | DateTime | Auto-updated |
+
+### Session
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID | Primary key |
+| `userId` | UUID | FK → User, indexed |
+| `refreshToken` | String | bcrypt hashed |
+| `deviceName` | String? | Parsed from user agent |
+| `ipAddress` | String? | Client IP |
+| `userAgent` | String? | Raw user agent |
+| `lastUsedAt` | DateTime | Default now |
+| `expiresAt` | DateTime | Indexed |
+| `createdAt` | DateTime | Auto-set |
+
+### Calendar
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID | Primary key |
+| `name` | String | Calendar name |
+| `color` | String | Display color |
+| `userId` | UUID | FK → User, indexed |
 | `createdAt` | DateTime | Auto-set |
 | `updatedAt` | DateTime | Auto-updated |
 
@@ -179,8 +230,49 @@ All endpoints require JWT + verified email.
 | `content` | String? | Max 5000 chars |
 | `wholeDay` | Boolean? | All-day event flag |
 | `userId` | UUID | FK → User, indexed |
+| `calendarId` | UUID? | FK → Calendar (set null on delete) |
+| `recurrenceFrequency` | String? | DAILY, WEEKLY, or MONTHLY |
+| `recurrenceByDay` | String? | Day selection for WEEKLY |
+| `recurrenceUntil` | DateTime? | Series end date |
+| `reminderType` | String? | Reminder type (EMAIL) |
+| `reminderAmount` | Int? | Amount before event (1–10080) |
+| `reminderUnit` | String? | MINUTES, HOURS, or DAYS |
 | `createdAt` | DateTime | Auto-set |
 | `updatedAt` | DateTime | Auto-updated |
+
+### RecurrenceException
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID | Primary key |
+| `calendarEntryId` | UUID | FK → CalendarEntry, cascade delete |
+| `originalDate` | DateTime | Unique with calendarEntryId |
+| `isCancelled` | Boolean | Default `false` |
+| `title` | String? | Override fields |
+| `startDate` | DateTime? | |
+| `endDate` | DateTime? | |
+| `content` | String? | |
+| `wholeDay` | Boolean? | |
+
+### ReminderSent
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID | Primary key |
+| `calendarEntryId` | UUID | FK → CalendarEntry, cascade delete |
+| `occurrenceDate` | DateTime | Unique with calendarEntryId |
+| `sentAt` | DateTime | Default now |
+
+### UserPreferences
+
+| Column | Type | Notes |
+|---|---|---|
+| `userId` | UUID | PK, FK → User |
+| `language` | String | e.g. en-US |
+| `timezone` | String | e.g. America/New_York |
+| `theme` | String | Default `system` |
+| `accentColor` | String | Default `blue` |
+| `weekStart` | String | Default `monday` |
 
 ## Database Seeding
 
@@ -195,7 +287,7 @@ The seed also creates 11 sample calendar entries distributed between both users.
 
 ## Docker
 
-Multi-stage Dockerfile using Node 22 Alpine. Includes a healthcheck on `/health`. Exposes port 3000.
+Multi-stage Dockerfile using Node 24 Alpine. Includes a healthcheck on `/health`. Exposes port 3000.
 
 ```bash
 # Build from monorepo root
