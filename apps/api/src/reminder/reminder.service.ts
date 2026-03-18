@@ -81,10 +81,6 @@ export class ReminderService implements OnModuleInit {
       include: { user: { select: { email: true } }, remindersSent: true },
     });
 
-    this.logger.debug(
-      `Poll: found ${nonRecurring.length} non-recurring entries with reminders`,
-    );
-
     for (const entry of nonRecurring) {
       const fireTime = this.computeFireTime(
         entry.startDate,
@@ -92,21 +88,12 @@ export class ReminderService implements OnModuleInit {
         entry.reminderUnit! as ReminderUnit,
       );
 
-      if (fireTime > now) {
-        this.logger.debug(
-          `Entry ${entry.id} "${entry.title}": fire time ${fireTime.toISOString()} is in the future, skipping`,
-        );
-        continue;
-      }
+      if (fireTime > now) continue;
 
       const alreadySent = entry.remindersSent.some(
         (rs) => rs.occurrenceDate.getTime() === entry.startDate.getTime(),
       );
       if (alreadySent) continue;
-
-      this.logger.log(
-        `Entry ${entry.id} "${entry.title}": reminder is due (fire time ${fireTime.toISOString()})`,
-      );
 
       await this.enqueueSend({
         calendarEntryId: entry.id,
