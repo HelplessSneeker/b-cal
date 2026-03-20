@@ -96,7 +96,7 @@ describe('MonthView', () => {
     expect(state.currentDate.getDate()).toBe(15);
   });
 
-  it('clicking empty cell opens entry modal at 9am', () => {
+  it('clicking empty cell opens entry modal at 9am with wholeDay true', () => {
     const openSpy = vi.fn();
     useCalendarStore.setState({
       currentDate,
@@ -105,15 +105,33 @@ describe('MonthView', () => {
     });
     render(<MonthView />);
 
-    // Find the day number "15" and click its parent
-    const daySpans = screen.getAllByText('15');
-    // Click the container div for day 15
-    const dayContainer = daySpans[0].closest('div[class*="cursor-pointer"]');
-    dayContainer!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    screen.getByTestId('month-cell-2025-06-15').click();
 
-    expect(openSpy).toHaveBeenCalledWith(undefined, expect.any(Date));
+    expect(openSpy).toHaveBeenCalledWith(undefined, expect.any(Date), true);
     const passedDate = openSpy.mock.calls[0][1] as Date;
     expect(passedDate.getHours()).toBe(9);
+  });
+
+  it('clicking cell with entries does not trigger openEntryModal', () => {
+    const openSpy = vi.fn();
+    const entry: CalendarEntry = {
+      id: 'block-click',
+      title: 'Busy Day',
+      startDate: new Date(2025, 5, 15, 10, 0),
+      endDate: new Date(2025, 5, 15, 11, 0),
+      wholeDay: false,
+    };
+    useCalendarStore.setState({
+      currentDate,
+      entries: [entry],
+      openEntryModal: openSpy,
+    });
+    render(<MonthView />);
+
+    // Cell with entries has no onClick handler
+    screen.getByTestId('month-cell-2025-06-15').click();
+
+    expect(openSpy).not.toHaveBeenCalled();
   });
 
   it('renders weekday headers starting from Sunday when weekStart is sunday', () => {

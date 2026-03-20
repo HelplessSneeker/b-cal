@@ -67,7 +67,7 @@ export function MonthView({ date }: { date?: Date }) {
   const handleCellClick = (date: Date) => {
     const startTime = new Date(date);
     startTime.setHours(9, 0, 0, 0);
-    openEntryModal(undefined, startTime);
+    openEntryModal(undefined, startTime, true);
   };
 
   return (

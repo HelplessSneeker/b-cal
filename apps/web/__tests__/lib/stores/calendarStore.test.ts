@@ -18,6 +18,7 @@ beforeEach(() => {
     isEntryModalOpen: false,
     editingEntry: null,
     defaultStartDate: null,
+    defaultWholeDay: false,
   });
   // Clear localStorage to avoid side effects
   vi.stubGlobal('localStorage', {
@@ -244,6 +245,7 @@ describe('calendarStore actions', () => {
     const state = useCalendarStore.getState();
     expect(state.isEntryModalOpen).toBe(true);
     expect(state.editingEntry).toEqual(entry);
+    expect(state.defaultWholeDay).toBe(false);
   });
 
   it('openEntryModal with no args opens for creation', () => {
@@ -251,16 +253,27 @@ describe('calendarStore actions', () => {
     const state = useCalendarStore.getState();
     expect(state.isEntryModalOpen).toBe(true);
     expect(state.editingEntry).toBeNull();
+    expect(state.defaultWholeDay).toBe(false);
   });
 
-  it('closeEntryModal resets modal state', () => {
-    useCalendarStore.getState().openEntryModal();
+  it('openEntryModal with defaultWholeDay sets flag', () => {
+    const start = new Date();
+    useCalendarStore.getState().openEntryModal(undefined, start, true);
+    const state = useCalendarStore.getState();
+    expect(state.isEntryModalOpen).toBe(true);
+    expect(state.defaultWholeDay).toBe(true);
+    expect(state.defaultStartDate).toEqual(start);
+  });
+
+  it('closeEntryModal resets modal state including defaultWholeDay', () => {
+    useCalendarStore.getState().openEntryModal(undefined, new Date(), true);
     useCalendarStore.getState().closeEntryModal();
 
     const state = useCalendarStore.getState();
     expect(state.isEntryModalOpen).toBe(false);
     expect(state.editingEntry).toBeNull();
     expect(state.defaultStartDate).toBeNull();
+    expect(state.defaultWholeDay).toBe(false);
   });
 
   it('addEntry adds a single entry', () => {
