@@ -17,17 +17,23 @@ export class MailProcessor extends WorkerHost {
     this.logger.log(`Processing mail job ${job.id} (type: ${job.data.type})`);
 
     try {
+      const { theme, accentColor } = job.data;
+
       switch (job.data.type) {
         case 'verification':
           await this.mailService.sendVerificationEmail(
             job.data.email,
             job.data.token,
+            theme,
+            accentColor,
           );
           break;
         case 'password-reset':
           await this.mailService.sendPasswordResetEmail(
             job.data.email,
             job.data.token,
+            theme,
+            accentColor,
           );
           break;
         case 'reminder':
@@ -35,6 +41,8 @@ export class MailProcessor extends WorkerHost {
             job.data.email,
             job.data.title,
             job.data.startDate,
+            theme,
+            accentColor,
           );
           break;
       }

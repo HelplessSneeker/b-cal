@@ -3,6 +3,42 @@ import { ConfigService } from '@nestjs/config';
 import { Transporter } from 'nodemailer';
 import * as nodemailer from 'nodemailer';
 
+const ACCENT_COLOR_HEX: Record<string, string> = {
+  blue: '#3b82f6',
+  indigo: '#6366f1',
+  violet: '#8b5cf6',
+  emerald: '#10b981',
+  amber: '#f59e0b',
+  slate: '#64748b',
+};
+
+interface ThemePalette {
+  bg: string;
+  cardBg: string;
+  text: string;
+  secondary: string;
+  border: string;
+  buttonText: string;
+}
+
+const LIGHT_PALETTE: ThemePalette = {
+  bg: '#f4f4f5',
+  cardBg: '#ffffff',
+  text: '#1a1f2e',
+  secondary: '#6b7280',
+  border: '#e5e7eb',
+  buttonText: '#fafafa',
+};
+
+const DARK_PALETTE: ThemePalette = {
+  bg: '#1a1a2e',
+  cardBg: '#27293d',
+  text: '#e4e4e7',
+  secondary: '#a1a1aa',
+  border: '#3a3c50',
+  buttonText: '#ffffff',
+};
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
@@ -88,6 +124,8 @@ export class MailService {
   async sendVerificationEmail(
     email: string,
     token: string,
+    theme?: string,
+    accentColor?: string,
   ): Promise<nodemailer.SentMessageInfo> {
     const verifyUrl = `${this.config.get<string>('FRONTEND_URL')}/verify-email?token=${token}`;
 
@@ -103,6 +141,8 @@ export class MailService {
         buttonUrl: verifyUrl,
         footerText:
           "If you didn't create an account, you can safely ignore this email.",
+        theme,
+        accentColor,
       }),
     });
   }
@@ -110,6 +150,8 @@ export class MailService {
   async sendPasswordResetEmail(
     email: string,
     token: string,
+    theme?: string,
+    accentColor?: string,
   ): Promise<nodemailer.SentMessageInfo> {
     const resetUrl = `${this.config.get<string>('FRONTEND_URL')}/reset-password?token=${token}`;
 
@@ -125,6 +167,8 @@ export class MailService {
         buttonUrl: resetUrl,
         footerText:
           "This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email.",
+        theme,
+        accentColor,
       }),
     });
   }
@@ -133,6 +177,8 @@ export class MailService {
     email: string,
     title: string,
     startDate: string,
+    theme?: string,
+    accentColor?: string,
   ): Promise<nodemailer.SentMessageInfo> {
     const formattedDate = new Date(startDate).toLocaleString('en-US', {
       dateStyle: 'full',
@@ -151,6 +197,8 @@ export class MailService {
         buttonUrl: calendarUrl,
         footerText:
           'You are receiving this because you set a reminder for this event.',
+        theme,
+        accentColor,
       }),
     });
   }
@@ -161,8 +209,14 @@ export class MailService {
     buttonText: string;
     buttonUrl: string;
     footerText?: string;
+    theme?: string;
+    accentColor?: string;
   }): string {
     const { heading, description, buttonText, buttonUrl, footerText } = options;
+
+    const palette = options.theme === 'dark' ? DARK_PALETTE : LIGHT_PALETTE;
+    const accent =
+      ACCENT_COLOR_HEX[options.accentColor ?? ''] ?? ACCENT_COLOR_HEX.blue;
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -171,30 +225,30 @@ export class MailService {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${heading}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f4f4f5;font-family:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:40px 20px;">
+<body style="margin:0;padding:0;background-color:${palette.bg};font-family:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${palette.bg};padding:40px 20px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+        <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background-color:${palette.cardBg};border:1px solid ${palette.border};border-radius:12px;overflow:hidden;">
           <!-- Header -->
           <tr>
             <td style="padding:32px 32px 0;text-align:center;">
-              <span style="font-size:20px;font-weight:700;color:#1a1f2e;letter-spacing:-0.5px;">b-cal</span>
+              <span style="font-size:20px;font-weight:700;color:${accent};letter-spacing:-0.5px;">b-cal</span>
             </td>
           </tr>
           <!-- Content -->
           <tr>
             <td style="padding:32px;">
-              <h1 style="margin:0 0 16px;font-size:22px;font-weight:600;color:#1a1f2e;text-align:center;">${heading}</h1>
-              <p style="margin:0 0 28px;font-size:15px;line-height:1.6;color:#1a1f2e;text-align:center;">${description}</p>
+              <h1 style="margin:0 0 16px;font-size:22px;font-weight:600;color:${palette.text};text-align:center;">${heading}</h1>
+              <p style="margin:0 0 28px;font-size:15px;line-height:1.6;color:${palette.text};text-align:center;">${description}</p>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <a href="${buttonUrl}" target="_blank" style="display:inline-block;padding:12px 32px;background-color:#1a1f2e;color:#fafafa;font-size:15px;font-weight:500;text-decoration:none;border-radius:8px;">${buttonText}</a>
+                    <a href="${buttonUrl}" target="_blank" style="display:inline-block;padding:12px 32px;background-color:${accent};color:${palette.buttonText};font-size:15px;font-weight:500;text-decoration:none;border-radius:8px;">${buttonText}</a>
                   </td>
                 </tr>
               </table>
-              <p style="margin:28px 0 0;font-size:13px;line-height:1.5;color:#6b7280;text-align:center;word-break:break-all;">Or copy this link: ${buttonUrl}</p>
+              <p style="margin:28px 0 0;font-size:13px;line-height:1.5;color:${palette.secondary};text-align:center;word-break:break-all;">Or copy this link: ${buttonUrl}</p>
             </td>
           </tr>${
             footerText
@@ -204,8 +258,8 @@ export class MailService {
             <td style="padding:0 32px 32px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="border-top:1px solid #e5e7eb;padding-top:20px;">
-                    <p style="margin:0;font-size:13px;line-height:1.5;color:#6b7280;text-align:center;">${footerText}</p>
+                  <td style="border-top:1px solid ${palette.border};padding-top:20px;">
+                    <p style="margin:0;font-size:13px;line-height:1.5;color:${palette.secondary};text-align:center;">${footerText}</p>
                   </td>
                 </tr>
               </table>

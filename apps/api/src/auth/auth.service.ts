@@ -224,9 +224,13 @@ export class AuthService {
       user.id,
       hashedVerificationToken,
     );
+
+    const prefs = await this.userService.findPreferences(userId);
     await this.mailQueueService.enqueueVerificationEmail(
       user.email,
       verificationToken,
+      prefs?.theme,
+      prefs?.accentColor,
     );
     this.logger.log(`Verification email resent: ${user.id}`);
   }
@@ -266,7 +270,14 @@ export class AuthService {
     const hashedResetToken = await bcrypt.hash(resetToken, saltRounds);
 
     await this.userService.setPasswordResetToken(email, hashedResetToken);
-    await this.mailQueueService.enqueuePasswordResetEmail(email, resetToken);
+
+    const prefs = await this.userService.findPreferences(user.id);
+    await this.mailQueueService.enqueuePasswordResetEmail(
+      email,
+      resetToken,
+      prefs?.theme,
+      prefs?.accentColor,
+    );
     this.logger.log(`Password reset requested: ${user.id}`);
   }
 

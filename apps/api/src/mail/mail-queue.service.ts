@@ -10,20 +10,55 @@ export class MailQueueService {
 
   constructor(@InjectQueue(MAIL_QUEUE_NAME) private mailQueue: Queue) {}
 
-  async enqueueVerificationEmail(email: string, token: string) {
-    const data: MailJobData = { type: 'verification', email, token };
+  async enqueueVerificationEmail(
+    email: string,
+    token: string,
+    theme?: string,
+    accentColor?: string,
+  ) {
+    const data: MailJobData = {
+      type: 'verification',
+      email,
+      token,
+      theme,
+      accentColor,
+    };
     await this.mailQueue.add(MAIL_JOB_SEND, data);
     this.logger.debug(`Enqueued verification email for ${email}`);
   }
 
-  async enqueuePasswordResetEmail(email: string, token: string) {
-    const data: MailJobData = { type: 'password-reset', email, token };
+  async enqueuePasswordResetEmail(
+    email: string,
+    token: string,
+    theme?: string,
+    accentColor?: string,
+  ) {
+    const data: MailJobData = {
+      type: 'password-reset',
+      email,
+      token,
+      theme,
+      accentColor,
+    };
     await this.mailQueue.add(MAIL_JOB_SEND, data);
     this.logger.debug(`Enqueued password reset email for ${email}`);
   }
 
-  async enqueueReminderEmail(email: string, title: string, startDate: string) {
-    const data: MailJobData = { type: 'reminder', email, title, startDate };
+  async enqueueReminderEmail(
+    email: string,
+    title: string,
+    startDate: string,
+    theme?: string,
+    accentColor?: string,
+  ) {
+    const data: MailJobData = {
+      type: 'reminder',
+      email,
+      title,
+      startDate,
+      theme,
+      accentColor,
+    };
     await this.mailQueue.add(MAIL_JOB_SEND, data);
     this.logger.debug(`Enqueued reminder email for ${email}`);
   }

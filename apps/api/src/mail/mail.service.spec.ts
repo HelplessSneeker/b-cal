@@ -323,6 +323,148 @@ describe('MailService', () => {
     });
   });
 
+  describe('sendReminderEmail', () => {
+    it('should send reminder email with correct content', async () => {
+      mockSendMail.mockResolvedValue({ messageId: '123' });
+
+      await service.sendReminderEmail(
+        'user@example.com',
+        'Team Standup',
+        '2026-03-20T10:00:00Z',
+      );
+
+      expect(mockSendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          from: 'test@b-cal.dev',
+          to: 'user@example.com',
+          subject: 'Reminder: Team Standup',
+        }),
+      );
+    });
+  });
+
+  describe('theme and accent color', () => {
+    it('should use light palette by default', async () => {
+      mockSendMail.mockResolvedValue({ messageId: '123' });
+
+      await service.sendVerificationEmail('user@example.com', 'token');
+
+      const sentHtml = String(
+        (mockSendMail.mock.calls[0] as [{ html: string }])[0].html,
+      );
+      // Light palette bg
+      expect(sentHtml).toContain('background-color:#f4f4f5');
+      // Light palette card bg
+      expect(sentHtml).toContain('background-color:#ffffff');
+      // Default blue accent on button
+      expect(sentHtml).toContain('background-color:#3b82f6');
+    });
+
+    it('should use dark palette when theme is dark', async () => {
+      mockSendMail.mockResolvedValue({ messageId: '123' });
+
+      await service.sendVerificationEmail('user@example.com', 'token', 'dark');
+
+      const sentHtml = String(
+        (mockSendMail.mock.calls[0] as [{ html: string }])[0].html,
+      );
+      // Dark palette bg
+      expect(sentHtml).toContain('background-color:#1a1a2e');
+      // Dark palette card bg
+      expect(sentHtml).toContain('background-color:#27293d');
+      // Dark text color
+      expect(sentHtml).toContain('color:#e4e4e7');
+      // Dark button text
+      expect(sentHtml).toContain('color:#ffffff');
+    });
+
+    it('should use light palette when theme is system', async () => {
+      mockSendMail.mockResolvedValue({ messageId: '123' });
+
+      await service.sendVerificationEmail(
+        'user@example.com',
+        'token',
+        'system',
+      );
+
+      const sentHtml = String(
+        (mockSendMail.mock.calls[0] as [{ html: string }])[0].html,
+      );
+      expect(sentHtml).toContain('background-color:#f4f4f5');
+      expect(sentHtml).toContain('background-color:#ffffff');
+    });
+
+    it('should apply accent color to button and logo', async () => {
+      mockSendMail.mockResolvedValue({ messageId: '123' });
+
+      await service.sendVerificationEmail(
+        'user@example.com',
+        'token',
+        undefined,
+        'violet',
+      );
+
+      const sentHtml = String(
+        (mockSendMail.mock.calls[0] as [{ html: string }])[0].html,
+      );
+      // Violet accent on button
+      expect(sentHtml).toContain('background-color:#8b5cf6');
+      // Violet accent on logo text
+      expect(sentHtml).toContain('color:#8b5cf6');
+    });
+
+    it('should fall back to blue accent for unknown accent color', async () => {
+      mockSendMail.mockResolvedValue({ messageId: '123' });
+
+      await service.sendVerificationEmail(
+        'user@example.com',
+        'token',
+        undefined,
+        'rainbow',
+      );
+
+      const sentHtml = String(
+        (mockSendMail.mock.calls[0] as [{ html: string }])[0].html,
+      );
+      expect(sentHtml).toContain('background-color:#3b82f6');
+    });
+
+    it('should apply theme and accent to password reset email', async () => {
+      mockSendMail.mockResolvedValue({ messageId: '123' });
+
+      await service.sendPasswordResetEmail(
+        'user@example.com',
+        'token',
+        'dark',
+        'emerald',
+      );
+
+      const sentHtml = String(
+        (mockSendMail.mock.calls[0] as [{ html: string }])[0].html,
+      );
+      expect(sentHtml).toContain('background-color:#1a1a2e');
+      expect(sentHtml).toContain('background-color:#10b981');
+    });
+
+    it('should apply theme and accent to reminder email', async () => {
+      mockSendMail.mockResolvedValue({ messageId: '123' });
+
+      await service.sendReminderEmail(
+        'user@example.com',
+        'Meeting',
+        '2026-03-20T10:00:00Z',
+        'dark',
+        'amber',
+      );
+
+      const sentHtml = String(
+        (mockSendMail.mock.calls[0] as [{ html: string }])[0].html,
+      );
+      expect(sentHtml).toContain('background-color:#1a1a2e');
+      expect(sentHtml).toContain('background-color:#f59e0b');
+    });
+  });
+
   describe('getFromAddress', () => {
     it('should use MAIL_FROM config when available', async () => {
       mockSendMail.mockResolvedValue({ messageId: '123' });

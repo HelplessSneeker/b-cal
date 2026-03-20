@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { MailQueueService } from 'src/mail/mail-queue.service';
+import { UserService } from 'src/user/user.service';
 import { REMINDER_QUEUE_NAME } from './reminder.constants';
 import { ReminderJobData } from './reminder-job.types';
 import { ReminderService } from './reminder.service';
@@ -15,6 +16,7 @@ export class ReminderProcessor extends WorkerHost {
     private reminderService: ReminderService,
     private prismaService: PrismaService,
     private mailQueueService: MailQueueService,
+    private userService: UserService,
   ) {
     super();
   }
@@ -27,8 +29,14 @@ export class ReminderProcessor extends WorkerHost {
         break;
 
       case 'send': {
-        const { calendarEntryId, occurrenceDate, email, title, startDate } =
-          job.data;
+        const {
+          calendarEntryId,
+          occurrenceDate,
+          userId,
+          email,
+          title,
+          startDate,
+        } = job.data;
 
         // Idempotency: create ReminderSent record (unique constraint prevents duplicates)
         try {
@@ -54,10 +62,13 @@ export class ReminderProcessor extends WorkerHost {
           throw error;
         }
 
+        const prefs = await this.userService.findPreferences(userId);
         await this.mailQueueService.enqueueReminderEmail(
           email,
           title,
           startDate,
+          prefs?.theme,
+          prefs?.accentColor,
         );
         this.logger.log(
           `Reminder sent for entry ${calendarEntryId} to ${email}`,

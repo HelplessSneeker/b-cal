@@ -33,6 +33,7 @@ const mockUserService = {
   findOne: jest.fn(),
   findById: jest.fn(),
   findByIdWithPreferences: jest.fn(),
+  findPreferences: jest.fn(),
   create: jest.fn(),
   updateVerificationToken: jest.fn(),
   validateEmail: jest.fn(),
@@ -339,6 +340,7 @@ describe('AuthService', () => {
         'hashed-new-verification-token',
       );
       mockUserService.updateVerificationToken.mockResolvedValue(undefined);
+      mockUserService.findPreferences.mockResolvedValue(null);
       mockMailQueueService.enqueueVerificationEmail.mockResolvedValue(
         undefined,
       );
@@ -355,9 +357,42 @@ describe('AuthService', () => {
         'user-1',
         'hashed-new-verification-token',
       );
+      expect(mockUserService.findPreferences).toHaveBeenCalledWith('user-1');
       expect(
         mockMailQueueService.enqueueVerificationEmail,
-      ).toHaveBeenCalledWith(mockUser.email, 'new-verification-token');
+      ).toHaveBeenCalledWith(
+        mockUser.email,
+        'new-verification-token',
+        undefined,
+        undefined,
+      );
+    });
+
+    it('should forward user theme and accentColor to verification email', async () => {
+      mockUserService.findById.mockResolvedValue(mockUser);
+      mockJwtService.signAsync.mockResolvedValue('new-verification-token');
+      (bcrypt.hash as jest.Mock).mockResolvedValue(
+        'hashed-new-verification-token',
+      );
+      mockUserService.updateVerificationToken.mockResolvedValue(undefined);
+      mockUserService.findPreferences.mockResolvedValue({
+        theme: 'dark',
+        accentColor: 'violet',
+      });
+      mockMailQueueService.enqueueVerificationEmail.mockResolvedValue(
+        undefined,
+      );
+
+      await service.resendVerificationEmail('user-1');
+
+      expect(
+        mockMailQueueService.enqueueVerificationEmail,
+      ).toHaveBeenCalledWith(
+        mockUser.email,
+        'new-verification-token',
+        'dark',
+        'violet',
+      );
     });
 
     it('should throw BadRequestException if user not found', async () => {
@@ -386,6 +421,7 @@ describe('AuthService', () => {
       mockJwtService.signAsync.mockResolvedValue('reset-token');
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-reset-token');
       mockUserService.setPasswordResetToken.mockResolvedValue(undefined);
+      mockUserService.findPreferences.mockResolvedValue(null);
       mockMailQueueService.enqueuePasswordResetEmail.mockResolvedValue(
         undefined,
       );
@@ -402,9 +438,40 @@ describe('AuthService', () => {
         'test@example.com',
         'hashed-reset-token',
       );
+      expect(mockUserService.findPreferences).toHaveBeenCalledWith('user-1');
       expect(
         mockMailQueueService.enqueuePasswordResetEmail,
-      ).toHaveBeenCalledWith('test@example.com', 'reset-token');
+      ).toHaveBeenCalledWith(
+        'test@example.com',
+        'reset-token',
+        undefined,
+        undefined,
+      );
+    });
+
+    it('should forward user theme and accentColor to password reset email', async () => {
+      mockUserService.findOne.mockResolvedValue(mockUser);
+      mockJwtService.signAsync.mockResolvedValue('reset-token');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-reset-token');
+      mockUserService.setPasswordResetToken.mockResolvedValue(undefined);
+      mockUserService.findPreferences.mockResolvedValue({
+        theme: 'dark',
+        accentColor: 'emerald',
+      });
+      mockMailQueueService.enqueuePasswordResetEmail.mockResolvedValue(
+        undefined,
+      );
+
+      await service.requestPasswordReset('test@example.com');
+
+      expect(
+        mockMailQueueService.enqueuePasswordResetEmail,
+      ).toHaveBeenCalledWith(
+        'test@example.com',
+        'reset-token',
+        'dark',
+        'emerald',
+      );
     });
 
     it('should silently return for non-existent user', async () => {
