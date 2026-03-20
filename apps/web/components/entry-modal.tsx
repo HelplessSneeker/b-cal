@@ -47,6 +47,7 @@ const WEEKDAY_KEYS = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'] as const;
 interface EntryFormProps {
   editingEntry: CalendarEntry | null;
   defaultStartDate: Date | null;
+  defaultWholeDay?: boolean;
   onSubmit: (
     entry: CalendarEntry,
     recurrence?: {
@@ -63,6 +64,7 @@ interface EntryFormProps {
 function EntryForm({
   editingEntry,
   defaultStartDate,
+  defaultWholeDay,
   onSubmit,
   onCancel,
   onDelete,
@@ -96,12 +98,12 @@ function EntryForm({
 
     return {
       title: '',
-      wholeDay: false,
+      wholeDay: defaultWholeDay ?? false,
       startDate: formatDateTimeLocal(start, timezone),
       endDate: formatDateTimeLocal(end, timezone),
       content: '',
     };
-  }, [editingEntry, defaultStartDate, timezone]);
+  }, [editingEntry, defaultStartDate, defaultWholeDay, timezone]);
 
   const [title, setTitle] = useState(initialValues.title);
   const [startDate, setStartDate] = useState(initialValues.startDate);
@@ -516,6 +518,7 @@ export function EntryModal() {
     isEntryModalOpen,
     editingEntry,
     defaultStartDate,
+    defaultWholeDay,
     closeEntryModal,
     addEntry,
     invalidateCache,
@@ -732,6 +735,7 @@ export function EntryModal() {
               key={formKey}
               editingEntry={editingEntry}
               defaultStartDate={defaultStartDate}
+              defaultWholeDay={defaultWholeDay}
               onSubmit={handleSubmit}
               onCancel={closeEntryModal}
               onDelete={editingEntry ? handleDelete : undefined}

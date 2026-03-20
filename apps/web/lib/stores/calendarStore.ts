@@ -128,6 +128,7 @@ interface CalendarState {
   isEntryModalOpen: boolean;
   editingEntry: CalendarEntry | null;
   defaultStartDate: Date | null;
+  defaultWholeDay: boolean;
   setView: (view: CalendarView) => void;
   setCurrentDate: (date: Date) => void;
   mergeEntries: (entries: CalendarEntry[]) => void;
@@ -137,7 +138,11 @@ interface CalendarState {
   clearCache: () => void;
   invalidateCache: () => void;
   navigate: (direction: -1 | 1) => void;
-  openEntryModal: (entry?: CalendarEntry, defaultStart?: Date) => void;
+  openEntryModal: (
+    entry?: CalendarEntry,
+    defaultStart?: Date,
+    defaultWholeDay?: boolean,
+  ) => void;
   closeEntryModal: () => void;
   addEntry: (entry: CalendarEntry) => void;
   updateEntry: (entry: CalendarEntry) => void;
@@ -155,6 +160,7 @@ export const useCalendarStore = create<CalendarState>((set) => ({
   isEntryModalOpen: false,
   editingEntry: null,
   defaultStartDate: null,
+  defaultWholeDay: false,
   setView: (view) => {
     storeValue('view', view);
     set({ view });
@@ -200,17 +206,19 @@ export const useCalendarStore = create<CalendarState>((set) => ({
       storeValue('currentDate', currentDate.toISOString());
       return { currentDate };
     }),
-  openEntryModal: (entry, defaultStart) =>
+  openEntryModal: (entry, defaultStart, defaultWholeDay) =>
     set({
       isEntryModalOpen: true,
       editingEntry: entry ?? null,
       defaultStartDate: defaultStart ?? null,
+      defaultWholeDay: defaultWholeDay ?? false,
     }),
   closeEntryModal: () =>
     set({
       isEntryModalOpen: false,
       editingEntry: null,
       defaultStartDate: null,
+      defaultWholeDay: false,
     }),
   addEntry: (entry) =>
     set((state) => {

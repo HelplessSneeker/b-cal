@@ -80,7 +80,19 @@ export function MonthWeekRow({
       const timedToShow = Math.min(dayTimed.length, freeRows.length);
       const hiddenCount = dayTimed.length - timedToShow + hiddenSpanning;
 
-      return { day, colIdx, dayTimed, freeRows, timedToShow, hiddenCount };
+      const hasAnyEntries =
+        dayTimed.length > 0 ||
+        spanningEntries.some((se) => entryOverlapsDay(se.entry, day));
+
+      return {
+        day,
+        colIdx,
+        dayTimed,
+        freeRows,
+        timedToShow,
+        hiddenCount,
+        hasAnyEntries,
+      };
     });
   }, [days, visibleSpanningEntries, spanningEntries, timedEntries]);
 
@@ -89,36 +101,32 @@ export function MonthWeekRow({
       className="relative flex min-h-0 flex-1 flex-col overflow-hidden border-b"
       data-testid="month-week-row"
     >
-      {/* Column borders */}
-      <div
-        className="pointer-events-none absolute inset-0 grid grid-cols-7"
-        aria-hidden="true"
-      >
-        {Array.from({ length: 7 }, (_, i) => (
+      {/* Column borders + empty cell click targets */}
+      <div className="absolute inset-0 grid grid-cols-7">
+        {dayData.map(({ day, hasAnyEntries }, i) => (
           <div
             key={i}
+            data-testid={`month-cell-${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`}
             className={cn(
               'border-l',
               i === 6 && 'border-r',
-              days[i].getMonth() !== currentMonth && 'bg-muted/50',
+              day.getMonth() !== currentMonth && 'bg-muted/50',
+              hasAnyEntries ? 'pointer-events-none' : 'cursor-pointer',
             )}
+            onClick={!hasAnyEntries ? () => onCellClick(day) : undefined}
           />
         ))}
       </div>
 
       {/* Day numbers */}
       <div className="grid grid-cols-7">
-        {days.map((day) => {
+        {dayData.map(({ day }) => {
           const isCurrentMonth = day.getMonth() === currentMonth;
           const isDayToday = isSameDay(day, today);
           return (
             <div
               key={day.toISOString()}
-              className={cn(
-                'cursor-pointer p-1',
-                !isCurrentMonth && 'text-muted-foreground',
-              )}
-              onClick={() => onCellClick(day)}
+              className={cn('p-1', !isCurrentMonth && 'text-muted-foreground')}
             >
               <span
                 className={cn(

@@ -78,6 +78,7 @@ export function resetStores() {
     isEntryModalOpen: false,
     editingEntry: null,
     defaultStartDate: null,
+    defaultWholeDay: false,
   });
   useConnectionStore.setState({
     consecutiveFailures: 0,
