@@ -167,6 +167,7 @@ export function CalendarManageDialog({
                       className="size-7"
                       onClick={cancelEdit}
                       disabled={isSubmitting}
+                      aria-label={tCommon('cancel')}
                     >
                       <X className="size-3.5" />
                     </Button>
@@ -176,6 +177,7 @@ export function CalendarManageDialog({
                       className="size-7"
                       onClick={handleSaveEdit}
                       disabled={isSubmitting || !editName.trim()}
+                      aria-label={tCommon('save')}
                     >
                       <Check className="size-3.5" />
                     </Button>
@@ -198,6 +200,7 @@ export function CalendarManageDialog({
                     size="icon"
                     className="size-7"
                     onClick={() => startEdit(cal)}
+                    aria-label={t('editCalendar')}
                   >
                     <Pencil className="size-3.5" />
                   </Button>
@@ -206,6 +209,7 @@ export function CalendarManageDialog({
                     size="icon"
                     className="size-7 text-destructive hover:text-destructive"
                     onClick={() => setDeleteTarget(cal)}
+                    aria-label={t('deleteCalendar')}
                   >
                     <Trash2 className="size-3.5" />
                   </Button>

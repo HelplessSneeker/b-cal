@@ -9,6 +9,7 @@ import { useUserStore } from '@/lib/stores/userStore';
 import { useConnectionStore } from '@/lib/stores/connectionStore';
 import { checkHealth } from '@/components/ConnectionGuard';
 import { useCalendarStore } from '@/lib/stores/calendarStore';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -18,6 +19,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Loading } from '@/components/ui/loading';
+import { AuthLayout } from '@/components/auth-layout';
 
 const RESEND_COOLDOWN_MS = 60_000;
 
@@ -83,17 +85,26 @@ export default function CheckEmailPage() {
 
   const handleResend = async () => {
     setResendLoading(true);
-    await resendVerification();
-    setResendLoading(false);
-    setCooldownEnd(Date.now() + RESEND_COOLDOWN_MS);
-    setNow(Date.now());
+    try {
+      await resendVerification();
+      setCooldownEnd(Date.now() + RESEND_COOLDOWN_MS);
+      setNow(Date.now());
+    } catch {
+      toast.error(t('resendFailed'));
+    } finally {
+      setResendLoading(false);
+    }
   };
 
   const handleLogout = async () => {
-    await logout();
-    clearUser();
-    clearCache();
-    router.push('/login');
+    try {
+      await logout();
+      clearUser();
+      clearCache();
+      router.push('/login');
+    } catch {
+      toast.error(t('logoutFailed'));
+    }
   };
 
   if (isLoading || (user && user.emailVerified)) {
@@ -101,42 +112,37 @@ export default function CheckEmailPage() {
   }
 
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('title')}</CardTitle>
-            <CardDescription>
-              {t.rich('description', {
-                email: () => (
-                  <span className="font-medium text-foreground">
-                    {user?.email}
-                  </span>
-                ),
-              })}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <Button
-              variant="outline"
-              disabled={resendLoading || cooldownRemaining > 0}
-              onClick={handleResend}
-            >
-              {resendLoading
-                ? t('sending')
-                : cooldownRemaining > 0
-                  ? t('resendIn', { seconds: cooldownRemaining })
-                  : t('resend')}
-            </Button>
-            <button
-              onClick={handleLogout}
-              className="text-center text-sm underline-offset-4 hover:underline"
-            >
-              {t('logout')}
-            </button>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <AuthLayout>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('title')}</CardTitle>
+          <CardDescription>
+            {t.rich('description', {
+              email: () => (
+                <span className="break-all font-medium text-foreground">
+                  {user?.email}
+                </span>
+              ),
+            })}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <Button
+            variant="outline"
+            disabled={resendLoading || cooldownRemaining > 0}
+            onClick={handleResend}
+          >
+            {resendLoading
+              ? t('sending')
+              : cooldownRemaining > 0
+                ? t('resendIn', { seconds: cooldownRemaining })
+                : t('resend')}
+          </Button>
+          <Button variant="link" onClick={handleLogout}>
+            {t('logout')}
+          </Button>
+        </CardContent>
+      </Card>
+    </AuthLayout>
   );
 }

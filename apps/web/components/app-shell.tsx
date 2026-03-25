@@ -94,8 +94,10 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent side="right" align="end">
-              <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
+            <DropdownMenuContent side="right" align="end" className="max-w-64">
+              <DropdownMenuLabel className="truncate">
+                {user?.email}
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOutIcon className="mr-2 size-4" />
@@ -146,8 +148,10 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
               <span>{t('nav.account')}</span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" side="top">
-            <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
+          <DropdownMenuContent align="end" side="top" className="max-w-64">
+            <DropdownMenuLabel className="truncate">
+              {user?.email}
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <LogOutIcon className="mr-2 size-4" />

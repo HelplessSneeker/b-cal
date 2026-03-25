@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { type CalendarEntry } from '@/lib/stores/calendarStore';
 import {
   computeSpanningEntries,
@@ -24,7 +24,7 @@ interface MonthWeekRowProps {
 
 const MAX_ENTRIES_PER_DAY = 3;
 
-export function MonthWeekRow({
+export const MonthWeekRow = memo(function MonthWeekRow({
   days,
   entries,
   currentMonth,
@@ -34,6 +34,10 @@ export function MonthWeekRow({
 }: MonthWeekRowProps) {
   const getColorClasses = useEntryColor();
   const today = useMemo(() => new Date(), []);
+  const dateFormatter = useMemo(
+    () => new Intl.DateTimeFormat(undefined, { dateStyle: 'full' }),
+    [],
+  );
 
   const wholeDayEntries = useMemo(
     () => entries.filter(isEffectiveWholeDay),
@@ -103,19 +107,37 @@ export function MonthWeekRow({
     >
       {/* Column borders + empty cell click targets */}
       <div className="absolute inset-0 grid grid-cols-7">
-        {dayData.map(({ day, hasAnyEntries }, i) => (
-          <div
-            key={i}
-            data-testid={`month-cell-${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`}
-            className={cn(
-              'border-l',
-              i === 6 && 'border-r',
-              day.getMonth() !== currentMonth && 'bg-muted/50',
-              hasAnyEntries ? 'pointer-events-none' : 'cursor-pointer',
-            )}
-            onClick={!hasAnyEntries ? () => onCellClick(day) : undefined}
-          />
-        ))}
+        {dayData.map(({ day, hasAnyEntries }, i) => {
+          const isInteractive = !hasAnyEntries;
+          return (
+            <div
+              key={i}
+              data-testid={`month-cell-${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`}
+              className={cn(
+                'border-l',
+                i === 6 && 'border-r',
+                day.getMonth() !== currentMonth && 'bg-muted/50',
+                isInteractive
+                  ? 'cursor-pointer outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:ring-inset'
+                  : 'pointer-events-none',
+              )}
+              {...(isInteractive
+                ? {
+                    role: 'button',
+                    tabIndex: 0,
+                    'aria-label': dateFormatter.format(day),
+                    onClick: () => onCellClick(day),
+                    onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onCellClick(day);
+                      }
+                    },
+                  }
+                : {})}
+            />
+          );
+        })}
       </div>
 
       {/* Day numbers */}
@@ -154,10 +176,12 @@ export function MonthWeekRow({
           {visibleSpanningEntries.map((se) => {
             const colors = getColorClasses(se.entry.calendarId);
             return (
-              <div
+              <button
+                type="button"
                 key={se.entry.id}
                 className={cn(
-                  'flex min-w-0 cursor-pointer items-center overflow-hidden px-1 text-xs font-medium transition-colors',
+                  'flex min-w-0 cursor-pointer items-center overflow-hidden px-1 text-left text-xs font-medium transition-colors',
+                  'outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]',
                   colors.bg,
                   colors.bgHover,
                   !se.continuesBefore &&
@@ -172,9 +196,10 @@ export function MonthWeekRow({
                   e.stopPropagation();
                   onEntryClick(se.entry);
                 }}
+                aria-label={se.entry.title}
               >
                 <span className="truncate">{se.entry.title}</span>
-              </div>
+              </button>
             );
           })}
 
@@ -222,4 +247,4 @@ export function MonthWeekRow({
       </div>
     </div>
   );
-}
+});

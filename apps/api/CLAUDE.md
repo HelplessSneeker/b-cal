@@ -108,7 +108,7 @@ Auth uses a `Session` model instead of storing a single refresh token on the Use
 
 **Custom decorators:** `@User()` — extracts JwtUser (`{ id, email, emailVerified, sessionId }`) from request.
 
-**Custom validators:** `@IsValidPassword()` (8+ chars, number, symbol), `@IsStartBeforeEnd()` (startDate <= endDate), `@IsRecurrenceValid()` (recurrenceByDay only with WEEKLY, recurrenceUntil >= startDate).
+**Custom validators:** `@IsValidPassword()` (8+ chars, number, symbol), `@IsStartBeforeEnd()` (startDate <= endDate), `@IsRecurrenceValid()` (recurrenceByDay only with WEEKLY, recurrenceUntil >= startDate), `@IsReminderValid()` (all three reminder fields must be set together or all null).
 
 **DTO max lengths:** email: 254, password: 128, title: 100, content: 5000. Calendar title/content sanitized via `stripHtmlTags`.
 

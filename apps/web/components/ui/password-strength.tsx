@@ -26,10 +26,22 @@ function getScore(password: string): number {
 const LEVEL_KEYS = ['weak', 'fair', 'good', 'strong'] as const;
 
 const LEVEL_META = [
-  { color: 'bg-red-500', segments: 1, textColor: 'text-red-500' },
-  { color: 'bg-orange-500', segments: 2, textColor: 'text-orange-500' },
-  { color: 'bg-blue-500', segments: 4, textColor: 'text-blue-500' },
-  { color: 'bg-green-500', segments: 5, textColor: 'text-green-500' },
+  {
+    color: 'bg-feedback-danger',
+    segments: 1,
+    textColor: 'text-feedback-danger',
+  },
+  {
+    color: 'bg-feedback-warning',
+    segments: 2,
+    textColor: 'text-feedback-warning',
+  },
+  { color: 'bg-feedback-info', segments: 4, textColor: 'text-feedback-info' },
+  {
+    color: 'bg-feedback-success',
+    segments: 5,
+    textColor: 'text-feedback-success',
+  },
 ] as const;
 
 const TOTAL_SEGMENTS = 5;
@@ -37,6 +49,7 @@ const TOTAL_SEGMENTS = 5;
 export function PasswordStrengthIndicator({
   password,
 }: PasswordStrengthIndicatorProps) {
+  const tStrength = useTranslations('auth.passwordStrength');
   const tChecks = useTranslations('auth.passwordStrength.checks');
   const tLevels = useTranslations('auth.passwordStrength.levels');
 
@@ -50,7 +63,14 @@ export function PasswordStrengthIndicator({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <div className="flex flex-1 gap-1">
+        <div
+          className="flex flex-1 gap-1"
+          role="meter"
+          aria-valuenow={score}
+          aria-valuemin={0}
+          aria-valuemax={4}
+          aria-label={tStrength('label')}
+        >
           {Array.from({ length: TOTAL_SEGMENTS }, (_, i) => (
             <div
               key={i}
@@ -73,7 +93,7 @@ export function PasswordStrengthIndicator({
           return (
             <li key={check.key} className="flex items-center gap-2 text-xs">
               {passed ? (
-                <CheckIcon className="size-3.5 text-green-500" />
+                <CheckIcon className="size-3.5 text-feedback-success" />
               ) : (
                 <CircleIcon className="text-muted-foreground size-3.5" />
               )}

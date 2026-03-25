@@ -84,7 +84,7 @@ Both apps have multi-stage Dockerfiles (`apps/api/Dockerfile`, `apps/web/Dockerf
 
 **Security**: Helmet (HSTS, strict CSP), per-request nonce CSP on the frontend, global rate limiting (60/60s default, 5/60s for auth, 3/5min for mail-sending), 1MB payload limit, Sentry with PII scrubbing, structured logging with sensitive field redaction.
 
-**Pre-commit Hooks**: Husky runs lint-staged (ESLint + Prettier) on commit.
+**Pre-commit Hooks**: Husky runs lint-staged (ESLint + Prettier) and all tests on commit.
 
 ## Environment
 
@@ -113,3 +113,22 @@ Both apps scrub PII before sending to Sentry (`sentry-before-send.ts`). The API 
 
 - `alice@example.com` / `password123!` (email verified, preferences: en-US, America/New_York)
 - `bob@example.com` / `password123!` (email verified, preferences: de-DE, Europe/Berlin)
+
+## Design Context
+
+**Users**: Individuals managing personal schedules, appointments, and reminders. They expect a fast, reliable, immediately familiar calendar app with no learning curve.
+
+**Brand Personality**: Bold, modern, confident. The interface communicates competence through crisp execution rather than visual noise.
+
+**Aesthetic Direction**: Classic & professional with elevated craft. Google Calendar is the primary reference for layout conventions and information hierarchy, but b-cal should feel more intentional — sharper typography (Geist), more deliberate spacing, and confident use of accent colors. Modern without being trendy.
+
+**Design Principles**:
+1. **Familiar first, then better** — Follow established calendar UX patterns. Users shouldn't think about how the app works, but should notice it feels better.
+2. **Confidence through clarity** — Strong typographic hierarchy, decisive spacing, purposeful color. Every element placed with intent.
+3. **Respect the user's choices** — Accent colors, themes, and language are first-class. Design should amplify, never fight, customization.
+4. **Density without clutter** — Embrace information density with clean alignment and consistent rhythm.
+5. **Accessible by default** — WCAG AA baseline. Focus states, keyboard navigation, and semantic HTML are non-negotiable.
+
+**Anti-patterns**: Overly playful/whimsical UIs, cluttered dashboards, skeuomorphic elements.
+
+**Stack**: Tailwind CSS v4 (OKLch tokens), shadcn/ui (new-york), Radix UI, Geist fonts, next-themes, CVA, lucide-react. See `.impeccable.md` for the full design context document.

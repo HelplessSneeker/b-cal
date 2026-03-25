@@ -23,13 +23,21 @@ type Theme = 'light' | 'dark' | 'system';
 type AccentColor = 'blue' | 'indigo' | 'violet' | 'emerald' | 'amber' | 'slate';
 type WeekStart = 'monday' | 'sunday' | 'saturday';
 
-const ACCENT_COLOR_KEYS: { key: AccentColor; color: string }[] = [
-  { key: 'blue', color: '#3b82f6' },
-  { key: 'indigo', color: '#6366f1' },
-  { key: 'violet', color: '#8b5cf6' },
-  { key: 'emerald', color: '#10b981' },
-  { key: 'amber', color: '#f59e0b' },
-  { key: 'slate', color: '#64748b' },
+const ACCENT_COLOR_KEYS: {
+  key: AccentColor;
+  color: string;
+  fgColor: string;
+}[] = [
+  { key: 'blue', color: 'oklch(0.546 0.245 262.881)', fgColor: 'white' },
+  { key: 'indigo', color: 'oklch(0.511 0.262 276.966)', fgColor: 'white' },
+  { key: 'violet', color: 'oklch(0.541 0.281 293.009)', fgColor: 'white' },
+  { key: 'emerald', color: 'oklch(0.596 0.145 163.225)', fgColor: 'white' },
+  {
+    key: 'amber',
+    color: 'oklch(0.666 0.179 58.318)',
+    fgColor: 'oklch(0.21 0.034 264.665)',
+  },
+  { key: 'slate', color: 'oklch(0.551 0.027 264.364)', fgColor: 'white' },
 ];
 
 const WEEK_START_KEYS: WeekStart[] = ['monday', 'sunday', 'saturday'];
@@ -38,14 +46,40 @@ const INITIAL_THEME: Theme = 'system';
 const INITIAL_ACCENT: AccentColor = 'blue';
 const INITIAL_WEEK_START: WeekStart = 'monday';
 
+/* OKLch values sourced from globals.css design tokens */
+const THEME_COLORS = {
+  light: {
+    bg: 'oklch(1 0 0)',
+    muted: 'oklch(0.967 0.003 264.542)',
+    border: 'oklch(0.928 0.006 264.531)',
+  },
+  dark: {
+    bg: 'oklch(0.13 0.028 261.692)',
+    muted: 'oklch(0.278 0.033 256.848)',
+    border: 'oklch(0.551 0.027 264.364)',
+  },
+};
+
 function ThemePreview({ theme }: { theme: Theme }) {
   if (theme === 'light') {
     return (
       <div className="flex h-20 w-full flex-col overflow-hidden rounded-md border">
-        <div className="flex-1 bg-white" />
-        <div className="flex gap-1 bg-gray-100 px-2 py-1.5">
-          <div className="h-1.5 w-6 rounded-full bg-gray-300" />
-          <div className="h-1.5 w-4 rounded-full bg-gray-300" />
+        <div
+          className="flex-1"
+          style={{ backgroundColor: THEME_COLORS.light.bg }}
+        />
+        <div
+          className="flex gap-1 px-2 py-1.5"
+          style={{ backgroundColor: THEME_COLORS.light.muted }}
+        >
+          <div
+            className="h-1.5 w-6 rounded-full"
+            style={{ backgroundColor: THEME_COLORS.light.border }}
+          />
+          <div
+            className="h-1.5 w-4 rounded-full"
+            style={{ backgroundColor: THEME_COLORS.light.border }}
+          />
         </div>
       </div>
     );
@@ -53,10 +87,22 @@ function ThemePreview({ theme }: { theme: Theme }) {
   if (theme === 'dark') {
     return (
       <div className="flex h-20 w-full flex-col overflow-hidden rounded-md border">
-        <div className="flex-1 bg-gray-900" />
-        <div className="flex gap-1 bg-gray-800 px-2 py-1.5">
-          <div className="h-1.5 w-6 rounded-full bg-gray-600" />
-          <div className="h-1.5 w-4 rounded-full bg-gray-600" />
+        <div
+          className="flex-1"
+          style={{ backgroundColor: THEME_COLORS.dark.bg }}
+        />
+        <div
+          className="flex gap-1 px-2 py-1.5"
+          style={{ backgroundColor: THEME_COLORS.dark.muted }}
+        >
+          <div
+            className="h-1.5 w-6 rounded-full"
+            style={{ backgroundColor: THEME_COLORS.dark.border }}
+          />
+          <div
+            className="h-1.5 w-4 rounded-full"
+            style={{ backgroundColor: THEME_COLORS.dark.border }}
+          />
         </div>
       </div>
     );
@@ -64,14 +110,26 @@ function ThemePreview({ theme }: { theme: Theme }) {
   // System: diagonal split
   return (
     <div className="relative flex h-20 w-full overflow-hidden rounded-md border">
-      <div className="absolute inset-0 bg-white" />
       <div
-        className="absolute inset-0 bg-gray-900"
-        style={{ clipPath: 'polygon(100% 0, 0% 100%, 100% 100%)' }}
+        className="absolute inset-0"
+        style={{ backgroundColor: THEME_COLORS.light.bg }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundColor: THEME_COLORS.dark.bg,
+          clipPath: 'polygon(100% 0, 0% 100%, 100% 100%)',
+        }}
       />
       <div className="absolute inset-x-0 bottom-0 flex gap-1 px-2 py-1.5">
-        <div className="h-1.5 w-6 rounded-full bg-gray-400" />
-        <div className="h-1.5 w-4 rounded-full bg-gray-400" />
+        <div
+          className="h-1.5 w-6 rounded-full"
+          style={{ backgroundColor: THEME_COLORS.light.border }}
+        />
+        <div
+          className="h-1.5 w-4 rounded-full"
+          style={{ backgroundColor: THEME_COLORS.light.border }}
+        />
       </div>
     </div>
   );
@@ -133,13 +191,14 @@ export function AppearanceTab() {
               <button
                 key={themeKey}
                 type="button"
+                aria-pressed={theme === themeKey}
                 onClick={() => {
                   setTheme(themeKey);
                   setNextTheme(themeKey);
                   setThemeCookie(themeKey);
                 }}
                 className={cn(
-                  'flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 p-3 transition-all',
+                  'flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 p-3 outline-none transition-all focus-visible:ring-ring/50 focus-visible:ring-[3px]',
                   theme === themeKey
                     ? 'ring-ring/20 border-primary shadow-sm ring-2'
                     : 'border-border hover:border-muted-foreground/30',
@@ -167,13 +226,14 @@ export function AppearanceTab() {
               <button
                 key={c.key}
                 type="button"
-                title={t(`colors.${c.key}`)}
+                aria-label={t(`colors.${c.key}`)}
+                aria-pressed={accentColor === c.key}
                 onClick={() => {
                   setAccentColor(c.key);
                   applyAccentColor(c.key);
                 }}
                 className={cn(
-                  'flex size-9 cursor-pointer items-center justify-center rounded-full transition-all',
+                  'flex size-9 cursor-pointer items-center justify-center rounded-full outline-none transition-all focus-visible:ring-ring/50 focus-visible:ring-[3px]',
                   accentColor === c.key
                     ? 'ring-offset-background ring-2 ring-offset-2'
                     : 'hover:scale-110',
@@ -188,7 +248,11 @@ export function AppearanceTab() {
                 }}
               >
                 {accentColor === c.key && (
-                  <CheckIcon className="size-4 text-white" strokeWidth={3} />
+                  <CheckIcon
+                    className="size-4"
+                    strokeWidth={3}
+                    style={{ color: c.fgColor }}
+                  />
                 )}
               </button>
             ))}
@@ -211,9 +275,10 @@ export function AppearanceTab() {
                 <button
                   key={ws}
                   type="button"
+                  aria-pressed={weekStart === ws}
                   onClick={() => setWeekStart(ws)}
                   className={cn(
-                    'cursor-pointer rounded-full px-4 py-1.5 text-sm font-medium transition-all',
+                    'cursor-pointer rounded-full px-4 py-1.5 text-sm font-medium outline-none transition-all focus-visible:ring-ring/50 focus-visible:ring-[3px]',
                     weekStart === ws
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted text-muted-foreground hover:bg-muted/80',

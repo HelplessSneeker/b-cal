@@ -62,7 +62,8 @@ export function CalendarList() {
             checked={!isDefaultHidden}
             onCheckedChange={() => toggleVisibility(DEFAULT_CALENDAR_ID)}
             className={cn(
-              'data-[state=checked]:border-primary data-[state=checked]:bg-primary',
+              DEFAULT_ENTRY_COLORS.checkedBorder,
+              DEFAULT_ENTRY_COLORS.checkedBg,
             )}
           />
           <span
@@ -86,10 +87,7 @@ export function CalendarList() {
               <Checkbox
                 checked={!isHidden}
                 onCheckedChange={() => toggleVisibility(cal.id)}
-                className={cn(
-                  colors.dot.replace('bg-', 'data-[state=checked]:border-'),
-                  colors.dot.replace('bg-', 'data-[state=checked]:bg-'),
-                )}
+                className={cn(colors.checkedBorder, colors.checkedBg)}
               />
               <span
                 className={cn('size-2.5 shrink-0 rounded-full', colors.dot)}

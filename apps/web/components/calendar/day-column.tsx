@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { CalendarEntry } from '@/lib/stores/calendarStore';
 import { useLocale } from '@/lib/hooks/useLocale';
 import { DAY_VIEW_MAX_COLUMNS } from '@/lib/calendar/calendar-constants';
@@ -20,7 +20,7 @@ interface DayColumnProps {
   compact?: boolean;
 }
 
-export function DayColumn({
+export const DayColumn = memo(function DayColumn({
   date,
   entries,
   onSlotClick,
@@ -29,8 +29,12 @@ export function DayColumn({
   compact = false,
 }: DayColumnProps) {
   const { timezone } = useLocale();
-  const slots = Array.from({ length: 48 }, (_, i) =>
-    createSlotTime(date, Math.floor(i / 2), (i % 2) * 30, timezone),
+  const slots = useMemo(
+    () =>
+      Array.from({ length: 48 }, (_, i) =>
+        createSlotTime(date, Math.floor(i / 2), (i % 2) * 30, timezone),
+      ),
+    [date, timezone],
   );
 
   const layout = useMemo(
@@ -59,4 +63,4 @@ export function DayColumn({
       <CurrentTimeIndicator date={date} />
     </div>
   );
-}
+});

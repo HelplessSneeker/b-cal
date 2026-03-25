@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
   useCalendarStore,
   type CalendarEntry,
@@ -53,8 +53,11 @@ export function WeekView({ date }: { date?: Date }) {
     ? MOBILE_TIME_COLUMN_WIDTH
     : TIME_COLUMN_WIDTH;
 
-  const startOfWeek = getStartOfWeek(currentDate, weekStartDay);
-  const weekDays = getWeekDays(startOfWeek);
+  const startOfWeek = useMemo(
+    () => getStartOfWeek(currentDate, weekStartDay),
+    [currentDate, weekStartDay],
+  );
+  const weekDays = useMemo(() => getWeekDays(startOfWeek), [startOfWeek]);
 
   const allDayEntries = useMemo(() => {
     return entries.filter(
@@ -63,19 +66,29 @@ export function WeekView({ date }: { date?: Date }) {
     );
   }, [entries, weekDays]);
 
-  const getTimedEntriesForDay = (day: Date): CalendarEntry[] => {
-    return entries.filter(
-      (entry) => !entry.wholeDay && entryOverlapsDay(entry, day),
-    );
-  };
+  const timedEntriesPerDay = useMemo(
+    () =>
+      weekDays.map((day) =>
+        entries.filter(
+          (entry) => !entry.wholeDay && entryOverlapsDay(entry, day),
+        ),
+      ),
+    [entries, weekDays],
+  );
 
-  const handleSlotClick = (time: Date) => {
-    openEntryModal(undefined, time);
-  };
+  const handleSlotClick = useCallback(
+    (time: Date) => {
+      openEntryModal(undefined, time);
+    },
+    [openEntryModal],
+  );
 
-  const handleEntryClick = (entry: CalendarEntry) => {
-    openEntryModal(entry);
-  };
+  const handleEntryClick = useCallback(
+    (entry: CalendarEntry) => {
+      openEntryModal(entry);
+    },
+    [openEntryModal],
+  );
 
   return (
     <div className="flex h-full flex-col">
@@ -119,11 +132,11 @@ export function WeekView({ date }: { date?: Date }) {
       <div className="flex-1 overflow-hidden">
         <TimeGrid timeColumnWidth={timeColumnWidth}>
           <div className="flex flex-1">
-            {weekDays.map((day) => (
+            {weekDays.map((day, i) => (
               <div key={day.toISOString()} className="flex-1 border-l">
                 <DayColumn
                   date={day}
-                  entries={getTimedEntriesForDay(day)}
+                  entries={timedEntriesPerDay[i]}
                   onSlotClick={handleSlotClick}
                   onEntryClick={handleEntryClick}
                   maxVisibleColumns={WEEK_VIEW_MAX_COLUMNS}

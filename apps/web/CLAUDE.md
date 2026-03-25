@@ -20,16 +20,18 @@ Next.js 16 application using the App Router with React 19 and TypeScript.
 - `app/` — Next.js App Router pages and layouts (login, signup, check-email, verify-email, forgot-password, reset-password, settings, health, error/not-found pages)
 - `components/` — React components
   - `components/ui/` — shadcn/ui primitives
-  - `components/calendar/` — Calendar-specific components (header, sidebar, time grid, day/week/month views, entry blocks)
+  - `components/calendar/` — Calendar-specific components (header, sidebar, calendar list, manage dialog, time grid, day/week/month views, entry blocks, swipe container)
   - `components/settings/` — Settings page tabs (profile, security, appearance, localization)
   - `components/app-shell.tsx` — Unified layout with desktop icon rail and mobile bottom tab bar (calendar, settings, user menu with logout)
   - `components/AuthProvider.tsx` — Wraps protected routes; fetches CSRF token, redirects unauthenticated users to `/login` and unverified users to `/check-email`
   - `components/ConnectionGuard.tsx` — Full-screen overlay when backend is unreachable; polls `/health` every 10s
+  - `components/auth-layout.tsx` — Shared layout wrapper for auth pages (login, signup, forgot-password, reset-password)
   - `components/entry-modal.tsx` — Entry creation/editing form with recurrence controls, email reminder settings, and scope dialog for recurring entries
+  - `components/forgot-password-form.tsx` — Forgot password form
 - `lib/api/` — Typed API layer with silent token refresh, CSRF handling, and `X-Request-Id` generation
-- `lib/stores/` — Zustand stores (userStore, calendarStore, connectionStore)
-- `lib/calendar/` — Calendar utilities (date, time, overlap, spanning calculations)
-- `lib/hooks/` — Custom React hooks (useCalendarData, useLocale, useMediaQuery)
+- `lib/stores/` — Zustand stores (userStore, calendarStore, calendarsStore, connectionStore)
+- `lib/calendar/` — Calendar utilities (date, time, overlap, spanning calculations, formatter cache, constants)
+- `lib/hooks/` — Custom React hooks (useCalendarData, useEntryColor, useLocale, useMediaQuery, useVisibleEntries)
 - `proxy.ts` — Next.js 16 proxy (route protection, CSP nonce generation)
 - `src/config/env.ts` — Environment variable validation
 

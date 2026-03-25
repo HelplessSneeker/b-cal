@@ -129,6 +129,20 @@ describe('EntryModal', () => {
 
     await user.click(screen.getByRole('button', { name: 'Delete' }));
 
+    // Confirmation dialog should appear
+    await waitFor(() => {
+      expect(screen.getByText('Delete entry')).toBeInTheDocument();
+    });
+
+    // Confirm deletion
+    const confirmDialog = screen
+      .getByText('Delete entry')
+      .closest('[role="dialog"]')!;
+    const confirmButton = confirmDialog.querySelector(
+      'button[data-variant="destructive"]',
+    )!;
+    await user.click(confirmButton);
+
     await waitFor(() => {
       expect(deleteMock).toHaveBeenCalledWith('entry-1');
       const store = useCalendarStore.getState();
@@ -251,9 +265,9 @@ describe('EntryModal', () => {
     expect(screen.getByText('Repeat on')).toBeInTheDocument();
     expect(screen.getByLabelText('Ends on')).toBeInTheDocument();
 
-    // Weekday buttons should be visible
-    expect(screen.getByRole('button', { name: 'Mo' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Fr' })).toBeInTheDocument();
+    // Weekday buttons should be visible (aria-label uses full name)
+    expect(screen.getByRole('button', { name: 'Monday' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Friday' })).toBeInTheDocument();
   });
 
   it('does not show recurrence fields when editing', () => {

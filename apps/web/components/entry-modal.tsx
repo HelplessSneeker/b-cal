@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -19,6 +20,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
+import { NativeSelect } from '@/components/ui/native-select';
 import {
   useCalendarStore,
   type CalendarEntry,
@@ -26,6 +28,7 @@ import {
 import { useCalendarsStore } from '@/lib/stores/calendarsStore';
 import { getColorClasses } from '@/lib/utils/calendar-colors';
 import { useLocale } from '@/lib/hooks/useLocale';
+import { cn } from '@/lib/utils/utils';
 import {
   formatDateTimeLocal,
   parseDateTimeLocal,
@@ -74,6 +77,7 @@ function EntryForm({
   const tValidation = useTranslations('calendar.validation');
   const tCommon = useTranslations('common');
   const tWeekdays = useTranslations('calendar.weekdays');
+  const tWeekdaysFull = useTranslations('calendar.weekdaysFull');
   const { timezone } = useLocale();
   const calendars = useCalendarsStore((s) => s.calendars);
   const initialValues = useMemo(() => {
@@ -231,8 +235,10 @@ function EntryForm({
             placeholder={t('titlePlaceholder')}
             maxLength={100}
             required
+            aria-invalid={!!errors.title || undefined}
+            aria-describedby={errors.title ? 'title-error' : undefined}
           />
-          <FieldError>{errors.title}</FieldError>
+          <FieldError id="title-error">{errors.title}</FieldError>
         </Field>
 
         {calendars.length > 0 && (
@@ -242,11 +248,11 @@ function EntryForm({
               <span
                 className={`absolute top-1/2 left-3 size-2.5 -translate-y-1/2 rounded-full ${calendarId ? getColorClasses(calendars.find((c) => c.id === calendarId)?.color ?? '').dot : 'bg-primary'}`}
               />
-              <select
+              <NativeSelect
                 id="calendarId"
                 value={calendarId ?? ''}
                 onChange={(e) => setCalendarId(e.target.value || null)}
-                className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-9 w-full rounded-md border py-1 pl-8 pr-3 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
+                className="pl-8"
               >
                 <option value="">{t('calendarDefault')}</option>
                 {calendars.map((cal) => (
@@ -254,7 +260,7 @@ function EntryForm({
                     {cal.name}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
           </Field>
         )}
@@ -287,8 +293,12 @@ function EntryForm({
                 }));
               }}
               required
+              aria-invalid={!!errors.startDate || undefined}
+              aria-describedby={
+                errors.startDate ? 'startDate-error' : undefined
+              }
             />
-            <FieldError>{errors.startDate}</FieldError>
+            <FieldError id="startDate-error">{errors.startDate}</FieldError>
           </Field>
           <Field data-invalid={!!errors.endDate || undefined}>
             <FieldLabel htmlFor="endDate">{t('end')}</FieldLabel>
@@ -305,8 +315,10 @@ function EntryForm({
                 }));
               }}
               required
+              aria-invalid={!!errors.endDate || undefined}
+              aria-describedby={errors.endDate ? 'endDate-error' : undefined}
             />
-            <FieldError>{errors.endDate}</FieldError>
+            <FieldError id="endDate-error">{errors.endDate}</FieldError>
           </Field>
         </div>
 
@@ -333,15 +345,15 @@ function EntryForm({
         ) : (
           <Field>
             <div className="flex items-center gap-2">
-              <select
+              <NativeSelect
                 value={reminderType}
                 onChange={(e) =>
                   setReminderType(e.target.value as ReminderType)
                 }
-                className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-9 rounded-md border px-2 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
+                className="w-auto"
               >
                 <option value="EMAIL">{t('reminderTypeEmail')}</option>
-              </select>
+              </NativeSelect>
               <Input
                 type="number"
                 min={1}
@@ -352,17 +364,17 @@ function EntryForm({
                 }
                 className="w-20"
               />
-              <select
+              <NativeSelect
                 value={reminderUnit}
                 onChange={(e) =>
                   setReminderUnit(e.target.value as ReminderUnit)
                 }
-                className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-9 rounded-md border px-2 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
+                className="w-auto"
               >
                 <option value="MINUTES">{t('reminderMinutes')}</option>
                 <option value="HOURS">{t('reminderHours')}</option>
                 <option value="DAYS">{t('reminderDays')}</option>
-              </select>
+              </NativeSelect>
               <span className="text-muted-foreground text-sm">
                 {t('reminderBefore')}
               </span>
@@ -371,6 +383,7 @@ function EntryForm({
                 onClick={() => setHasReminder(false)}
                 className="text-muted-foreground hover:text-foreground ml-auto"
                 title={t('removeReminder')}
+                aria-label={t('removeReminder')}
               >
                 <X className="size-4" />
               </button>
@@ -382,7 +395,7 @@ function EntryForm({
           <>
             <Field>
               <FieldLabel htmlFor="recurrence">{t('repeat')}</FieldLabel>
-              <select
+              <NativeSelect
                 id="recurrence"
                 value={recurrenceFrequency}
                 onChange={(e) =>
@@ -390,7 +403,6 @@ function EntryForm({
                     e.target.value as RecurrenceFrequency | '',
                   )
                 }
-                className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
               >
                 {!isEditingRecurring && (
                   <option value="">{t('repeatNone')}</option>
@@ -398,7 +410,7 @@ function EntryForm({
                 <option value="DAILY">{t('repeatDaily')}</option>
                 <option value="WEEKLY">{t('repeatWeekly')}</option>
                 <option value="MONTHLY">{t('repeatMonthly')}</option>
-              </select>
+              </NativeSelect>
             </Field>
 
             {recurrenceFrequency === 'WEEKLY' && (
@@ -409,12 +421,15 @@ function EntryForm({
                     <button
                       key={day}
                       type="button"
+                      aria-pressed={recurrenceByDay.has(day)}
+                      aria-label={tWeekdaysFull(day.toLowerCase())}
                       onClick={() => toggleByDay(day)}
-                      className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium transition-colors ${
+                      className={cn(
+                        'flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium outline-none transition-colors focus-visible:ring-ring/50 focus-visible:ring-[3px]',
                         recurrenceByDay.has(day)
                           ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                      }`}
+                          : 'bg-muted text-muted-foreground hover:bg-muted/80',
+                      )}
                     >
                       {tWeekdays(day.toLowerCase())}
                     </button>
@@ -483,6 +498,7 @@ function ScopeDialog({
   onSelect,
   onCancel,
 }: ScopeDialogProps) {
+  const tCommon = useTranslations('common');
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onCancel()}>
       <DialogContent className="sm:max-w-sm">
@@ -503,7 +519,7 @@ function ScopeDialog({
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onCancel}>
-            Cancel
+            {tCommon('cancel')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -536,6 +552,7 @@ export function EntryModal() {
     until?: string;
   } | null>(null);
   const [showFrequencyHint, setShowFrequencyHint] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const isEditingRecurring = !!editingEntry?.isRecurring;
 
@@ -673,13 +690,19 @@ export function EntryModal() {
     setScopeDialogMode('edit');
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!editingEntry) return;
     if (isEditingRecurring) {
       setScopeDialogMode('delete');
       return;
     }
-    // Non-recurring delete
+    // Show confirmation for non-recurring delete
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!editingEntry) return;
+    setShowDeleteConfirm(false);
     setIsSubmitting(true);
     try {
       await deleteEntryApi(editingEntry.id);
@@ -721,7 +744,12 @@ export function EntryModal() {
   return (
     <>
       <Dialog
-        open={isEntryModalOpen && !scopeDialogMode && !showFrequencyHint}
+        open={
+          isEntryModalOpen &&
+          !scopeDialogMode &&
+          !showFrequencyHint &&
+          !showDeleteConfirm
+        }
         onOpenChange={(open) => !open && closeEntryModal()}
       >
         <DialogContent className="sm:max-w-md">
@@ -779,6 +807,32 @@ export function EntryModal() {
               disabled={isSubmitting}
             >
               {t('frequencyChangeConfirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={showDeleteConfirm}
+        onOpenChange={(open) => !open && setShowDeleteConfirm(false)}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('deleteConfirmTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('deleteConfirmDescription')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setShowDeleteConfirm(false)}>
+              {tCommon('cancel')}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isSubmitting}
+            >
+              {tCommon('delete')}
             </Button>
           </DialogFooter>
         </DialogContent>

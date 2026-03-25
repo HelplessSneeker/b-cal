@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   useCalendarStore,
@@ -49,26 +49,39 @@ export function MonthView({ date }: { date?: Date }) {
     return rows;
   }, [gridDates]);
 
-  const getEntriesForWeek = (weekDays: Date[]): CalendarEntry[] => {
-    return entries.filter((entry) =>
-      weekDays.some((day) => entryOverlapsDay(entry, day)),
-    );
-  };
+  const weekEntries = useMemo(
+    () =>
+      weekRows.map((weekDays) =>
+        entries.filter((entry) =>
+          weekDays.some((day) => entryOverlapsDay(entry, day)),
+        ),
+      ),
+    [weekRows, entries],
+  );
 
-  const handleMoreClick = (date: Date) => {
-    setCurrentDate(date);
-    setView(CalendarView.Day);
-  };
+  const handleMoreClick = useCallback(
+    (date: Date) => {
+      setCurrentDate(date);
+      setView(CalendarView.Day);
+    },
+    [setCurrentDate, setView],
+  );
 
-  const handleEntryClick = (entry: CalendarEntry) => {
-    openEntryModal(entry);
-  };
+  const handleEntryClick = useCallback(
+    (entry: CalendarEntry) => {
+      openEntryModal(entry);
+    },
+    [openEntryModal],
+  );
 
-  const handleCellClick = (date: Date) => {
-    const startTime = new Date(date);
-    startTime.setHours(9, 0, 0, 0);
-    openEntryModal(undefined, startTime, true);
-  };
+  const handleCellClick = useCallback(
+    (date: Date) => {
+      const startTime = new Date(date);
+      startTime.setHours(9, 0, 0, 0);
+      openEntryModal(undefined, startTime, true);
+    },
+    [openEntryModal],
+  );
 
   return (
     <div className="flex h-full flex-col">
@@ -89,11 +102,11 @@ export function MonthView({ date }: { date?: Date }) {
 
       {/* Month grid - 6 week rows */}
       <div className="flex flex-1 flex-col border-b [&>:last-child]:pb-2">
-        {weekRows.map((weekDays) => (
+        {weekRows.map((weekDays, i) => (
           <MonthWeekRow
             key={weekDays[0].toISOString()}
             days={weekDays}
-            entries={getEntriesForWeek(weekDays)}
+            entries={weekEntries[i]}
             currentMonth={currentMonth}
             onCellClick={handleCellClick}
             onEntryClick={handleEntryClick}

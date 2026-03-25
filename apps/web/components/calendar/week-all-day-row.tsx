@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { CalendarEntry } from '@/lib/stores/calendarStore';
 import { TIME_COLUMN_WIDTH } from '@/lib/calendar/calendar-constants';
 import { computeSpanningEntries } from '@/lib/calendar/spanning-utils';
@@ -14,7 +14,7 @@ interface WeekAllDayRowProps {
   timeColumnWidth?: number;
 }
 
-export function WeekAllDayRow({
+export const WeekAllDayRow = memo(function WeekAllDayRow({
   weekDays,
   allDayEntries,
   onEntryClick,
@@ -58,10 +58,12 @@ export function WeekAllDayRow({
           {spanningEntries.map((se) => {
             const colors = getColorClasses(se.entry.calendarId);
             return (
-              <div
+              <button
+                type="button"
                 key={se.entry.id}
                 className={cn(
-                  'flex min-w-0 cursor-pointer items-center overflow-hidden text-xs font-medium transition-colors',
+                  'flex min-w-0 cursor-pointer items-center overflow-hidden text-left text-xs font-medium transition-colors',
+                  'outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]',
                   colors.bg,
                   colors.bgHover,
                   timeColumnWidth >= TIME_COLUMN_WIDTH ? 'px-2' : 'px-0.5',
@@ -74,13 +76,14 @@ export function WeekAllDayRow({
                   gridRow: se.row + 1,
                 }}
                 onClick={() => onEntryClick(se.entry)}
+                aria-label={se.entry.title}
               >
                 <span className="truncate">{se.entry.title}</span>
-              </div>
+              </button>
             );
           })}
         </div>
       </div>
     </div>
   );
-}
+});

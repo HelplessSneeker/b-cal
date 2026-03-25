@@ -81,25 +81,29 @@ components/
 ├── calendar/
 │   ├── views/                # Day, Week, Month view components
 │   ├── calendar-header.tsx   # Top nav with view selector & user menu
+│   ├── calendar-list.tsx     # Calendar list with visibility toggles
+│   ├── calendar-manage-dialog.tsx # Create/edit calendar dialog
 │   ├── calendar-sidebar.tsx  # Sidebar with mini calendar
 │   ├── time-grid.tsx         # Scrollable 24h time grid
 │   ├── day-column.tsx        # Single day with time slots
 │   └── entry-block.tsx       # Positioned calendar entry
 ├── settings/                  # Settings tabs (profile, security, appearance, localization)
 ├── app-shell.tsx              # Layout with desktop icon rail and mobile bottom tab bar
+├── auth-layout.tsx            # Shared layout wrapper for auth pages
 ├── AuthProvider.tsx           # Auth guard (redirects unauthenticated/unverified)
 ├── ConnectionGuard.tsx        # Full-screen overlay when backend is unreachable
 ├── entry-modal.tsx            # Create/edit/delete entry dialog
-├── login-form.tsx             # Shared login/signup form
+├── forgot-password-form.tsx   # Forgot password form
+├── login-form.tsx             # Login/signup form
 ├── verify-email-content.tsx   # Email verification handler
 └── reset-password-form.tsx    # Password reset form
 
 lib/
 ├── api/                      # Typed API layer (auth, calendar, CSRF)
 ├── calendar/                 # Date/time utils and layout constants
-├── hooks/                    # Custom hooks (useCalendarData)
+├── hooks/                    # Custom hooks (useCalendarData, useEntryColor, useLocale, useMediaQuery, useVisibleEntries)
 ├── stores/                   # Zustand stores (user, calendar, calendars, connection)
-└── utils/                    # Helpers (cn, password validation, accent color)
+└── utils/                    # Helpers (cn, password validation, accent color, calendar colors, theme cookie)
 
 proxy.ts                      # Route protection + CSP nonce (Next.js 16 proxy)
 ```

@@ -257,7 +257,7 @@ export function SecurityTab() {
                       </p>
                     </div>
                     {session.isCurrent ? (
-                      <span className="shrink-0 rounded-full bg-green-500/15 px-2.5 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
+                      <span className="shrink-0 rounded-full bg-feedback-success/15 px-2.5 py-0.5 text-xs font-medium text-feedback-success">
                         {t('current')}
                       </span>
                     ) : (

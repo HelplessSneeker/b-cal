@@ -11,6 +11,7 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from '@/components/ui/popover';
+import { getTimeFormatter } from '@/lib/calendar/formatter-cache';
 import { cn } from '@/lib/utils/utils';
 
 interface OverflowPillProps {
@@ -19,12 +20,7 @@ interface OverflowPillProps {
 }
 
 function formatTimeRange(start: Date, end: Date, timezone: string): string {
-  const fmt = new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone,
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  });
+  const fmt = getTimeFormatter(timezone);
   return `${fmt.format(start)} - ${fmt.format(end)}`;
 }
 
@@ -36,7 +32,7 @@ export function OverflowPill({ group, onEntryClick }: OverflowPillProps) {
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className="absolute z-[5] cursor-pointer overflow-hidden rounded-md border border-dashed border-muted-foreground/40 bg-muted/60 px-1 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted"
+          className="absolute z-[5] cursor-pointer overflow-hidden rounded-md border border-dashed border-muted-foreground/50 bg-muted px-1 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/80"
           style={{
             top: group.topPx,
             height: group.heightPx,

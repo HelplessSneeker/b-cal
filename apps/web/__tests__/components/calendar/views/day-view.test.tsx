@@ -152,7 +152,7 @@ describe('DayView', () => {
 
     expect(screen.getByText('Conference')).toBeInTheDocument();
     // Chevron icons should be rendered (SVG elements with lucide classes)
-    const entryEl = screen.getByText('Conference').closest('div');
+    const entryEl = screen.getByText('Conference').closest('button');
     const svgs = entryEl?.querySelectorAll('svg');
     expect(svgs?.length).toBe(2); // ChevronLeft + ChevronRight
   });

@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { CalendarEntry } from '@/lib/stores/calendarStore';
 import { getDaySpanInfo } from '@/lib/calendar/spanning-utils';
 import { useEntryColor } from '@/lib/hooks/useEntryColor';
@@ -12,7 +13,7 @@ interface AllDaySectionProps {
   onEntryClick: (entry: CalendarEntry) => void;
 }
 
-export function AllDaySection({
+export const AllDaySection = memo(function AllDaySection({
   entries,
   currentDay,
   onEntryClick,
@@ -33,10 +34,12 @@ export function AllDaySection({
           );
           const colors = getColorClasses(entry.calendarId);
           return (
-            <div
+            <button
+              type="button"
               key={entry.id}
               className={cn(
-                'flex cursor-pointer items-center gap-1 px-3 py-1 transition-colors',
+                'flex cursor-pointer items-center gap-1 px-3 py-1 text-left transition-colors',
+                'outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]',
                 colors.bg,
                 colors.bgHover,
                 !continuesBefore &&
@@ -46,6 +49,7 @@ export function AllDaySection({
                 continuesAfter && !continuesBefore && 'rounded-r-none',
               )}
               onClick={() => onEntryClick(entry)}
+              aria-label={entry.title}
             >
               {continuesBefore && (
                 <ChevronLeft className="h-3 w-3 shrink-0 text-muted-foreground" />
@@ -54,10 +58,10 @@ export function AllDaySection({
               {continuesAfter && (
                 <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
               )}
-            </div>
+            </button>
           );
         })}
       </div>
     </div>
   );
-}
+});

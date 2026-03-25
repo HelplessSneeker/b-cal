@@ -118,7 +118,7 @@ export function LoginForm({
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </Field>
-              <Field>
+              <Field data-invalid={!!errors.password || undefined}>
                 {!isSignup && (
                   <div className="flex items-center">
                     <FieldLabel htmlFor="password">
@@ -126,7 +126,7 @@ export function LoginForm({
                     </FieldLabel>
                     <a
                       href="/forgot-password"
-                      className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                      className="ml-auto inline-block rounded-sm text-sm underline-offset-4 outline-none hover:underline focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                     >
                       {t('login.forgotPassword')}
                     </a>
@@ -146,11 +146,15 @@ export function LoginForm({
                     setPassword(e.target.value);
                     setErrors((prev) => ({ ...prev, password: '' }));
                   }}
+                  aria-invalid={!!errors.password || undefined}
+                  aria-describedby={
+                    errors.password ? 'password-error' : undefined
+                  }
                 />
                 {isSignup && password && (
                   <PasswordStrengthIndicator password={password} />
                 )}
-                <FieldError>{errors.password}</FieldError>
+                <FieldError id="password-error">{errors.password}</FieldError>
               </Field>
               {isSignup && (
                 <Field data-invalid={!!errors.confirmPassword || undefined}>
@@ -166,12 +170,20 @@ export function LoginForm({
                       setConfirmPassword(e.target.value);
                       setErrors((prev) => ({ ...prev, confirmPassword: '' }));
                     }}
+                    aria-invalid={!!errors.confirmPassword || undefined}
+                    aria-describedby={
+                      errors.confirmPassword
+                        ? 'confirm-password-error'
+                        : undefined
+                    }
                   />
-                  <FieldError>{errors.confirmPassword}</FieldError>
+                  <FieldError id="confirm-password-error">
+                    {errors.confirmPassword}
+                  </FieldError>
                 </Field>
               )}
               <Field>
-                <Button type="submit" disabled={isLoading}>
+                <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? (
                     <Spinner />
                   ) : isSignup ? (

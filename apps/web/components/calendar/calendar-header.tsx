@@ -104,13 +104,23 @@ export function CalendarHeader() {
         </div>
 
         <div className="flex flex-1 items-center justify-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            aria-label={t('nav.previous')}
+          >
             <ChevronLeftIcon className="size-4" />
           </Button>
           <span className="min-w-48 text-center text-muted-foreground">
             {formatDateDisplay(currentDate, view, language, t)}
           </span>
-          <Button variant="ghost" size="icon" onClick={() => navigate(1)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(1)}
+            aria-label={t('nav.next')}
+          >
             <ChevronRightIcon className="size-4" />
           </Button>
         </div>

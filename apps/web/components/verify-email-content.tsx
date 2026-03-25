@@ -76,7 +76,10 @@ export function VerifyEmailContent() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <a href="/login" className="text-sm underline-offset-4 hover:underline">
+        <a
+          href="/login"
+          className="rounded-sm text-sm underline-offset-4 outline-none hover:underline focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+        >
           {tCommon('backToLogin')}
         </a>
       </CardContent>

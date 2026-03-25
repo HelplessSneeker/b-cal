@@ -159,17 +159,28 @@ export function LocalizationTab() {
         <CardContent>
           <Popover open={langOpen} onOpenChange={setLangOpen}>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="w-60 justify-between">
+              <Button
+                variant="outline"
+                className="w-full max-w-60 justify-between"
+              >
                 {selectedLangOption.native}
                 <ChevronDownIcon className="text-muted-foreground size-4" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-60 p-1" align="start">
+            <PopoverContent
+              className="w-60 p-1"
+              align="start"
+              role="listbox"
+              aria-label={t('language')}
+            >
               {LANGUAGES.map((lang) => (
-                <div
+                <button
+                  type="button"
                   key={lang.code}
+                  role="option"
+                  aria-selected={selectedLanguage === lang.code}
                   className={cn(
-                    'flex cursor-pointer items-center justify-between rounded-sm px-2 py-1.5 text-sm',
+                    'flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1.5 text-left text-sm outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]',
                     selectedLanguage === lang.code
                       ? 'bg-accent text-accent-foreground'
                       : 'hover:bg-muted',
@@ -190,7 +201,7 @@ export function LocalizationTab() {
                   {selectedLanguage === lang.code && (
                     <CheckIcon className="size-4" />
                   )}
-                </div>
+                </button>
               ))}
             </PopoverContent>
           </Popover>
@@ -224,17 +235,20 @@ export function LocalizationTab() {
                 />
               </div>
               <ScrollArea className="h-60">
-                <div className="p-1">
+                <div className="p-1" role="listbox" aria-label={t('timezone')}>
                   {filteredTimezones.length === 0 ? (
                     <p className="text-muted-foreground px-2 py-4 text-center text-sm">
                       {t('noTimezones')}
                     </p>
                   ) : (
                     filteredTimezones.map((tz) => (
-                      <div
+                      <button
+                        type="button"
                         key={tz.value}
+                        role="option"
+                        aria-selected={selectedTimezone === tz.value}
                         className={cn(
-                          'flex cursor-pointer items-center justify-between rounded-sm px-2 py-1.5 text-sm',
+                          'flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1.5 text-left text-sm outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]',
                           selectedTimezone === tz.value
                             ? 'bg-accent text-accent-foreground'
                             : 'hover:bg-muted',
@@ -251,7 +265,7 @@ export function LocalizationTab() {
                             <CheckIcon className="size-4" />
                           )}
                         </span>
-                      </div>
+                      </button>
                     ))
                   )}
                 </div>

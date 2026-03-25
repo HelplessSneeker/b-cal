@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback, useMemo } from 'react';
 import {
   useCalendarStore,
   type CalendarEntry,
@@ -28,20 +29,32 @@ export function DayView({ date }: { date?: Date }) {
   const { language } = useLocale();
   const currentDate = date ?? storeDate;
 
-  const dayEntries = entries.filter((entry) =>
-    entryOverlapsDay(entry, currentDate),
+  const dayEntries = useMemo(
+    () => entries.filter((entry) => entryOverlapsDay(entry, currentDate)),
+    [entries, currentDate],
+  );
+  const allDayEntries = useMemo(
+    () => dayEntries.filter((entry) => entry.wholeDay),
+    [dayEntries],
+  );
+  const timedEntries = useMemo(
+    () => dayEntries.filter((entry) => !entry.wholeDay),
+    [dayEntries],
   );
 
-  const allDayEntries = dayEntries.filter((entry) => entry.wholeDay);
-  const timedEntries = dayEntries.filter((entry) => !entry.wholeDay);
+  const handleSlotClick = useCallback(
+    (time: Date) => {
+      openEntryModal(undefined, time);
+    },
+    [openEntryModal],
+  );
 
-  const handleSlotClick = (time: Date) => {
-    openEntryModal(undefined, time);
-  };
-
-  const handleEntryClick = (entry: CalendarEntry) => {
-    openEntryModal(entry);
-  };
+  const handleEntryClick = useCallback(
+    (entry: CalendarEntry) => {
+      openEntryModal(entry);
+    },
+    [openEntryModal],
+  );
 
   return (
     <div className="flex h-full flex-col">

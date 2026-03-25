@@ -224,7 +224,7 @@ All endpoints require JWT + verified email.
 | Column | Type | Notes |
 |---|---|---|
 | `id` | UUID | Primary key |
-| `title` | String | Max 255 chars |
+| `title` | String | Max 100 chars |
 | `startDate` | DateTime | Indexed |
 | `endDate` | DateTime | Indexed |
 | `content` | String? | Max 5000 chars |

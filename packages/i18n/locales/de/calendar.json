@@ -56,7 +56,9 @@
     "reminderMinutes": "Minuten",
     "reminderHours": "Stunden",
     "reminderDays": "Tage",
-    "reminderBefore": "vorher"
+    "reminderBefore": "vorher",
+    "deleteConfirmTitle": "Eintrag löschen",
+    "deleteConfirmDescription": "Möchtest du diesen Eintrag wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
   },
   "validation": {
     "titleRequired": "Titel ist erforderlich",
@@ -77,7 +79,9 @@
     "deleteDescription": "Was soll mit den Eintragen in diesem Kalender passieren?",
     "deleteEntries": "Eintrage loschen",
     "keepEntries": "Eintrage behalten",
-    "empty": "Noch keine Kalender"
+    "empty": "Noch keine Kalender",
+    "editCalendar": "Kalender bearbeiten",
+    "deleteCalendar": "Kalender löschen"
   },
   "weekdays": {
     "mo": "Mo",
@@ -87,5 +91,14 @@
     "fr": "Fr",
     "sa": "Sa",
     "su": "So"
+  },
+  "weekdaysFull": {
+    "mo": "Montag",
+    "tu": "Dienstag",
+    "we": "Mittwoch",
+    "th": "Donnerstag",
+    "fr": "Freitag",
+    "sa": "Samstag",
+    "su": "Sonntag"
   }
 }

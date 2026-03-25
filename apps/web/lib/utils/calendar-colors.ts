@@ -3,56 +3,74 @@ export interface EntryColorClasses {
   bg: string;
   bgHover: string;
   dot: string;
+  checkedBorder: string;
+  checkedBg: string;
 }
 
 const COLOR_MAP: Record<string, EntryColorClasses> = {
   red: {
-    border: 'border-red-500',
-    bg: 'bg-red-500/20',
-    bgHover: 'hover:bg-red-500/30',
-    dot: 'bg-red-500',
+    border: 'border-entry-red',
+    bg: 'bg-entry-red/20',
+    bgHover: 'hover:bg-entry-red/30',
+    dot: 'bg-entry-red',
+    checkedBorder: 'data-[state=checked]:border-entry-red',
+    checkedBg: 'data-[state=checked]:bg-entry-red',
   },
   orange: {
-    border: 'border-orange-500',
-    bg: 'bg-orange-500/20',
-    bgHover: 'hover:bg-orange-500/30',
-    dot: 'bg-orange-500',
+    border: 'border-entry-orange',
+    bg: 'bg-entry-orange/20',
+    bgHover: 'hover:bg-entry-orange/30',
+    dot: 'bg-entry-orange',
+    checkedBorder: 'data-[state=checked]:border-entry-orange',
+    checkedBg: 'data-[state=checked]:bg-entry-orange',
   },
   yellow: {
-    border: 'border-yellow-500',
-    bg: 'bg-yellow-500/20',
-    bgHover: 'hover:bg-yellow-500/30',
-    dot: 'bg-yellow-500',
+    border: 'border-entry-yellow',
+    bg: 'bg-entry-yellow/20',
+    bgHover: 'hover:bg-entry-yellow/30',
+    dot: 'bg-entry-yellow',
+    checkedBorder: 'data-[state=checked]:border-entry-yellow',
+    checkedBg: 'data-[state=checked]:bg-entry-yellow',
   },
   lime: {
-    border: 'border-lime-500',
-    bg: 'bg-lime-500/20',
-    bgHover: 'hover:bg-lime-500/30',
-    dot: 'bg-lime-500',
+    border: 'border-entry-lime',
+    bg: 'bg-entry-lime/20',
+    bgHover: 'hover:bg-entry-lime/30',
+    dot: 'bg-entry-lime',
+    checkedBorder: 'data-[state=checked]:border-entry-lime',
+    checkedBg: 'data-[state=checked]:bg-entry-lime',
   },
   teal: {
-    border: 'border-teal-500',
-    bg: 'bg-teal-500/20',
-    bgHover: 'hover:bg-teal-500/30',
-    dot: 'bg-teal-500',
+    border: 'border-entry-teal',
+    bg: 'bg-entry-teal/20',
+    bgHover: 'hover:bg-entry-teal/30',
+    dot: 'bg-entry-teal',
+    checkedBorder: 'data-[state=checked]:border-entry-teal',
+    checkedBg: 'data-[state=checked]:bg-entry-teal',
   },
   cyan: {
-    border: 'border-cyan-500',
-    bg: 'bg-cyan-500/20',
-    bgHover: 'hover:bg-cyan-500/30',
-    dot: 'bg-cyan-500',
+    border: 'border-entry-cyan',
+    bg: 'bg-entry-cyan/20',
+    bgHover: 'hover:bg-entry-cyan/30',
+    dot: 'bg-entry-cyan',
+    checkedBorder: 'data-[state=checked]:border-entry-cyan',
+    checkedBg: 'data-[state=checked]:bg-entry-cyan',
   },
   pink: {
-    border: 'border-pink-500',
-    bg: 'bg-pink-500/20',
-    bgHover: 'hover:bg-pink-500/30',
-    dot: 'bg-pink-500',
+    border: 'border-entry-pink',
+    bg: 'bg-entry-pink/20',
+    bgHover: 'hover:bg-entry-pink/30',
+    dot: 'bg-entry-pink',
+    checkedBorder: 'data-[state=checked]:border-entry-pink',
+    checkedBg: 'data-[state=checked]:bg-entry-pink',
   },
   rose: {
-    border: 'border-rose-500',
-    bg: 'bg-rose-500/20',
-    bgHover: 'hover:bg-rose-500/30',
-    dot: 'bg-rose-500',
+    border: 'border-entry-rose',
+    bg: 'bg-entry-rose/20',
+    bgHover: 'hover:bg-entry-rose/30',
+    dot: 'bg-entry-rose',
+    checkedBorder: 'data-[state=checked]:border-entry-rose',
+    checkedBg: 'data-[state=checked]:bg-entry-rose',
   },
 };
 
@@ -61,6 +79,8 @@ export const DEFAULT_ENTRY_COLORS: EntryColorClasses = {
   bg: 'bg-primary/20',
   bgHover: 'hover:bg-primary/30',
   dot: 'bg-primary',
+  checkedBorder: 'data-[state=checked]:border-primary',
+  checkedBg: 'data-[state=checked]:bg-primary',
 };
 
 export function getEntryColorClasses(

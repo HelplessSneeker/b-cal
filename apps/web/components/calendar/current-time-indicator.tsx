@@ -39,8 +39,8 @@ export function CurrentTimeIndicator({ date }: CurrentTimeIndicatorProps) {
       className="pointer-events-none absolute left-0 right-0 z-10 flex items-center"
       style={{ top }}
     >
-      <div className="h-3 w-3 -translate-x-1/2 rounded-full bg-red-500" />
-      <div className="h-0.5 flex-1 bg-red-500" />
+      <div className="h-3 w-3 -translate-x-1/2 rounded-full bg-destructive" />
+      <div className="h-0.5 flex-1 bg-destructive" />
     </div>
   );
 }

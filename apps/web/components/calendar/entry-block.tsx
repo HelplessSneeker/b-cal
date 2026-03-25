@@ -1,11 +1,13 @@
 'use client';
 
+import { memo } from 'react';
 import { Repeat } from 'lucide-react';
 import { CalendarEntry } from '@/lib/stores/calendarStore';
 import { useLocale } from '@/lib/hooks/useLocale';
 import { useEntryColor } from '@/lib/hooks/useEntryColor';
 import { getEventTopPosition, getEventHeight } from '@/lib/calendar/time-utils';
 import { OVERLAP_GAP_PX } from '@/lib/calendar/calendar-constants';
+import { getTimeFormatter } from '@/lib/calendar/formatter-cache';
 import { cn } from '@/lib/utils/utils';
 
 interface EntryBlockProps {
@@ -17,16 +19,11 @@ interface EntryBlockProps {
 }
 
 function formatTimeRange(start: Date, end: Date, timezone: string): string {
-  const fmt = new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone,
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  });
+  const fmt = getTimeFormatter(timezone);
   return `${fmt.format(start)} - ${fmt.format(end)}`;
 }
 
-export function EntryBlock({
+export const EntryBlock = memo(function EntryBlock({
   entry,
   onClick,
   left,
@@ -42,9 +39,11 @@ export function EntryBlock({
   const hasOverlapLayout = left !== undefined && width !== undefined;
 
   return (
-    <div
+    <button
+      type="button"
       className={cn(
-        'absolute cursor-pointer overflow-hidden rounded-md border-l-[3px] transition-colors hover:z-10',
+        'absolute cursor-pointer overflow-hidden rounded-md border-l-[3px] text-left transition-colors hover:z-10',
+        'outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]',
         colors.border,
         colors.bg,
         colors.bgHover,
@@ -63,6 +62,7 @@ export function EntryBlock({
           : { top, height }
       }
       onClick={() => onClick(entry)}
+      aria-label={entry.title}
     >
       <p
         className={cn(
@@ -78,6 +78,6 @@ export function EntryBlock({
           {formatTimeRange(entry.startDate, entry.endDate, timezone)}
         </p>
       )}
-    </div>
+    </button>
   );
-}
+});

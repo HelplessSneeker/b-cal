@@ -20,6 +20,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { PasswordInput } from '@/components/ui/password-input';
+import { PasswordStrengthIndicator } from '@/components/ui/password-strength';
 import { Spinner } from '@/components/ui/spinner';
 
 export function ResetPasswordForm() {
@@ -44,7 +45,7 @@ export function ResetPasswordForm() {
         <CardContent>
           <a
             href="/forgot-password"
-            className="text-sm underline-offset-4 hover:underline"
+            className="rounded-sm text-sm underline-offset-4 outline-none hover:underline focus-visible:ring-ring/50 focus-visible:ring-[3px]"
           >
             {t('requestNew')}
           </a>
@@ -98,8 +99,13 @@ export function ResetPasswordForm() {
                   setPassword(e.target.value);
                   setErrors((prev) => ({ ...prev, password: '' }));
                 }}
+                aria-invalid={!!errors.password || undefined}
+                aria-describedby={
+                  errors.password ? 'password-error' : undefined
+                }
               />
-              <FieldError>{errors.password}</FieldError>
+              {password && <PasswordStrengthIndicator password={password} />}
+              <FieldError id="password-error">{errors.password}</FieldError>
             </Field>
             <Field data-invalid={!!errors.confirmPassword || undefined}>
               <FieldLabel htmlFor="confirm-password">
@@ -114,11 +120,17 @@ export function ResetPasswordForm() {
                   setConfirmPassword(e.target.value);
                   setErrors((prev) => ({ ...prev, confirmPassword: '' }));
                 }}
+                aria-invalid={!!errors.confirmPassword || undefined}
+                aria-describedby={
+                  errors.confirmPassword ? 'confirm-password-error' : undefined
+                }
               />
-              <FieldError>{errors.confirmPassword}</FieldError>
+              <FieldError id="confirm-password-error">
+                {errors.confirmPassword}
+              </FieldError>
             </Field>
             <Field>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? <Spinner /> : t('submit')}
               </Button>
             </Field>

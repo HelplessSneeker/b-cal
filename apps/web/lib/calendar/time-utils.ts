@@ -1,15 +1,16 @@
 import { HOUR_HEIGHT, START_HOUR } from '@/lib/calendar/calendar-constants';
+import {
+  getTimePartsFormatter,
+  getDateTimePartsFormatter,
+  getDateTimeLocalFormatter,
+  getDatePartsFormatter,
+} from '@/lib/calendar/formatter-cache';
 
 export function getTimeInTimezone(
   date: Date,
   timezone: string,
 ): { hours: number; minutes: number } {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone,
-    hour: 'numeric',
-    minute: 'numeric',
-    hourCycle: 'h23',
-  }).formatToParts(date);
+  const parts = getTimePartsFormatter(timezone).formatToParts(date);
   return {
     hours: parseInt(parts.find((p) => p.type === 'hour')?.value ?? '0'),
     minutes: parseInt(parts.find((p) => p.type === 'minute')?.value ?? '0'),
@@ -17,15 +18,7 @@ export function getTimeInTimezone(
 }
 
 function getTimezoneOffsetMs(utcDate: Date, timezone: string): number {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone,
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    hourCycle: 'h23',
-  }).formatToParts(utcDate);
+  const parts = getDateTimePartsFormatter(timezone).formatToParts(utcDate);
   const get = (type: string) =>
     parseInt(parts.find((p) => p.type === type)?.value ?? '0');
   const localAsUtc = Date.UTC(
@@ -39,15 +32,7 @@ function getTimezoneOffsetMs(utcDate: Date, timezone: string): number {
 }
 
 export function formatDateTimeLocal(date: Date, timezone: string): string {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: timezone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  }).formatToParts(date);
+  const parts = getDateTimeLocalFormatter(timezone).formatToParts(date);
   const get = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((p) => p.type === type)?.value ?? '';
   return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;
@@ -78,12 +63,7 @@ export function createSlotTime(
   minutes: number,
   timezone: string,
 ): Date {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: timezone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(baseDate);
+  const parts = getDatePartsFormatter(timezone).formatToParts(baseDate);
   const get = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((p) => p.type === type)?.value ?? '';
   const dateStr = `${get('year')}-${get('month')}-${get('day')}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;

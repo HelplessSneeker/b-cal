@@ -78,8 +78,10 @@ export function ProfileTab() {
               <Avatar className="size-16 text-lg">
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
-              <div>
-                <p className="text-lg font-medium">{user?.email ?? '-'}</p>
+              <div className="min-w-0">
+                <p className="truncate text-lg font-medium">
+                  {user?.email ?? '-'}
+                </p>
                 <p className="text-muted-foreground text-sm">
                   {t('memberSince', { date: memberSince })}
                 </p>
