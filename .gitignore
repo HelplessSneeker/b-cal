@@ -4,3 +4,4 @@ dist
 .next
 .env*.local
 release-eval.md
+.playwright-mcp/
