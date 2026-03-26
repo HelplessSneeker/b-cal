@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import {
   useCalendarStore,
   type CalendarEntry,
@@ -10,14 +10,17 @@ import { useVisibleEntries } from '@/lib/hooks/useVisibleEntries';
 import { TimeGrid } from '@/components/calendar/time-grid';
 import { DayColumn } from '@/components/calendar/day-column';
 import { WeekAllDayRow } from '@/components/calendar/week-all-day-row';
-import { getStartOfWeek } from '@/lib/calendar/date-utils';
+import { getStartOfWeek, getWeekNumber } from '@/lib/calendar/date-utils';
 import { isSameDay, entryOverlapsDay } from '@/lib/calendar/spanning-utils';
 import {
   TIME_COLUMN_WIDTH,
   MOBILE_TIME_COLUMN_WIDTH,
   WEEK_VIEW_MAX_COLUMNS,
+  MIN_ENTRY_COLUMN_WIDTH,
 } from '@/lib/calendar/calendar-constants';
+import { useDynamicColumns } from '@/lib/hooks/useDynamicColumns';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
+import { useTranslations } from 'next-intl';
 
 function getWeekDays(startOfWeek: Date): Date[] {
   return Array.from({ length: 7 }, (_, i) => {
@@ -42,6 +45,7 @@ function isToday(date: Date): boolean {
 }
 
 export function WeekView({ date }: { date?: Date }) {
+  const t = useTranslations('calendar');
   const storeDate = useCalendarStore((s) => s.currentDate);
   const entries = useVisibleEntries();
   const openEntryModal = useCalendarStore((s) => s.openEntryModal);
@@ -90,8 +94,16 @@ export function WeekView({ date }: { date?: Date }) {
     [openEntryModal],
   );
 
+  const columnRef = useRef<HTMLDivElement>(null);
+  const dynamicColumns = useDynamicColumns(columnRef, MIN_ENTRY_COLUMN_WIDTH);
+  const effectiveMaxColumns = dynamicColumns ?? WEEK_VIEW_MAX_COLUMNS;
+
+  const weekLabel = t('calendarWeekShort', {
+    week: getWeekNumber(currentDate),
+  });
+
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col" role="region" aria-label={weekLabel}>
       {/* Week header with day names and dates */}
       <div className="flex border-b pr-2.5">
         {/* Empty space for time column alignment */}
@@ -133,13 +145,17 @@ export function WeekView({ date }: { date?: Date }) {
         <TimeGrid timeColumnWidth={timeColumnWidth}>
           <div className="flex flex-1">
             {weekDays.map((day, i) => (
-              <div key={day.toISOString()} className="flex-1 border-l">
+              <div
+                key={day.toISOString()}
+                ref={i === 0 ? columnRef : undefined}
+                className="flex-1 border-l"
+              >
                 <DayColumn
                   date={day}
                   entries={timedEntriesPerDay[i]}
                   onSlotClick={handleSlotClick}
                   onEntryClick={handleEntryClick}
-                  maxVisibleColumns={WEEK_VIEW_MAX_COLUMNS}
+                  maxVisibleColumns={effectiveMaxColumns}
                   compact={isMobile}
                 />
               </div>

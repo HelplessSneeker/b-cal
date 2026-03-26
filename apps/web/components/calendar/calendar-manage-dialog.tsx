@@ -145,7 +145,7 @@ export function CalendarManageDialog({
   return (
     <>
       <Dialog open={open && !deleteTarget} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>{t('manageTitle')}</DialogTitle>
           </DialogHeader>
@@ -325,6 +325,7 @@ function ColorPicker({
   value: CalendarColor;
   onChange: (color: CalendarColor) => void;
 }) {
+  const tColors = useTranslations('calendar.calendars');
   return (
     <div className="flex gap-1.5">
       {CALENDAR_COLORS.map((color) => (
@@ -339,7 +340,7 @@ function ColorPicker({
               ? 'ring-2 ring-offset-2 ring-offset-background ring-foreground'
               : 'opacity-60 hover:opacity-100',
           )}
-          aria-label={color}
+          aria-label={tColors(`colors.${color}`)}
         />
       ))}
     </div>

@@ -29,6 +29,7 @@ export const DayColumn = memo(function DayColumn({
   compact = false,
 }: DayColumnProps) {
   const { timezone } = useLocale();
+
   const slots = useMemo(
     () =>
       Array.from({ length: 48 }, (_, i) =>
@@ -43,9 +44,14 @@ export const DayColumn = memo(function DayColumn({
   );
 
   return (
-    <div className="relative flex-1">
+    <div className="relative flex flex-1 flex-col">
       {slots.map((time, i) => (
-        <TimeSlot key={i} time={time} onClick={onSlotClick} />
+        <TimeSlot
+          key={i}
+          time={time}
+          timezone={timezone}
+          onClick={onSlotClick}
+        />
       ))}
       {layout.visibleEvents.map((event) => (
         <EntryBlock

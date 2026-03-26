@@ -57,6 +57,9 @@
     "reminderHours": "hours",
     "reminderDays": "days",
     "reminderBefore": "before",
+    "reminderTypeLabel": "Reminder type",
+    "reminderAmountLabel": "Reminder amount",
+    "reminderUnitLabel": "Reminder unit",
     "deleteConfirmTitle": "Delete entry",
     "deleteConfirmDescription": "Are you sure you want to delete this entry? This action cannot be undone."
   },
@@ -68,6 +71,7 @@
   },
   "more": "+{count} more",
   "moreEntries": "{count} more entries",
+  "moreEntriesLabel": "Show {count} more entries",
   "calendars": {
     "title": "Calendars",
     "manage": "Manage calendars",
@@ -81,7 +85,17 @@
     "keepEntries": "Keep entries",
     "empty": "No calendars yet",
     "editCalendar": "Edit calendar",
-    "deleteCalendar": "Delete calendar"
+    "deleteCalendar": "Delete calendar",
+    "colors": {
+      "red": "Red",
+      "orange": "Orange",
+      "yellow": "Yellow",
+      "lime": "Lime",
+      "teal": "Teal",
+      "cyan": "Cyan",
+      "pink": "Pink",
+      "rose": "Rose"
+    }
   },
   "weekdays": {
     "mo": "Mo",
@@ -92,6 +106,7 @@
     "sa": "Sa",
     "su": "Su"
   },
+  "viewAnnouncement": "{date}",
   "weekdaysFull": {
     "mo": "Monday",
     "tu": "Tuesday",

@@ -5,11 +5,17 @@
   "delete": "Delete",
   "retry": "Retry",
   "backToLogin": "Back to login",
+  "loading": "Loading",
+  "skipToContent": "Skip to content",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
   "nav": {
     "calendar": "Calendar",
     "settings": "Settings",
     "logout": "Logout",
-    "account": "Account"
+    "account": "Account",
+    "desktopNav": "Main navigation",
+    "mobileNav": "Main navigation"
   },
   "serviceUnavailable": {
     "title": "Service Unavailable",

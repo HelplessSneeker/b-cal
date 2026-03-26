@@ -82,7 +82,7 @@ Create a `.env` file:
 ```env
 # App
 PORT=3000
-FRONTEND_URL="http://localhost:8080/"
+FRONTEND_URL="http://localhost:8080"
 
 # Database
 DB_USER=root

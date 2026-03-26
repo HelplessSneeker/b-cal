@@ -56,7 +56,10 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-svh flex-col md:flex-row">
       {/* Desktop icon rail */}
-      <nav className="hidden w-14 shrink-0 flex-col items-center border-r bg-background py-2 md:flex">
+      <nav
+        className="hidden w-14 shrink-0 flex-col items-center border-r bg-background py-2 md:flex"
+        aria-label={t('nav.desktopNav')}
+      >
         <div className="flex flex-1 flex-col items-center gap-1">
           {navItems.map((item) => (
             <Tooltip key={item.path}>
@@ -109,14 +112,20 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
       </nav>
 
       {/* Main content */}
-      <main className="min-w-0 flex-1 pb-14 md:pb-0">{children}</main>
+      <main id="main-content" className="min-w-0 flex-1 pb-14 md:pb-0">
+        {children}
+      </main>
 
       {/* Mobile bottom tab bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t bg-background md:hidden">
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t bg-background md:hidden"
+        aria-label={t('nav.mobileNav')}
+      >
         {navItems.map((item) => {
           const isActive = pathname === item.path;
           return (
             <button
+              type="button"
               key={item.path}
               onClick={() => router.push(item.path)}
               className={cn(
@@ -137,6 +146,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
+              type="button"
               className="flex flex-1 flex-col items-center gap-0.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
               aria-label={user?.email ?? ''}
             >

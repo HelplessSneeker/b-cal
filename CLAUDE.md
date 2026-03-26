@@ -107,7 +107,7 @@ GitHub Actions workflows (`.github/workflows/`):
 
 ## Sensitive Data Handling
 
-Both apps scrub PII before sending to Sentry (`sentry-before-send.ts`). The API redacts sensitive fields in structured logs via pino redaction paths and custom request/response serializers.
+Both apps scrub PII before sending to Sentry (API: `sentry-before-send.ts`, Web: `sentry.before-send.ts`). The API redacts sensitive fields in structured logs via pino redaction paths and custom request/response serializers.
 
 ## Test Users (after seeding)
 

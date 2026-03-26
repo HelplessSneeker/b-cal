@@ -32,6 +32,8 @@ export function OverflowPill({ group, onEntryClick }: OverflowPillProps) {
     <Popover>
       <PopoverTrigger asChild>
         <button
+          type="button"
+          aria-label={t('moreEntriesLabel', { count: group.hiddenCount })}
           className="absolute z-[5] cursor-pointer overflow-hidden rounded-md border border-dashed border-muted-foreground/50 bg-muted px-1 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/80"
           style={{
             top: group.topPx,
@@ -53,6 +55,7 @@ export function OverflowPill({ group, onEntryClick }: OverflowPillProps) {
             return (
               <li key={entry.id}>
                 <button
+                  type="button"
                   className={cn(
                     'w-full cursor-pointer rounded-md border-l-[3px] px-2 py-1 text-left transition-colors',
                     colors.border,

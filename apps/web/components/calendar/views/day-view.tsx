@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import {
   useCalendarStore,
   type CalendarEntry,
@@ -8,7 +8,11 @@ import {
 import { useLocale } from '@/lib/hooks/useLocale';
 import { useVisibleEntries } from '@/lib/hooks/useVisibleEntries';
 import { entryOverlapsDay } from '@/lib/calendar/spanning-utils';
-import { DAY_VIEW_MAX_COLUMNS } from '@/lib/calendar/calendar-constants';
+import {
+  DAY_VIEW_MAX_COLUMNS,
+  MIN_ENTRY_COLUMN_WIDTH,
+} from '@/lib/calendar/calendar-constants';
+import { useDynamicColumns } from '@/lib/hooks/useDynamicColumns';
 import { TimeGrid } from '@/components/calendar/time-grid';
 import { DayColumn } from '@/components/calendar/day-column';
 import { AllDaySection } from '@/components/calendar/all-day-section';
@@ -56,8 +60,16 @@ export function DayView({ date }: { date?: Date }) {
     [openEntryModal],
   );
 
+  const columnRef = useRef<HTMLDivElement>(null);
+  const dynamicColumns = useDynamicColumns(columnRef, MIN_ENTRY_COLUMN_WIDTH);
+  const effectiveMaxColumns = dynamicColumns ?? DAY_VIEW_MAX_COLUMNS;
+
   return (
-    <div className="flex h-full flex-col">
+    <div
+      className="flex h-full flex-col"
+      role="region"
+      aria-label={formatDayHeader(currentDate, language)}
+    >
       <div className="border-b px-4 py-3">
         <h2 className="text-lg font-semibold capitalize">
           {formatDayHeader(currentDate, language)}
@@ -70,13 +82,15 @@ export function DayView({ date }: { date?: Date }) {
       />
       <div className="flex-1 overflow-hidden">
         <TimeGrid>
-          <DayColumn
-            date={currentDate}
-            entries={timedEntries}
-            onSlotClick={handleSlotClick}
-            onEntryClick={handleEntryClick}
-            maxVisibleColumns={DAY_VIEW_MAX_COLUMNS}
-          />
+          <div ref={columnRef} className="flex flex-1">
+            <DayColumn
+              date={currentDate}
+              entries={timedEntries}
+              onSlotClick={handleSlotClick}
+              onEntryClick={handleEntryClick}
+              maxVisibleColumns={effectiveMaxColumns}
+            />
+          </div>
         </TimeGrid>
       </div>
     </div>

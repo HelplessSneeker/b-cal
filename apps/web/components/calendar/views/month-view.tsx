@@ -31,7 +31,7 @@ export function MonthView({ date }: { date?: Date }) {
   const setView = useCalendarStore((s) => s.setView);
   const setCurrentDate = useCalendarStore((s) => s.setCurrentDate);
   const openEntryModal = useCalendarStore((s) => s.openEntryModal);
-  const { weekStartDay } = useLocale();
+  const { weekStartDay, language } = useLocale();
   const currentDate = date ?? storeDate;
 
   const weekdayKeys = useMemo(
@@ -83,8 +83,13 @@ export function MonthView({ date }: { date?: Date }) {
     [openEntryModal],
   );
 
+  const monthLabel = currentDate.toLocaleDateString(language, {
+    month: 'long',
+    year: 'numeric',
+  });
+
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col" role="region" aria-label={monthLabel}>
       {/* Weekday headers */}
       <div className="grid grid-cols-7 border-y">
         {weekdayKeys.map((key, index) => (
@@ -101,7 +106,7 @@ export function MonthView({ date }: { date?: Date }) {
       </div>
 
       {/* Month grid - 6 week rows */}
-      <div className="flex flex-1 flex-col border-b [&>:last-child]:pb-2">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto border-b [&>:last-child]:pb-2">
         {weekRows.map((weekDays, i) => (
           <MonthWeekRow
             key={weekDays[0].toISOString()}

@@ -11,3 +11,4 @@ export const MOBILE_TIME_COLUMN_WIDTH = 32;
 export const DAY_VIEW_MAX_COLUMNS = 5;
 export const WEEK_VIEW_MAX_COLUMNS = 3;
 export const OVERLAP_GAP_PX = 2;
+export const MIN_ENTRY_COLUMN_WIDTH = 60;

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { cookies, headers } from 'next/headers';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
-import { getLocale, getMessages } from 'next-intl/server';
+import { getLocale, getMessages, getTranslations } from 'next-intl/server';
 import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
 import { ConnectionGuard } from '@/components/ConnectionGuard';
@@ -43,6 +43,7 @@ export default async function RootLayout({
 
   const locale = await getLocale();
   const messages = await getMessages();
+  const t = await getTranslations('common');
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -60,6 +61,12 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow-lg focus:ring-2 focus:ring-ring"
+        >
+          {t('skipToContent')}
+        </a>
         <ThemeProvider nonce={nonce}>
           <NextIntlClientProvider locale={locale} messages={messages}>
             {children}

@@ -159,6 +159,7 @@ export function CalendarHeader() {
         className="flex items-center justify-between border-b px-3 py-2 md:hidden"
         data-testid="mobile-header"
       >
+        <h1 className="sr-only">{t('title')}</h1>
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
@@ -231,6 +232,7 @@ export function CalendarHeader() {
 
       {/* Mobile drawer */}
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+        {/* aria-describedby={undefined} suppresses Radix UI's default description binding since this sheet has no description element */}
         <SheetContent side="left" className="w-72" aria-describedby={undefined}>
           <SheetHeader>
             <SheetTitle>{t('title')}</SheetTitle>

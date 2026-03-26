@@ -113,7 +113,7 @@ This starts four services:
 | `api` | NestJS API (waits for postgres + redis) | 3000 |
 | `web` | Next.js frontend (waits for API health) | 8080 |
 
-Data is persisted in a `postgres_data` Docker volume. The API uses hardcoded dev secrets — **do not use this compose file in production**.
+Data is persisted in `postgres_data` and `redis-data` Docker volumes. The API uses hardcoded dev secrets — **do not use this compose file in production**.
 
 ## Scripts
 

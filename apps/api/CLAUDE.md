@@ -29,9 +29,10 @@ src/
 ├── calendar/       # CalendarController, CalendarService, DTOs, validators
 │   └── utils/      # expand-recurrence.ts (virtual occurrence generation), occurrence-id.ts (synthetic ID helpers)
 ├── calendars/      # CalendarsController, CalendarsService, DTOs (named calendar management)
-├── common/filters/ # GlobalExceptionFilter (Sentry-integrated, includes request ID in responses)
-├── common/logging/ # Custom pino serializers (redact sensitive headers/query params)
-├── common/utils/   # strip-html-tags, i18n helper (t() function)
+├── common/         # CacheShutdownService (graceful Redis teardown)
+│   ├── filters/    # GlobalExceptionFilter (Sentry-integrated, includes request ID in responses)
+│   ├── logging/    # Custom pino serializers (redact sensitive headers/query params)
+│   └── utils/      # strip-html-tags, i18n helper (t() function)
 ├── config/         # env.validation.ts (runtime env var validation via class-validator)
 ├── csrf/           # CSRF protection config (double-submit cookie via csrf-csrf)
 ├── health/         # HealthController, HealthModule (@nestjs/terminus), RedisHealthIndicator
@@ -39,6 +40,8 @@ src/
 ├── reminder/       # ReminderModule, ReminderService (polls for due reminders), ReminderProcessor (BullMQ)
 ├── prisma/         # PrismaModule (global), PrismaService
 ├── user/           # UserController, UserService (account deletion, preferences)
+├── instrument.ts   # Sentry initialization (imported before app bootstrap)
+├── sentry-before-send.ts # PII scrubbing for Sentry events
 └── main.ts         # Bootstrap with CORS, cookies, validation pipe, Helmet, CSP, CSRF
 ```
 

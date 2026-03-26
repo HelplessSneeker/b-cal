@@ -74,26 +74,40 @@ app/                          # Next.js App Router pages
 ├── reset-password/           # Password reset form
 ├── settings/                 # Settings (profile, security, appearance, localization)
 ├── health/                   # Health check route
+├── test-error/               # Sentry test error page (development)
+├── error.tsx                 # Global error boundary
+├── global-error.tsx          # Root error boundary
+├── not-found.tsx             # 404 page
 └── page.tsx                  # Main calendar (protected)
 
 components/
 ├── ui/                       # shadcn/ui primitives
 ├── calendar/
 │   ├── views/                # Day, Week, Month view components
-│   ├── calendar-header.tsx   # Top nav with view selector & user menu
+│   ├── calendar-header.tsx   # Top nav with view selector and date navigation
 │   ├── calendar-list.tsx     # Calendar list with visibility toggles
 │   ├── calendar-manage-dialog.tsx # Create/edit calendar dialog
 │   ├── calendar-sidebar.tsx  # Sidebar with mini calendar
 │   ├── time-grid.tsx         # Scrollable 24h time grid
+│   ├── time-column.tsx       # Hour labels column
 │   ├── day-column.tsx        # Single day with time slots
-│   └── entry-block.tsx       # Positioned calendar entry
-├── settings/                  # Settings tabs (profile, security, appearance, localization)
+│   ├── entry-block.tsx       # Positioned calendar entry
+│   ├── entry-preview.tsx     # Compact entry preview for month view
+│   ├── all-day-section.tsx   # All-day events section
+│   ├── week-all-day-row.tsx  # All-day row for week view
+│   ├── current-time-indicator.tsx # Red line for current time
+│   ├── month-week-row.tsx    # Week row in month view
+│   ├── sidebar-calendar.tsx  # Mini calendar in sidebar
+│   └── swipe-container.tsx   # Touch gesture navigation
+├── settings/                  # Settings tabs (profile, security, appearance, localization) and settings sidebar
 ├── app-shell.tsx              # Layout with desktop icon rail and mobile bottom tab bar
+├── app-shell-skeleton.tsx     # Loading skeleton for the app shell
 ├── auth-layout.tsx            # Shared layout wrapper for auth pages
 ├── AuthProvider.tsx           # Auth guard (redirects unauthenticated/unverified)
 ├── ConnectionGuard.tsx        # Full-screen overlay when backend is unreachable
 ├── entry-modal.tsx            # Create/edit/delete entry dialog
 ├── forgot-password-form.tsx   # Forgot password form
+├── ThemeProvider.tsx           # Theme provider with CSP nonce support
 ├── login-form.tsx             # Login/signup form
 ├── verify-email-content.tsx   # Email verification handler
 └── reset-password-form.tsx    # Password reset form
@@ -101,7 +115,7 @@ components/
 lib/
 ├── api/                      # Typed API layer (auth, calendar, CSRF)
 ├── calendar/                 # Date/time utils and layout constants
-├── hooks/                    # Custom hooks (useCalendarData, useEntryColor, useLocale, useMediaQuery, useVisibleEntries)
+├── hooks/                    # Custom hooks (useCalendarData, useDynamicColumns, useEntryColor, useLocale, useMediaQuery, useVisibleEntries)
 ├── stores/                   # Zustand stores (user, calendar, calendars, connection)
 └── utils/                    # Helpers (cn, password validation, accent color, calendar colors, theme cookie)
 

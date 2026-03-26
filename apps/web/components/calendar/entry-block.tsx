@@ -6,7 +6,7 @@ import { CalendarEntry } from '@/lib/stores/calendarStore';
 import { useLocale } from '@/lib/hooks/useLocale';
 import { useEntryColor } from '@/lib/hooks/useEntryColor';
 import { getEventTopPosition, getEventHeight } from '@/lib/calendar/time-utils';
-import { OVERLAP_GAP_PX } from '@/lib/calendar/calendar-constants';
+import { OVERLAP_GAP_PX, SLOT_HEIGHT } from '@/lib/calendar/calendar-constants';
 import { getTimeFormatter } from '@/lib/calendar/formatter-cache';
 import { cn } from '@/lib/utils/utils';
 
@@ -35,6 +35,7 @@ export const EntryBlock = memo(function EntryBlock({
   const colors = getColorClasses(entry.calendarId);
   const top = getEventTopPosition(entry.startDate, timezone);
   const height = getEventHeight(entry.startDate, entry.endDate);
+  const displayHeight = Math.max(height, SLOT_HEIGHT);
   const isShort = height < 40;
   const hasOverlapLayout = left !== undefined && width !== undefined;
 
@@ -55,11 +56,11 @@ export const EntryBlock = memo(function EntryBlock({
         hasOverlapLayout
           ? {
               top,
-              height,
+              height: displayHeight,
               left: `calc(${left}% + ${OVERLAP_GAP_PX}px)`,
               width: `calc(${width}% - ${OVERLAP_GAP_PX * 2}px)`,
             }
-          : { top, height }
+          : { top, height: displayHeight }
       }
       onClick={() => onClick(entry)}
       aria-label={entry.title}

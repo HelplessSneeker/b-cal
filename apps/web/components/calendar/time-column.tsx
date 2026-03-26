@@ -24,18 +24,23 @@ export function TimeColumn({
 
   return (
     <div
-      className="shrink-0 flex flex-col text-xs text-muted-foreground"
-      style={{ width: columnWidth }}
+      className="shrink-0 relative text-xs text-muted-foreground"
+      style={{
+        width: columnWidth,
+        height: (END_HOUR - START_HOUR) * HOUR_HEIGHT,
+      }}
     >
-      {hours.map((hour) => (
-        <div
-          key={hour}
-          className="flex items-center justify-end pr-1"
-          style={{ height: HOUR_HEIGHT }}
-        >
-          {compact ? hour.toString() : formatHour(hour)}
-        </div>
-      ))}
+      {hours
+        .filter((hour) => hour > START_HOUR)
+        .map((hour) => (
+          <span
+            key={hour}
+            className="absolute right-1"
+            style={{ top: hour * HOUR_HEIGHT, transform: 'translateY(-50%)' }}
+          >
+            {compact ? hour.toString() : formatHour(hour)}
+          </span>
+        ))}
     </div>
   );
 }

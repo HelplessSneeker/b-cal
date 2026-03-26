@@ -351,6 +351,7 @@ function EntryForm({
                   setReminderType(e.target.value as ReminderType)
                 }
                 className="w-auto"
+                aria-label={t('reminderTypeLabel')}
               >
                 <option value="EMAIL">{t('reminderTypeEmail')}</option>
               </NativeSelect>
@@ -363,6 +364,7 @@ function EntryForm({
                   setReminderAmount(parseInt(e.target.value, 10) || 1)
                 }
                 className="w-20"
+                aria-label={t('reminderAmountLabel')}
               />
               <NativeSelect
                 value={reminderUnit}
@@ -370,6 +372,7 @@ function EntryForm({
                   setReminderUnit(e.target.value as ReminderUnit)
                 }
                 className="w-auto"
+                aria-label={t('reminderUnitLabel')}
               >
                 <option value="MINUTES">{t('reminderMinutes')}</option>
                 <option value="HOURS">{t('reminderHours')}</option>
@@ -501,7 +504,7 @@ function ScopeDialog({
   const tCommon = useTranslations('common');
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onCancel()}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-sm" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
@@ -752,7 +755,7 @@ export function EntryModal() {
         }
         onOpenChange={(open) => !open && closeEntryModal()}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>
               {editingEntry ? t('editTitle') : t('newTitle')}
@@ -794,10 +797,8 @@ export function EntryModal() {
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>{t('frequencyChangeHintTitle')}</DialogTitle>
+            <DialogDescription>{t('frequencyChangeHint')}</DialogDescription>
           </DialogHeader>
-          <p className="text-muted-foreground text-sm">
-            {t('frequencyChangeHint')}
-          </p>
           <DialogFooter>
             <Button variant="ghost" onClick={handleFrequencyHintCancel}>
               {tCommon('cancel')}

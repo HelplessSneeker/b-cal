@@ -2,18 +2,21 @@
 
 import { memo } from 'react';
 import { SLOT_HEIGHT } from '@/lib/calendar/calendar-constants';
+import { getTimeInTimezone } from '@/lib/calendar/time-utils';
 import { cn } from '@/lib/utils/utils';
 
 interface TimeSlotProps {
   time: Date;
+  timezone: string;
   onClick: (time: Date) => void;
 }
 
 export const TimeSlot = memo(function TimeSlot({
   time,
+  timezone,
   onClick,
 }: TimeSlotProps) {
-  const isHourBoundary = time.getMinutes() === 30;
+  const isHourBoundary = getTimeInTimezone(time, timezone).minutes === 30;
 
   return (
     <button

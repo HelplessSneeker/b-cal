@@ -102,7 +102,7 @@ export const MonthWeekRow = memo(function MonthWeekRow({
 
   return (
     <div
-      className="relative flex min-h-0 flex-1 flex-col overflow-hidden border-b"
+      className="relative flex flex-1 flex-col border-b"
       data-testid="month-week-row"
     >
       {/* Column borders + empty cell click targets */}
@@ -167,7 +167,7 @@ export const MonthWeekRow = memo(function MonthWeekRow({
       {/* Unified entries grid: spanning bars + timed entries share rows */}
       {hasEntries && (
         <div
-          className="grid grid-cols-7 gap-y-0.5"
+          className="relative grid grid-cols-7 gap-y-0.5"
           style={{
             gridTemplateRows: `repeat(${MAX_ENTRIES_PER_DAY}, 20px)`,
           }}
@@ -208,7 +208,7 @@ export const MonthWeekRow = memo(function MonthWeekRow({
             dayTimed.slice(0, timedToShow).map((entry, i) => (
               <div
                 key={entry.id}
-                className="px-0.5"
+                className="min-w-0 overflow-hidden px-0.5"
                 style={{
                   gridColumn: colIdx + 1,
                   gridRow: freeRows[i] + 1,
@@ -228,7 +228,7 @@ export const MonthWeekRow = memo(function MonthWeekRow({
       )}
 
       {/* "+N more" indicators */}
-      <div className="grid grid-cols-7">
+      <div className="relative grid grid-cols-7">
         {dayData.map(({ day, hiddenCount }) =>
           hiddenCount > 0 ? (
             <div key={day.toISOString()} className="px-0.5">

@@ -29,7 +29,7 @@ export const EntryPreview = memo(function EntryPreview({
     <button
       type="button"
       className={cn(
-        'cursor-pointer truncate rounded px-1 py-0.5 text-left text-xs transition-colors',
+        'block w-full cursor-pointer truncate rounded px-1 py-0.5 text-left text-xs transition-colors',
         'border-l-2',
         'outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]',
         colors.border,
