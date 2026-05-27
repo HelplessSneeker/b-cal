@@ -25,6 +25,7 @@ const RESEND_COOLDOWN_MS = 60_000;
 
 export default function CheckEmailPage() {
   const t = useTranslations('auth.checkEmail');
+  const tSuccess = useTranslations('success');
   const router = useRouter();
   const { user, setUser, clearUser } = useUserStore();
   const { clearCache } = useCalendarStore();
@@ -89,6 +90,7 @@ export default function CheckEmailPage() {
       await resendVerification();
       setCooldownEnd(Date.now() + RESEND_COOLDOWN_MS);
       setNow(Date.now());
+      toast.success(tSuccess('verificationEmailSent'));
     } catch {
       toast.error(t('resendFailed'));
     } finally {

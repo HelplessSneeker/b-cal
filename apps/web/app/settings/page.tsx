@@ -39,7 +39,7 @@ function SettingsContent() {
         >
           <MenuIcon className="size-5" />
         </Button>
-        <h1 className="text-2xl font-bold">{t('title')}</h1>
+        <h1 className="text-display-md">{t('title')}</h1>
       </header>
 
       <div className="flex min-h-0 flex-1">

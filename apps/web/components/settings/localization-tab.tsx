@@ -55,6 +55,22 @@ const TIMEZONE_OPTIONS = TIMEZONES.map((tz) => ({
   offset: getUtcOffsets(tz),
 }));
 
+function getTimezoneRegion(tz: string): string {
+  const slashIdx = tz.indexOf('/');
+  if (slashIdx === -1) return 'UTC';
+  return tz.slice(0, slashIdx);
+}
+
+const TIMEZONES_BY_REGION = (() => {
+  const groups = new Map<string, typeof TIMEZONE_OPTIONS>();
+  for (const tz of TIMEZONE_OPTIONS) {
+    const region = getTimezoneRegion(tz.value);
+    if (!groups.has(region)) groups.set(region, []);
+    groups.get(region)!.push(tz);
+  }
+  return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
+})();
+
 function formatTime(tz: string): string {
   return new Intl.DateTimeFormat('en-US', {
     timeZone: tz,
@@ -103,6 +119,15 @@ export function LocalizationTab() {
         tz.offset.toLowerCase().includes(q),
     );
   }, [tzSearch]);
+
+  const browserTimezone = useMemo(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone,
+    [],
+  );
+  const suggestedOption = useMemo(() => {
+    if (browserTimezone === selectedTimezone) return null;
+    return TIMEZONE_OPTIONS.find((tz) => tz.value === browserTimezone) ?? null;
+  }, [browserTimezone, selectedTimezone]);
 
   // Update live time preview every minute
   useEffect(() => {
@@ -235,38 +260,77 @@ export function LocalizationTab() {
                 />
               </div>
               <ScrollArea className="h-60">
-                <div className="p-1" role="listbox" aria-label={t('timezone')}>
+                <div role="listbox" aria-label={t('timezone')}>
                   {filteredTimezones.length === 0 ? (
                     <p className="text-muted-foreground px-2 py-4 text-center text-sm">
                       {t('noTimezones')}
                     </p>
+                  ) : tzSearch ? (
+                    <div className="p-1">
+                      {filteredTimezones.map((tz) => (
+                        <TimezoneOption
+                          key={tz.value}
+                          value={tz.value}
+                          offset={tz.offset}
+                          selected={selectedTimezone === tz.value}
+                          onSelect={() => {
+                            setSelectedTimezone(tz.value);
+                            setTzOpen(false);
+                          }}
+                        />
+                      ))}
+                    </div>
                   ) : (
-                    filteredTimezones.map((tz) => (
-                      <button
-                        type="button"
-                        key={tz.value}
-                        role="option"
-                        aria-selected={selectedTimezone === tz.value}
-                        className={cn(
-                          'flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1.5 text-left text-sm outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]',
-                          selectedTimezone === tz.value
-                            ? 'bg-accent text-accent-foreground'
-                            : 'hover:bg-muted',
-                        )}
-                        onClick={() => {
-                          setSelectedTimezone(tz.value);
-                          setTzOpen(false);
-                        }}
-                      >
-                        <span className="truncate">{tz.value}</span>
-                        <span className="text-muted-foreground ml-2 flex shrink-0 items-center gap-1 text-xs">
-                          {tz.offset}
-                          {selectedTimezone === tz.value && (
-                            <CheckIcon className="size-4" />
-                          )}
-                        </span>
-                      </button>
-                    ))
+                    <>
+                      {suggestedOption && (
+                        <section aria-labelledby="tz-suggested">
+                          <h3
+                            id="tz-suggested"
+                            className="bg-popover text-muted-foreground sticky top-0 z-10 px-3 pt-3 pb-1 text-xs font-medium uppercase tracking-wide"
+                          >
+                            {t('suggested')}
+                          </h3>
+                          <div className="p-1">
+                            <TimezoneOption
+                              value={suggestedOption.value}
+                              offset={suggestedOption.offset}
+                              selected={false}
+                              onSelect={() => {
+                                setSelectedTimezone(suggestedOption.value);
+                                setTzOpen(false);
+                              }}
+                            />
+                          </div>
+                        </section>
+                      )}
+                      {TIMEZONES_BY_REGION.map(([region, items]) => (
+                        <section
+                          key={region}
+                          aria-labelledby={`tz-region-${region}`}
+                        >
+                          <h3
+                            id={`tz-region-${region}`}
+                            className="bg-popover text-muted-foreground sticky top-0 z-10 px-3 pt-3 pb-1 text-xs font-medium uppercase tracking-wide"
+                          >
+                            {region}
+                          </h3>
+                          <div className="p-1">
+                            {items.map((tz) => (
+                              <TimezoneOption
+                                key={tz.value}
+                                value={tz.value}
+                                offset={tz.offset}
+                                selected={selectedTimezone === tz.value}
+                                onSelect={() => {
+                                  setSelectedTimezone(tz.value);
+                                  setTzOpen(false);
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </section>
+                      ))}
+                    </>
                   )}
                 </div>
               </ScrollArea>
@@ -288,5 +352,38 @@ export function LocalizationTab() {
         </Button>
       </div>
     </div>
+  );
+}
+
+interface TimezoneOptionProps {
+  value: string;
+  offset: string;
+  selected: boolean;
+  onSelect: () => void;
+}
+
+function TimezoneOption({
+  value,
+  offset,
+  selected,
+  onSelect,
+}: TimezoneOptionProps) {
+  return (
+    <button
+      type="button"
+      role="option"
+      aria-selected={selected}
+      className={cn(
+        'flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1.5 text-left text-sm outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]',
+        selected ? 'bg-accent text-accent-foreground' : 'hover:bg-muted',
+      )}
+      onClick={onSelect}
+    >
+      <span className="truncate">{value}</span>
+      <span className="text-muted-foreground ml-2 flex shrink-0 items-center gap-1 text-xs">
+        {offset}
+        {selected && <CheckIcon className="size-4" />}
+      </span>
+    </button>
   );
 }

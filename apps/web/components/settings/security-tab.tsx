@@ -51,6 +51,7 @@ export function SecurityTab() {
   const t = useTranslations('settings.security');
   const tAuth = useTranslations('auth');
   const tValidation = useTranslations('auth.validation');
+  const tSuccess = useTranslations('success');
   const router = useRouter();
 
   // Change password state
@@ -104,6 +105,7 @@ export function SecurityTab() {
       setNewPassword('');
       setConfirmPassword('');
       fetchSessions();
+      toast.success(tSuccess('passwordUpdated'));
     } else {
       setPasswordError(result.error ?? '');
     }
@@ -116,6 +118,7 @@ export function SecurityTab() {
     try {
       await revokeSession(sessionId);
       setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      toast.success(tSuccess('sessionRevoked'));
     } catch {
       toast.error(t('failedRevokeSession'));
     } finally {
@@ -221,7 +224,7 @@ export function SecurityTab() {
               {Array.from({ length: 2 }).map((_, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-4 rounded-lg bg-muted/50 p-4"
+                  className="flex items-center gap-4 rounded-lg border bg-card p-4"
                 >
                   <Skeleton className="size-5 shrink-0 rounded" />
                   <div className="min-w-0 flex-1 space-y-2">
@@ -241,7 +244,7 @@ export function SecurityTab() {
                 return (
                   <div
                     key={session.id}
-                    className="bg-muted/50 flex items-center gap-4 rounded-lg p-4"
+                    className="flex items-center gap-4 rounded-lg border bg-card p-4"
                   >
                     <Icon className="text-muted-foreground size-5 shrink-0" />
                     <div className="min-w-0 flex-1">
@@ -262,9 +265,9 @@ export function SecurityTab() {
                       </span>
                     ) : (
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="shrink-0"
+                        className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
                         disabled={revokingId === session.id}
                         onClick={() => handleRevokeSession(session.id)}
                       >
@@ -279,7 +282,7 @@ export function SecurityTab() {
                 <div className="pt-2">
                   <Button
                     variant="outline"
-                    className="border-destructive text-destructive"
+                    className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
                     disabled={isRevokingAll}
                     onClick={handleRevokeAll}
                   >

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
+import { WifiOffIcon } from 'lucide-react';
 import { useConnectionStore } from '@/lib/stores/connectionStore';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -64,11 +65,16 @@ export function ConnectionGuard() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-4 px-4 text-center">
-        <h1 className="text-4xl font-bold">{t('title')}</h1>
-        <p className="text-muted-foreground">{t('description')}</p>
-        <Button onClick={handleRetry} disabled={isRetrying} className="mt-2">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-4 backdrop-blur-sm">
+      <div className="flex w-full max-w-md flex-col items-center gap-5 rounded-xl border border-feedback-info/30 bg-card p-8 text-center shadow-lg">
+        <div className="flex size-12 items-center justify-center rounded-full bg-feedback-info/15">
+          <WifiOffIcon className="size-6 text-feedback-info" />
+        </div>
+        <div className="flex flex-col gap-2">
+          <h1 className="text-display-md">{t('title')}</h1>
+          <p className="text-muted-foreground">{t('description')}</p>
+        </div>
+        <Button onClick={handleRetry} disabled={isRetrying}>
           {isRetrying ? <Spinner /> : tCommon('retry')}
         </Button>
       </div>

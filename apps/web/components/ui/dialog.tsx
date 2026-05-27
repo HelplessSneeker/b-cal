@@ -102,7 +102,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('text-lg font-semibold leading-none', className)}
+      className={cn('text-heading-lg', className)}
       {...props}
     />
   );

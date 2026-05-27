@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { deleteUser } from '@/lib/api/auth';
 import { useUserStore } from '@/lib/stores/userStore';
 import { useCalendarStore } from '@/lib/stores/calendarStore';
@@ -38,6 +39,7 @@ export function ProfileTab() {
   const t = useTranslations('settings.profile');
   const tFields = useTranslations('auth.fields');
   const tCommon = useTranslations('common');
+  const tSuccess = useTranslations('success');
   const router = useRouter();
   const { user, clearUser } = useUserStore();
   const { language } = useLocale();
@@ -60,6 +62,7 @@ export function ProfileTab() {
     if (result.success) {
       clearUser();
       clearCache();
+      toast.success(tSuccess('userDeleted'));
       router.push('/login');
     }
     setIsDeleting(false);

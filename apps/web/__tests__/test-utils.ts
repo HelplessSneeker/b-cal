@@ -18,8 +18,9 @@ import auth from '@b-cal/i18n/locales/en/auth.json';
 import settings from '@b-cal/i18n/locales/en/settings.json';
 import calendar from '@b-cal/i18n/locales/en/calendar.json';
 import error from '@b-cal/i18n/locales/en/error.json';
+import success from '@b-cal/i18n/locales/en/success.json';
 
-const messages = { common, auth, settings, calendar, error };
+const messages = { common, auth, settings, calendar, error, success };
 
 function IntlWrapper({ children }: { children: React.ReactNode }) {
   return createElement(

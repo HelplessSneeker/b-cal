@@ -93,6 +93,7 @@
     "timezoneDescription": "Your calendar events will be displayed relative to this timezone. This also affects reminders and notifications.",
     "searchTimezones": "Search timezones...",
     "noTimezones": "No timezones found.",
+    "suggested": "Suggested",
     "currentTime": "Current time in {timezone}: {time}",
     "saved": "Preferences saved",
     "saveFailed": "Failed to save preferences"

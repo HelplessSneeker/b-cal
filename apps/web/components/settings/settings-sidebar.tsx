@@ -47,7 +47,7 @@ export function SettingsSidebar({
       {/* Mobile sidebar */}
       <nav
         className={cn(
-          'fixed inset-y-0 left-0 z-30 flex w-56 flex-col gap-1 border-r bg-background p-2 transition-transform duration-200 md:hidden',
+          'fixed inset-y-0 left-0 z-30 flex w-64 max-w-[85vw] flex-col gap-0.5 border-r bg-background p-2 transition-transform duration-200 md:hidden',
           mobileOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
@@ -63,8 +63,12 @@ export function SettingsSidebar({
         {settingsTabKeys.map((tab) => (
           <Button
             key={tab.key}
-            variant={activeTab === tab.key ? 'secondary' : 'ghost'}
-            className="justify-start"
+            variant="ghost"
+            className={cn(
+              'justify-start border-l-2 border-transparent rounded-l-none',
+              activeTab === tab.key &&
+                'border-primary bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary',
+            )}
             asChild
             onClick={() => onMobileOpenChange(false)}
           >
@@ -77,12 +81,16 @@ export function SettingsSidebar({
       </nav>
 
       {/* Desktop sidebar */}
-      <nav className="hidden w-56 flex-col gap-1 border-r p-2 md:flex">
+      <nav className="hidden w-56 flex-col gap-0.5 border-r p-2 md:flex">
         {settingsTabKeys.map((tab) => (
           <Button
             key={tab.key}
-            variant={activeTab === tab.key ? 'secondary' : 'ghost'}
-            className="justify-start"
+            variant="ghost"
+            className={cn(
+              'justify-start border-l-2 border-transparent rounded-l-none',
+              activeTab === tab.key &&
+                'border-primary bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary',
+            )}
             asChild
           >
             <Link href={`/settings?tab=${tab.key}`}>

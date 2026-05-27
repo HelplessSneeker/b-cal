@@ -97,7 +97,7 @@ export function CalendarHeader() {
         data-testid="desktop-header"
       >
         <div className="flex w-64 items-center justify-between pl-4">
-          <h1 className="text-2xl font-bold">{t('title')}</h1>
+          <h1 className="text-display-md">{t('title')}</h1>
           <Button variant="outline" size="sm" onClick={handleTodayClick}>
             {t('today')}
           </Button>

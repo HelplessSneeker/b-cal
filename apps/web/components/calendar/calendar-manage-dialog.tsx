@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { Pencil, Trash2, Plus, Check, X } from 'lucide-react';
 import {
   Dialog,
@@ -47,6 +48,7 @@ export function CalendarManageDialog({
 }: CalendarManageDialogProps) {
   const t = useTranslations('calendar.calendars');
   const tCommon = useTranslations('common');
+  const tSuccess = useTranslations('success');
   const {
     calendars,
     addCalendar: addToStore,
@@ -90,6 +92,7 @@ export function CalendarManageDialog({
       });
       updateInStore(updated);
       setEditingId(null);
+      toast.success(tSuccess('calendarUpdated'));
     } catch {
       // Error toast shown by api()
     } finally {
@@ -109,6 +112,7 @@ export function CalendarManageDialog({
       setNewName('');
       setNewColor('teal');
       setShowAdd(false);
+      toast.success(tSuccess('calendarCreated'));
     } catch {
       // Error toast shown by api()
     } finally {
@@ -126,6 +130,7 @@ export function CalendarManageDialog({
         invalidateCache();
       }
       setDeleteTarget(null);
+      toast.success(tSuccess('calendarDeleted'));
     } catch {
       // Error toast shown by api()
     } finally {

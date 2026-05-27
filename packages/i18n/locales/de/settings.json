@@ -93,6 +93,7 @@
     "timezoneDescription": "Deine Kalendereinträge werden relativ zu dieser Zeitzone angezeigt. Dies betrifft auch Erinnerungen und Benachrichtigungen.",
     "searchTimezones": "Zeitzonen suchen...",
     "noTimezones": "Keine Zeitzonen gefunden.",
+    "suggested": "Vorschlag",
     "currentTime": "Aktuelle Uhrzeit in {timezone}: {time}",
     "saved": "Einstellungen gespeichert",
     "saveFailed": "Einstellungen konnten nicht gespeichert werden"
