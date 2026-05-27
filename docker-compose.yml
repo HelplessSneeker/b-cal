@@ -25,10 +25,10 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --requirepass dev-redis-password
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "dev-redis-password", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -63,6 +63,7 @@ services:
       MAIL_PASS: pass
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      REDIS_PASSWORD: dev-redis-password
     depends_on:
       postgres:
         condition: service_healthy
