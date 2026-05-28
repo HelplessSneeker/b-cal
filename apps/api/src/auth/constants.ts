@@ -25,6 +25,8 @@ interface CookieConfig {
 const isProduction = process.env.NODE_ENV === 'production';
 
 function getCookieDomain(): string | undefined {
+  if (process.env.COOKIE_DOMAIN) return process.env.COOKIE_DOMAIN;
+
   const frontendUrl = process.env.FRONTEND_URL;
   if (!frontendUrl) return undefined;
   try {
