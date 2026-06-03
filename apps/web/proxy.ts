@@ -7,7 +7,15 @@ const AUTH_ROUTES = [
   '/forgot-password',
   '/reset-password',
 ];
-const OPEN_ROUTES = ['/verify-email', '/check-email', '/health'];
+const OPEN_ROUTES = [
+  '/verify-email',
+  '/check-email',
+  '/health',
+  // Social-share preview image must be publicly fetchable by scrapers
+  // (LinkedIn, WhatsApp, …) — it has no file extension, so the matcher
+  // below does not exclude it.
+  '/opengraph-image',
+];
 const ACCESS_TOKEN_COOKIE = 'access_token';
 const REFRESH_TOKEN_COOKIE = 'refresh_token';
 
