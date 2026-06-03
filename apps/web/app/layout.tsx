@@ -24,9 +24,28 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:8080';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: 'b-cal',
-  description: 'Calendar App',
+  description:
+    'Your calendar, sharper. Manage appointments, reminders and recurring events.',
+  applicationName: 'b-cal',
+  openGraph: {
+    type: 'website',
+    siteName: 'b-cal',
+    title: 'b-cal',
+    description:
+      'Your calendar, sharper. Manage appointments, reminders and recurring events.',
+    url: siteUrl,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'b-cal',
+    description:
+      'Your calendar, sharper. Manage appointments, reminders and recurring events.',
+  },
 };
 
 export default async function RootLayout({
