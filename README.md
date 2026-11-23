@@ -150,4 +150,4 @@ After running `pnpm prisma:seed` in the API:
 
 ## License
 
-UNLICENSED
+[MIT](LICENSE)
