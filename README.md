@@ -1,5 +1,7 @@
 # b-cal
 
+> b-cal is a reference implementation of a full-stack TypeScript calendar app. It is not deployed anywhere, and this repository is archived.
+
 A full-stack calendar application built as a Turborepo monorepo.
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
